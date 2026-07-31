@@ -99,7 +99,6 @@ export function Banner({
               <PortableText value={description} />
             </motion.div>
       </div>
-
     <div className="text-img-fullbg_img">
       {back_image && 
         <Image
