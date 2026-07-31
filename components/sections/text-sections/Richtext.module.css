@@ -1,0 +1,80 @@
+.section {
+  width: 100%;
+  padding: 0 0 0 ;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 141px 20px;
+}
+
+.wrapper {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.eyebrow {
+  font-size: 14px;
+    line-height: 16px;
+    color: #182B44;
+    letter-spacing: 0.28px;
+    font-family: 'Helvetica Neue';
+}
+
+.title {
+  font-size: 44px;
+  line-height: 51px;
+  font-weight: 400;
+  color: #182B44;
+  letter-spacing: -0.97px;
+  font-family: 'Editor';
+}
+
+.content {
+  display: grid;
+  gap: 1rem;
+  max-width: 760px;
+}
+
+.description {
+  font-size: 14px;
+    line-height: 16px;
+    color: #182B44;
+    letter-spacing: 0.28px;
+    font-family: 'Helvetica Neue';
+}
+
+.description p {
+  margin: 0 0 1rem;
+}
+
+.description :global(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: fit-content;
+  padding: 0.95rem 1.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: #1f1b17;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 141px 39px 80px;
+  }
+}
