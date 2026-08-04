@@ -1,0 +1,172 @@
+.text-img_wrap {
+  padding: 30px 0;
+  overflow: hidden;
+}
+
+
+
+.text-img_title {
+  font-size: 35px;
+  font-weight: 100;
+  text-align: center;
+  margin-bottom: 0;
+  margin-top: 0;
+  font-weight: 700;
+}
+
+.text-img_wrap.text-img--dark {
+  color: #fff
+}
+
+.text-img_wrap.text-img--light {
+background-color: #f6f5f3;
+}
+
+
+.text-img_wrap.text-img--dark .text-img_title {
+  color: #3effc0;
+}
+
+.text-img_wrap.text-img--light .text-img_title,
+.text-img_wrap.text-img--light .text-img_sub-head {
+  color: #035c67;
+  
+}
+
+.text-img_title strong {
+  font-weight: 900;
+}
+
+.text-img_sub-head {
+  font-size: 22px;
+  text-align: center;
+  margin-top: 0;
+  font-weight: 700;
+}
+
+.text-img_container {
+  display: flex;
+  margin-top: 40px;
+  align-items: center;
+  flex-direction: column;
+}
+
+.text-img_image {
+  position: relative;
+  text-align: center;
+}
+
+.text-img_img_ppl.small_img {
+  margin-bottom: 40px;
+}
+
+.text-img_img_ppl {
+  width: 100%;
+  height: fit-content;
+  position: relative;
+  z-index: 1;
+}
+
+.text-img_img_bg {
+  position: absolute;
+  left: 0;
+  top: -15%;
+  z-index: 0;
+  width: 80%;
+  height: fit-content;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+}
+
+.text-img_contents p strong {
+  font-weight: 600;
+}
+
+.bulleted_content {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.text-img_contents p {
+  font-size: 18px;
+}
+
+.text-img_contents p:empty {
+  display: block;
+  margin: 20px;
+}
+
+.bulleted_content p {
+  margin: -5px 0 0 0;
+  line-height: 1.4;
+}
+
+.bulleted_content p+p {
+  margin-top: 20px;
+}
+
+.bulleted_content padding {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.bulleted_content strong {
+  font-weight: 900;
+}
+
+.text-img_wrap.text-img--dark {
+  background-color: #397f77;
+}
+
+@media(min-width: 990px) {
+  .text-img_wrap {
+    padding: 60px 0;
+  }
+
+  .text-img_title {
+    font-size: 50px;
+  }
+
+  .text-img_sub-head {
+    font-size: 25px;
+  }
+
+  .text-img_container {
+    margin-top: 100px;
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .text-img_image {
+    width: 50%;
+    position: relative;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+  }
+
+  .text-img_contents {
+    width: 50%;
+  }
+
+  .text-img_img_ppl.small_img {
+    width: 60%;
+    max-width: 60%;
+    margin-top: -20px;
+    margin-bottom: 0;
+  }
+
+  .bulleted_content {
+    margin-bottom: 25px;
+  }
+
+  .bulleted_content p+p {
+    margin-top: 25px;
+  }
+  .text-img_contents p {
+    font-size: 19.2px;
+  }
+}

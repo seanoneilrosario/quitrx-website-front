@@ -76,7 +76,14 @@ export const homeType = defineType({
         { type: "twoColumnLayout" },
         { type: "imageGrid" },
         { type: "richtext_with_image" },
-        { type: "heading_with_link" }
+        { type: "heading_with_link" },
+        { type: "prescription_comparison" },
+        { type: "escript_banner" },
+        { type: "text_block_with_icon" },
+        { type: "text_image" },
+        { type: "faq"},
+        {type: "supportForm"}
+        
       ],
       options: {
         insertMenu: {
@@ -95,7 +102,11 @@ export const homeType = defineType({
                 "richtext_with_cta",
                 "richtextWithGroupedCTA",
                 "richtext",
-                "heading_with_link"
+                "heading_with_link",
+                "prescription_comparison",
+                "escript_banner",
+                "text_block_with_icon",
+                "faq",
               ],
             },
             {
@@ -106,12 +117,14 @@ export const homeType = defineType({
             {
               name: "image",
               title: "Images",
-              of: ["imageGrid"],
+              of: ["imageGrid", "text_image"],
             },
             {
               name: "custom-apps",
               title: "Custom Apps",
-              of: [],
+              of: [
+                "supportForm"
+              ],
             },
           ],
           // views: [

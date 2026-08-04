@@ -4,9 +4,9 @@
 }
 
 .container {
-  max-width: 1280px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 141px 20px;
+  padding: 20px 20px;
 }
 
 .wrapper {
@@ -20,16 +20,14 @@
     line-height: 16px;
     color: #182B44;
     letter-spacing: 0.28px;
-    font-family: 'Helvetica Neue';
+    font-family: 'Quicksand';
 }
 
 .title {
-  font-size: 44px;
-  line-height: 51px;
-  font-weight: 400;
-  color: #182B44;
-  letter-spacing: -0.97px;
-  font-family: 'Editor';
+  font-size: 62px;
+  font-weight: 700;
+  color: #035c67;
+  font-family: 'Quicksand';
 }
 
 .content {
@@ -39,11 +37,9 @@
 }
 
 .description {
-  font-size: 14px;
-    line-height: 16px;
-    color: #182B44;
-    letter-spacing: 0.28px;
-    font-family: 'Helvetica Neue';
+  font-size: 19.2pxpx;
+    color: #035c67;
+    font-family: 'Quicksand';
 }
 
 .description p {
@@ -75,6 +71,6 @@
 
 @media (min-width: 1024px) {
   .container {
-    padding: 141px 39px 80px;
+    padding: 20px 39px 20px;
   }
 }

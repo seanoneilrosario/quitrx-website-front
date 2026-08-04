@@ -1,0 +1,299 @@
+.text-blocks-icon_wrap {
+  background: #fff;
+  padding: 30px 0 30px;
+}
+
+.text-blocks-icon_heading {
+  max-width: 900px;
+  margin: 0 auto 70px;
+  text-align: center;
+}
+
+.text-blocks-icon_title {
+  margin: 0 0 15px;
+  color: #035c67;
+  font-size: 35px;
+  font-weight: 300;
+  line-height: 1.15;
+}
+
+.text-blocks-icon_title strong {
+  font-weight: 800;
+}
+
+.text-blocks-icon_sub-head {
+  margin: 0;
+  color: #4a4a4a;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+/* ==========================================
+   Container
+========================================== */
+
+.text-blocks-icon_container {
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+}
+
+/* ==========================================
+   Card
+========================================== */
+
+.text-blocks-icon_box {
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+  align-items: center;
+
+  background: #F6F5F3;
+
+  border-radius: 36px;
+
+  padding: 35px;
+
+  transition: .3s ease;
+}
+
+.text-blocks-icon_box:hover {
+  transform: translateY(-4px);
+}
+
+/* ==========================================
+   Image
+========================================== */
+
+.text-blocks-icon_img {
+  width: 150px;
+  min-width: 150px;
+}
+
+.icon_img {
+  width: 100%;
+  display: block;
+  height: auto;
+}
+
+/* ==========================================
+   Content
+========================================== */
+
+.text-blocks-icon_contents {
+  flex: 1;
+}
+
+.steps {
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 3px 18px;
+
+  border-radius: 999px;
+
+  background: #44fcc3;
+
+  color: #397f77;
+
+  font-size: 20px;
+
+  font-weight: 700;
+
+  /* text-transform: uppercase; */
+
+  margin-bottom: 18px;
+}
+
+.text-blocks-icon_contents h4 {
+  margin: 0 0 10px;
+  color: #123f45;
+  font-size: 25px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.text-blocks-icon_description {
+  margin-bottom: 30px;
+}
+
+.text-blocks-icon_description p {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.6;
+  color: #333;
+  font-weight: 700;
+}
+
+/* ==========================================
+   Feature List
+========================================== */
+
+.feature-list {
+  /* border-top: 1px solid #DDDDDD; */
+}
+
+.feature-row {
+
+  display: grid;
+
+  grid-template-columns: 150px 1fr;
+
+  gap: 24px;
+
+  align-items: baseline;
+
+  padding: 10px 0;
+}
+
+.feature-row+.feature-row {
+  border-top: 1px solid #DDDDDD;
+}
+
+/* ==========================================
+   Labels
+========================================== */
+
+.feature-label {
+
+  display: inline-flex;
+
+  justify-content: center;
+  align-items: center;
+
+  padding: 12px 18px;
+
+  border-radius: 10px;
+
+  font-weight: 700;
+
+  font-size: 14px;
+
+  line-height: 1;
+
+  text-align: center;
+}
+
+.feature-label--green {
+
+  background: #44fcc3;
+
+  color: #035C67;
+}
+
+.feature-label--grey {
+
+  background: #E6E6E6;
+
+  color: #0a191e;
+}
+
+/* ==========================================
+   Text
+========================================== */
+
+.feature-text {
+  color: #2d2d2d;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+.feature-text p {
+  margin: 0;
+}
+
+/* ==========================================
+   Desktop
+========================================== */
+
+@media (min-width: 990px) {
+
+  .text-blocks-icon_wrap {
+    padding: 60px 0 60px;
+  }
+
+  .text-blocks-icon_title {
+    font-size: 50px;
+  }
+
+  .text-blocks-icon_sub-head {
+    font-size: 25px;
+  }
+
+  .text-blocks-icon_box {
+
+    flex-direction: row;
+
+    align-items: center;
+
+    gap: 70px;
+
+    padding: 60px;
+  }
+
+  .text-blocks-icon_img {
+    width: 180px;
+    min-width: 180px;
+  }
+
+  .text-blocks-icon_contents h4 {
+    font-size: 25px;
+  }
+
+  .steps {
+    font-size: 20px;
+  }
+
+  .feature-label {
+    font-size: 20px;
+  }
+
+  .feature-text {
+    font-size: 20px;
+  }
+
+}
+
+/* ==========================================
+   Mobile
+========================================== */
+
+@media (max-width: 989px) {
+
+  .text-blocks-icon_heading {
+    margin-bottom: 45px;
+  }
+
+  .text-blocks-icon_box {
+    text-align: center;
+  }
+
+  .text-blocks-icon_contents {
+    width: 100%;
+  }
+
+  .feature-row {
+
+    grid-template-columns: 1fr;
+
+    gap: 14px;
+
+    text-align: center;
+  }
+
+  .feature-label {
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  .feature-row.column-direction .feature-text,
+  .feature-row .feature-text {
+    margin: 0 auto;
+  }
+
+}

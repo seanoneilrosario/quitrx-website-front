@@ -74,13 +74,6 @@ export default async function RootLayout({
       className="h-full antialiased"
       suppressHydrationWarning
     >
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://use.typekit.net/ycl4sti.css"
-        />
-      </head>
-
       <body className="min-h-full flex flex-col">
         <ThemeProvider
           settings={settings as ThemeSettings | undefined}
@@ -110,4 +103,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

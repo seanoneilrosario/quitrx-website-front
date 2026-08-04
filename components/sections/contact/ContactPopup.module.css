@@ -67,7 +67,7 @@
   background: transparent;
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, .35);
-  font-family: 'Helvetica Neue';
+  font-family: 'Quicksand';
   color: #ECEBED;
 
   padding: 15px 0 5px;
@@ -98,7 +98,7 @@
 }
 
 .submit span:nth-child(1) {
-  font-family: 'Helvetica Neue';
+  font-family: 'Quicksand';
   font-size: 14px;
   line-height: 16px;
   letter-spacing: 0.28px;

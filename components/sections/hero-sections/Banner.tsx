@@ -19,6 +19,8 @@ interface BannerProps {
   title_image?: string;
   description: PortableTextBlock[];
   title_array: PortableTextBlock[];
+  button_text?: string;
+  button_url?: string;
 }
 
 export function Banner({
@@ -29,7 +31,9 @@ export function Banner({
   link,
   title_image,
   description,
-  title_array
+  title_array,
+  button_text,
+  button_url
 }: BannerProps) {
   const handleScrollDown = (event?: React.MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
@@ -44,7 +48,7 @@ export function Banner({
   console.log(doc_img)
 
   const content = (
-    <section className="hero-banner">
+    <section className="hero-banner page-width">
       {image && 
         <Image
           src={image}
@@ -88,8 +92,9 @@ export function Banner({
               >
                 <PortableText value={title_array} />
               </motion.div>
-            )}
-
+        )}
+        
+        <span className="border-separator"></span>
             <motion.div
               className="hero-description"
               initial={{ y: 6, opacity: 0 }}
@@ -97,7 +102,13 @@ export function Banner({
               transition={{ duration: 0.7, ease: "easeOut", delay: 0.12 }}
             >
               <PortableText value={description} />
-            </motion.div>
+        </motion.div>
+        
+        <div className="banner-links">
+          <Link href={button_url || "#"} className="banner-button">
+            {button_text || "Learn More"}
+          </Link>
+        </div>
       </div>
     <div className="text-img-fullbg_img">
       {back_image && 
@@ -122,7 +133,7 @@ export function Banner({
         {/* <div>{doc_img}</div> */}
     </div>
 
-      <button
+      {/* <button
         type="button"
         className="hero-scroll"
         onClick={handleScrollDown}
@@ -135,7 +146,7 @@ export function Banner({
           height={17}
           className="mx-auto"
         />
-      </button>
+      </button> */}
     </section>
   );
 

@@ -5,8 +5,14 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   overflow: hidden;
+  background-color: #397f77;
+  padding-top: 50px !important;
+  flex-direction: column;
+}
+
+.banner-section {
   background-color: #397f77;
 }
 
@@ -50,31 +56,36 @@
 
 .hero-title {
   margin: 0;
-  font-family: 'Editor';
+  font-family: 'Quicksand';
   font-weight: 400;
   font-size: 50px;
   line-height: 1.1;
   letter-spacing: -.02em;
 }
 
-.hero-title-array {
-  font-family: 'Editor';
-  font-weight: 400;
-  font-size: 44px;
-  line-height: 51px;
-  letter-spacing: -0.97px;
+.hero-title-array h2 {
+  font-family: 'Quicksand';
+    font-size: 38px;
+    font-weight: 700;
+    color: #3effc0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.hero-title-array h2 em {
+  color: #fff
 }
 
 .hero-description {
-  margin-top: 34px;
-  font-size: 12px;
-  line-height: 14px;
-  letter-spacing: 0.24px;
-  color: rgba(255, 255, 255, .82);
+    font-size: 22px;
+    /* font-weight: 100; */
+    /* text-align: center; */
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .hero-description p {
-  font-family: 'Helvetica Neue';
+  font-family: 'Quicksand';
 }
 
 .hero-scroll {
@@ -100,7 +111,8 @@
 
 .text-img-fullbg_img {
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden; */
+  margin-bottom: -5%;
 }
 
 .text-img-fullbg_img .back_image {
@@ -120,8 +132,70 @@
     margin-bottom: -10px;
 }
 
+.border-separator {
+  width: 90px;
+  height: 2.5px;
+  background: #3effc0;
+  display: block;
+  margin: 40px auto;
+}
+
+.banner-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.banner-links a {
+  background: #3effc0;
+  color: #035c67;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #3effc0;
+  transition: .3s;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: 700;
+  font-size: 19.2px
+}
+
+@media (min-width: 600px) {
+  .hero-title-array h2 {
+    font-size: 50px;
+  }
+}
+
 @media (min-width: 990px) {
   .text-img-fullbg_img .front_image {
     width: 110%;
+  }
+  .hero-title-array h2 {
+    font-size: 70px;
+    text-align: left;
+    margin-bottom: 25px;
+  }
+  .hero-banner {
+    flex-direction: row;
+    height: 100%;
+  }
+  .border-separator {
+    margin: 40px 0;
+  }
+  .hero-description {
+    font-size: 22px;
+    text-align: left;
+  }
+  .hero-center {
+    padding-top: 50px;
+    margin-bottom: 50px;
+  }
+  .hero-center,
+  .text-img-fullbg_img {
+    width: 50%;
+  }
+  .banner-links {
+    justify-content: flex-start;
   }
 }

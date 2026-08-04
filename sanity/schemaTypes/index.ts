@@ -20,6 +20,13 @@ import heading_with_link from '../components/heading_with_link'
 import multi_row from '../components/multi_row'
 import contact_section from '../components/contact_section'
 import { productType } from './multiple/productType'
+import { prescriptionComparison } from '../components/text_blocks'
+import { imageDocument } from './settings/image_document'
+import { escriptBanner } from '../components/escriptBanner'
+import textBlockWithIcon from '../components/textBlockWithIcon'
+import { textImage } from '../components/text_image'
+import faq from '../components/faq'
+import { externalForm } from '../components/external_form'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -32,6 +39,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     pageType,
     homeType,
     productType,
+    imageDocument,
     // components
     videoBanner,
     banner,
@@ -43,6 +51,12 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     richtext,
     heading_with_link,
     multi_row,
-    contact_section
+    contact_section,
+    prescriptionComparison,
+    escriptBanner,
+    textBlockWithIcon,
+    textImage,
+    faq,
+    externalForm
   ],
 }

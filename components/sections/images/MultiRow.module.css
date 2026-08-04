@@ -37,7 +37,7 @@
   line-height: 20px;
   letter-spacing: 0.35px;
   color: #897658;
-      font-family: 'Helvetica Neue Medium';
+      font-family: 'Quicksand';
 }
 
 .content h4 {
@@ -46,12 +46,12 @@
   line-height: 20px;
   letter-spacing: 0.35px;
   color: #897658;
-      font-family: 'Helvetica Neue Medium';
+      font-family: 'Quicksand';
 }
 
 .description {
   max-width: 488px;
-    font-family: 'Helvetica Neue';
+    font-family: 'Quicksand';
 }
 
 .description p {
@@ -61,7 +61,7 @@
   line-height: 20px;
     letter-spacing: 0.28px;
   color: #182B44;
-    font-family: 'Helvetica Neue';
+    font-family: 'Quicksand';
 }
 
 @media (max-width: 991px) {

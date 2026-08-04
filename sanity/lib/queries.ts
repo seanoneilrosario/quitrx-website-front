@@ -5,6 +5,10 @@ const PAGE_COMPONENTS = `
     link,
     heading,
     eyebrow,
+    description,
+    sub_heading,
+    paddingTop,
+    paddingBottom,
     body,
     "video": video.asset->url,
     "image": image.asset->url,
@@ -82,7 +86,46 @@ const PAGE_COMPONENTS = `
       address,
       phone
     },
-    button_url
+    button_url-> {
+      "slug": slug.current
+    },
+    "buttonIcon": buttonIcon.asset->url,
+    "icon": icon.asset->url,
+    "box": box[]{
+      step,
+      title,
+
+      description,
+
+      "image": image.asset->url,
+
+      label_1,
+      description_1,
+
+      label_2,
+      description_2,
+
+      label_3,
+      description_3,
+
+      label_4,
+      description_4,
+
+      row_direction
+    },
+    theme,
+    contentTheme,
+    imageTheme,
+    "frontImage": frontImage.asset->url,
+    "backImage": backImage.asset->url,
+    content,
+     bullets[]{
+      content
+    },
+    items[]{
+      question,
+      answer
+    }
   }
 `;
 

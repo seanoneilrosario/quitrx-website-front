@@ -80,6 +80,12 @@ export const pageType = defineType({
         { type: "heading_with_link" },
         { type: "multi_row" },
         { type: "contact_section" },
+         { type: "prescription_comparison" },
+        { type: "escript_banner" },
+        { type: "text_block_with_icon" },
+        { type: "text_image" },
+        { type: "faq"},
+        {type: "supportForm"}
       ],
       options: {
         insertMenu: {
@@ -99,8 +105,12 @@ export const pageType = defineType({
                 "richtext_with_image",
                 "heading_with_link",
                 "contact_section",
-                "richtext"
-              ],
+                "richtext",
+                "prescription_comparison",
+                "escript_banner",
+                "text_block_with_icon",
+                "faq",
+                ],
             },
             {
               name: "banner",
@@ -110,12 +120,14 @@ export const pageType = defineType({
             {
               name: "image",
               title: "Images",
-              of: ["imageGrid", "multi_row"],
+              of: ["imageGrid", "multi_row", "text_image"],
             },
             {
               name: "custom-apps",
               title: "Custom Apps",
-              of: [],
+              of: [
+                "supportForm"
+              ],
             },
           ],
           // views: [

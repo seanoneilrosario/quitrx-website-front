@@ -83,6 +83,19 @@ export default function Header({ navigation }: HeaderProps) {
           {/* <Link className="site-header__consultations" href="/contact">
             Consultations
           </Link> */}
+            <Link className="site-header__logo" href="/" aria-label="Home">
+              {selectedLogo ? (
+                <Image
+                  src={selectedLogo}
+                  alt={navigation?.headerLogoAlt || navigation?.title || "MCQ"}
+                  width={280}
+                  height={80}
+                  priority
+                />
+              ) : (
+                <span>MCQ</span>
+              )}
+            </Link>
 
           <nav className="site-header__desktop-nav" aria-label="Primary navigation">
             {menuItems.map((item) => {
@@ -100,27 +113,6 @@ export default function Header({ navigation }: HeaderProps) {
             })}
           </nav>
 
-          <div className="nav2">
-            <Link className="site-header__logo" href="/" aria-label="Home">
-              {selectedLogo ? (
-                <Image
-                  src={selectedLogo}
-                  alt={navigation?.headerLogoAlt || navigation?.title || "MCQ"}
-                  width={280}
-                  height={80}
-                  priority
-                />
-              ) : (
-                <span>MCQ</span>
-              )}
-            </Link>
-            <Link className="site-header__contact" href="/contact">
-              Contact
-            </Link>
-          </div>
-
-          
-
           <button
             className="site-header__menu-button"
             type="button"
@@ -132,8 +124,6 @@ export default function Header({ navigation }: HeaderProps) {
             <span />
             <span />
           </button>
-
-          
         </div>
       </div>
 

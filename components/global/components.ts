@@ -56,6 +56,40 @@ interface Office {
   phone: string;
 }
 
+export interface TextBlocksIconBox {
+  image?: string;
+
+  step?: string;
+
+  title?: string;
+
+  description?: PortableTextBlock[];
+
+  label_1?: string;
+  description_1?: string;
+
+  label_2?: string;
+  description_2?: string;
+
+  label_3?: string;
+  description_3?: string;
+
+  label_4?: string;
+  description_4?: string;
+
+  row_direction?: boolean;
+}
+
+export interface TextImageBullet {
+  content?: PortableTextBlock[];
+}
+
+export interface FAQItem {
+  question: string;
+  answer?: PortableTextBlock[];
+}
+
+
 export type SectionType =
   | "video_banner"
   | "banner"
@@ -68,6 +102,12 @@ export type SectionType =
   | "heading_with_link"
   | "multi_row"
   | "contact_section"
+  | "prescription_comparison"
+  | "escript_banner"
+  | "text_block_with_icon"
+  | "text_image"
+  | "faq"
+  | "supportForm"
 
 
 
@@ -100,6 +140,9 @@ export interface COMPONENTS {
   button_link?: string;
   background_image?: string;
   eyebrow_max_width?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
+  sub_heading?: string;
   members?: {
     image: {
       asset: {
@@ -118,4 +161,25 @@ export interface COMPONENTS {
     description: PortableTextBlock[];
   }[];
   offices: Office[];
+  button_url?: {
+    slug: string;
+  };
+  icon?: string;
+  buttonIcon?: string;
+  box: TextBlocksIconBox[];
+   theme?: "dark" | "light";
+
+  contentTheme?: "plaintext" | "img_bullet";
+
+  imageTheme?: "double" | "single";
+
+  frontImage?: string;
+
+  backImage?: string;
+
+  content?: PortableTextBlock[];
+
+  bullets?: TextImageBullet[];
+
+  items: FAQItem[];
 }

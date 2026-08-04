@@ -13,6 +13,12 @@ import HeadingWithLink from "../sections/text-sections/HeadingWithLink";
 import MultiRow from "../sections/images/MultiRow";
 import ContactSection from "../sections/contact/ContactSection";
 import Richtext from "../sections/text-sections/Richtext";
+import TextBlocks from "../sections/text-sections/TextBlocks";
+import EscriptBanner from "../sections/text-sections/EscriptBanner";
+import TextBlocksIcon from "../sections/text-sections/TextBlocksIcon";
+import TextImage from "../sections/images/TextImage";
+import Faq from "../sections/text-sections/Faq";
+import SupportForm from "../sections/customs/SupportForm";
 
 const sectionRenderers: Record<
   SectionType,
@@ -34,6 +40,8 @@ const sectionRenderers: Record<
       title_image={component.title_image || ""}
       description={component.description || []}
       title_array={component.title_array || []}
+      button_text={component.button_text || ""}
+      button_url={component.button_url?.slug || ""}
     />
   ),
   twoColumnLayout: (component) => (
@@ -101,7 +109,70 @@ const sectionRenderers: Record<
       offices={component.offices || []}
       button_link={component.button_link || ""}
     />
-  )
+  ),
+  prescription_comparison: (component) => (
+    <TextBlocks
+      heading={component.heading || ""}
+      description={component.description || []}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+      // isLoggedIn={isLoggedIn}
+      // isLoggedIn={true}
+      // customer={true}
+      // openLoginPopup={openLoginPopup}
+    />
+  ),
+  escript_banner: (component) => (
+    <EscriptBanner
+      heading={component.heading || ""}
+      description={component.description || []}
+      icon={component.icon}
+      buttonIcon={component.buttonIcon}
+      buttonText={component.button_text || ""}
+      buttonUrl={component.button_url?.slug || ""}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+    />
+  ),
+  text_block_with_icon: (component) => (
+    <TextBlocksIcon
+      title_array={component.title_array || []}
+      subHeading={component.sub_heading || ""}
+      box={component.box || []}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+    />
+  ),
+  text_image: (component) => (
+    <TextImage
+      heading={component.heading || ""}
+      subHeading={component.sub_heading || ""}
+      theme={component.theme || "dark"}
+      contentTheme ={component.contentTheme  || "plaintext"}
+      frontImage={component.frontImage || ""}
+      backImage={component.backImage || ""}
+      content={component.content || []}
+      bullets={component.bullets || []}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+      imageTheme={component.imageTheme || "double"}
+    />
+  ),
+  faq: (component) => (
+    <Faq
+      heading={component.heading || ""}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+      items={component.items || []}
+    />
+  ),
+  supportForm: (component) => (
+    <SupportForm
+      title={component.title || ""}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+    />
+  ),
 };
 
 export default function SpreadComponents({

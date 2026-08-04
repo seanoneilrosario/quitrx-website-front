@@ -59,7 +59,7 @@ export function Footer({ navigation }: FooterProps) {
         /> */}
       <div className="footer-content relative">
         
-        <div className="richtext-with-image__container">
+        {/* <div className="richtext-with-image__container">
           {navigation?.footerLogo && (
             <div className="richtext-with-image__image">
               <Image
@@ -78,9 +78,11 @@ export function Footer({ navigation }: FooterProps) {
               <PortableText value={navigation?.company_info} />
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
-      <div className={`footer__container bottom-4 w-[94%] ${pathname == "/" ? "lg:fixed" : "lg:absolute"}`}>
+      <div className="footer-border-separator hidden lg:block  w-[89%] mb-5 mx-auto"></div>
+
+      <div className={`footer__container page-width bottom-4 w-[94%]`}>
         
         {/* LEFT */}
         <div className="footer__left">
@@ -93,12 +95,12 @@ export function Footer({ navigation }: FooterProps) {
               {item.title}
             </Link>
           ))}
-          <Link
+          {/* <Link
               href={`/privacy-policy`}
               className="footer__link"
             >
               Privacy Policy
-            </Link>
+            </Link> */}
         </div>
 
         {/* CENTER */}
@@ -117,9 +119,11 @@ export function Footer({ navigation }: FooterProps) {
         {/* RIGHT */}
         <div className="footer__right">
           {/* <PortableText value={navigation?.company_info} components={components} /> */}
-          <p>&copy; MCQ Capital LLC 2026 {currentYear}</p>
+          <p>&copy; Copyright QuitRx {currentYear}</p>
 
         </div>
+      <div className="footer-border-separator w-full lg:hidden"></div>
+
       </div>
     </footer>
   );

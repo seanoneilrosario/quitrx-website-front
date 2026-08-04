@@ -1,0 +1,565 @@
+/* =====================================
+   Comparison Layout
+===================================== */
+
+.text-blocks_wrap {
+  background: #f6f5f3;
+}
+
+.comparison-layout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: stretch;
+}
+
+@media(min-width:990px) {
+
+  .comparison-layout {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .alternative-box {
+    transform: scale(0.9) !important;
+    width: 40%;
+  }
+
+  .featured-box {
+    width: 55% !important;
+  }
+
+  .text-blocks_wrap .text-blocks_container {
+    gap: 5px;
+  }
+
+
+}
+
+/* =====================================
+   Cards
+===================================== */
+
+.featured-box {
+  position: relative;
+  border: 3px solid #3EFFC0;
+  border-radius: 24px;
+  overflow: hidden;
+  transform: none !important;
+  background: #045c68;
+  padding: 40px;
+}
+
+.alternative-box {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  /* transform:none !important; */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+  background: #fff !important;
+  padding: 40px;
+
+}
+
+/* =====================================
+   OR Circle
+===================================== */
+
+.comparison-or {
+
+  width: 74px;
+  height: 74px;
+
+  border-radius: 50%;
+
+  background: #fff;
+
+  border: 2px solid #E6E6E6;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 700;
+  font-size: 30px;
+
+  color: #0B6B73;
+
+  margin: auto;
+
+  z-index: 1;
+
+}
+
+@media(min-width:990px) {
+
+  .comparison-or {
+
+    position: absolute;
+
+    left: 56%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+  }
+
+}
+
+/* =====================================
+   Card Top
+===================================== */
+
+.card-top {
+
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+
+}
+
+.card-top h3 {
+
+  font-size: 35px;
+  line-height: 1.05;
+  margin: 0;
+  margin-bottom: 20px;
+  font-weight: 700;
+  color: #fff
+
+}
+
+.card-top h3 em {
+
+  display: block;
+  margin-top: 12px;
+
+  font-style: normal;
+
+  font-size: 20px;
+  font-weight: 600;
+
+}
+
+.alternative-box h3 {
+
+  color: #071821;
+
+}
+
+.alternative-box h3 em {
+
+  color: #838b91;
+
+}
+
+/* =====================================
+   Badge
+===================================== */
+
+.for-renewal {
+
+  border-radius: 999px;
+
+  padding: 12px 22px;
+
+  font-size: 14px;
+
+  letter-spacing: .05em;
+
+  text-transform: uppercase;
+
+  font-weight: 700;
+
+}
+
+.featured-box .for-renewal {
+
+  background: #70fac6;
+  color: #0B6B73;
+
+}
+
+.alternative-box .for-renewal {
+
+  background: #F2F2F2;
+  color: #8E9398;
+
+}
+
+/* =====================================
+   Icon
+===================================== */
+
+.renew-wrap {
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+}
+
+.renew-wrap img {
+
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+
+}
+
+/* =====================================
+   Lists
+===================================== */
+
+.featured-box ol,
+.alternative-box ol {
+
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+}
+
+.featured-box li {
+  color: #fff
+}
+
+.featured-box li,
+.alternative-box li {
+
+  position: relative;
+
+  padding-left: 38px;
+
+  margin-bottom: 18px;
+
+  font-size: 20px;
+
+  font-weight: 600;
+
+}
+
+.alternative-box li {
+  color: #071821
+}
+
+.featured-box li::before {
+
+  content: "✓";
+
+  position: absolute;
+  left: 0;
+  top: 2px;
+
+  width: 26px;
+  height: 26px;
+
+  border-radius: 50%;
+
+  background: #72F4C6;
+
+  color: #0B6B73;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  font-weight: 700;
+
+}
+
+.alternative-box li::before {
+
+  content: "✓";
+
+  position: absolute;
+  left: 0;
+  top: 2px;
+
+  width: 26px;
+  height: 26px;
+
+  border-radius: 50%;
+
+  background: #AEB7BB;
+
+  color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  font-weight: 700;
+
+}
+
+/* =====================================
+   Bottom Highlight
+===================================== */
+
+.plan-highlight {
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+
+  padding: 10px 0;
+
+  margin-top: 35px;
+
+  border-top: 2px solid #3effc0;
+
+  border-bottom: 2px solid #3effc0;
+
+}
+
+.plan-highlight__icon {
+
+  width: 40px;
+  height: 40px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid #3EFFC0;
+
+  color: #3EFFC0;
+
+  font-weight: 700;
+
+  font-size: 24px;
+
+}
+
+.plan-highlight__text {
+
+  color: #3EFFC0;
+
+  font-size: 20px;
+
+}
+
+.plan-highlight strong {
+
+  font-weight: 700;
+
+}
+
+/* =====================================
+   Price Box
+===================================== */
+
+.price-box {
+
+  margin-top: 35px;
+
+  padding-top: 30px;
+
+  border-top: 1px solid #ECECEC;
+
+  text-align: center;
+
+}
+
+.price-label {
+  display: block;
+  color: #0a232f;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 800;
+
+}
+
+.price {
+
+  display: block;
+
+  color: #0a232f;
+
+  font-size: 44px;
+
+  font-weight: 800;
+
+  line-height: 1;
+
+}
+
+/* =====================================
+   Comparison Buttons
+===================================== */
+
+.comparison-btn {
+
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 20px 28px;
+
+  border-radius: 14px;
+
+  text-decoration: none;
+
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+
+  transition: .25s ease;
+
+  box-sizing: border-box;
+
+}
+
+.comparison-btn--primary {
+
+  background: #70fac6;
+
+  color: #0B3943;
+
+  border: 2px solid #70fac6;
+
+}
+
+.comparison-btn--primary:hover {
+
+  background: #2EE7B3;
+  border-color: #2EE7B3;
+
+}
+
+.comparison-btn--secondary {
+
+  background: #fff;
+
+  color: #0B3943;
+
+  border: 2px solid #0B3943;
+
+}
+
+.comparison-btn--secondary:hover {
+
+  background: #F8F8F8;
+
+}
+
+.comparison-btn:focus-visible {
+
+  outline: 3px solid rgba(62, 255, 192, .4);
+  outline-offset: 3px;
+
+}
+
+.comparison-layout .text-blocks_btns {
+  margin-top: 20px;
+}
+
+@media(max-width:989px) {
+
+  .comparison-btn {
+
+    font-size: 22px;
+    padding: 18px 22px;
+
+  }
+
+}
+
+/* =====================================
+   Mobile
+===================================== */
+
+@media(max-width:989px) {
+
+  .comparison-or {
+
+    order: 2;
+
+  }
+
+  .alternative-box {
+
+    order: 3;
+
+  }
+
+  .card-top h3 {
+
+    font-size: 40px;
+
+  }
+
+  .card-top h3 em {
+
+    font-size: 20px;
+
+  }
+
+  .featured-box li,
+  .alternative-box li {
+
+    font-size: 18px;
+
+  }
+
+
+  .price {
+
+    font-size: 44px;
+
+  }
+
+}
+
+/* =====================================
+   Comparison Heading
+===================================== */
+
+.comparison-heading {
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto 60px;
+  padding: 0 1.5rem
+}
+
+.comparison-heading h2 {
+  margin: 0 0 12px;
+  color: #035c67;
+  font-size: 35px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.comparison-heading p {
+  margin: 0;
+  color: #035c67;
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+@media (min-width: 990px) {
+
+  .comparison-heading {
+    margin-bottom: 70px;
+  }
+
+  .comparison-heading h2 {
+    font-size: 50px;
+  }
+
+  .comparison-heading p {
+    font-size: 25px;
+  }
+
+}

@@ -1,17 +1,18 @@
 .site-header {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
   z-index: 50;
   width: 100%;
-  color: #fff;
+  background: #035c67;
+  color:#fff;
   transition: 0.5s all;
   right: 0;
 }
 
 .site-header__bar {
   padding: 20px 0;
-  max-width: 1280px;
+  max-width: 1560px;
   margin-left: auto;
   margin-right: auto;
   transition: 0.5s all;
@@ -38,7 +39,7 @@
   line-height: 16px;
   letter-spacing: 0.28px;
   color: #fff;
-  font-family: 'Helvetica Neue';
+  font-family: 'Quicksand';
   text-decoration: none;
   transition: color 0.3s ease;
 }
@@ -59,7 +60,7 @@
   display: block;
   width: 100%;
   height: auto;
-  max-width: 90px;
+  max-width: 220px;
   transition: 0.5s all;
 }
 
@@ -201,7 +202,7 @@
   font-size: 20px;
   line-height: 1.2;
   color: #fff !important;
-  font-family: 'Helvetica Neue';
+  font-family: 'Quicksand';
   position: relative;
   border-bottom: 1px solid transparent;
   letter-spacing: 0.28px;
@@ -234,7 +235,7 @@
 .site-header--not-home .site-nav__menu a,
 .site-header--not-home .site-header__desktop-nav a,
 .site-header--not-home .site-header__contact {
-  color: #182B44;
+  color: #fff;
 }
 
 .nav2 {
@@ -268,7 +269,7 @@
   }
 
   .site-header__logo img {
-    max-width: 90px;
+    max-width: 220px;
   }
 
   .site-header__subtitle {
@@ -326,7 +327,7 @@
   }
 
   .site-header__logo img {
-    max-width: 90px;
+    max-width: 220px;
   }
 
   .site-header__menu-button {
@@ -356,15 +357,14 @@
   .site-header__desktop-nav a {
     color: inherit;
     text-decoration: none;
-    font-size: 14px;
-    line-height: 16px;
-    letter-spacing: 0.28px;
-    font-family: 'Helvetica Neue';
+    font-size: 16.8px;
+    line-height: 20px;
+    font-family: 'Quicksand';
   }
 
   .site-header__bar {
-    padding-left: 39px;
-    padding-right: 39px;
+    padding-left: 5rem;
+    padding-right: 5rem;
   }
 
     .nav2 {
@@ -379,12 +379,12 @@
       /* height: 94px; */
     }
 
-    .site-header__logo {
+    /* .site-header__logo {
       align-self: stretch;
       position: absolute;
       left: 45%;
       top: 30px;
-    }
+    } */
 
     .site-header__contact {
       position: absolute;
@@ -429,4 +429,3 @@
 /* .site-header.site-header--scrolled {
   background-color: #182b447a;
 } */
-
