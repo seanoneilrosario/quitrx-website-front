@@ -63,6 +63,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const lastScrollY = useRef(0);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const menuItems = navigation?.header_menu?.length
     ? navigation.header_menu
     : fallbackMenu;
@@ -103,6 +104,11 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
       document.body.style.overflow = "";
     };
   }, [isOpen, isSearchOpen]);
+  useEffect(() => {
+    if (isSearchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [isSearchOpen]);
   // Tag <body> with the current page type: home / inner page / admin
   useEffect(() => {
     const body = document.body;
@@ -263,6 +269,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
             </div>
           </div>
         </div>
+      </header>
         <div
           id="site-search-dialog"
           className={`site-search ${isSearchOpen ? "site-search--open" : ""}`}
@@ -272,29 +279,32 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
           onClick={() => setIsSearchOpen(false)}
         >
           <div className="site-search__panel" onClick={(event) => event.stopPropagation()}>
-            <div className="site-search__header">
-              <h2>Search</h2>
-              <button
-                type="button"
-                className="site-search__close"
-                aria-label="Close search"
-                onClick={() => setIsSearchOpen(false)}
-              >
-                ×
-              </button>
+            <div className="site-search__field">
+              <label className="site-search__label" htmlFor="site-search-input">Search pages</label>
+              <input
+                id="site-search-input"
+                className="site-search__input"
+                type="search"
+                value={searchTerm}
+                placeholder="Search"
+                ref={searchInputRef}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+              <svg className="site-search__icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="m16 16 5 5" />
+              </svg>
             </div>
-            <label className="site-search__label" htmlFor="site-search-input">Search pages</label>
-            <input
-              id="site-search-input"
-              className="site-search__input"
-              type="search"
-              value={searchTerm}
-              placeholder="Type to search..."
-              autoFocus
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
+            <button
+              type="button"
+              className="site-search__close"
+              aria-label="Close search"
+              onClick={() => setIsSearchOpen(false)}
+            >
+              <span />
+              <span />
+            </button>
             <div className="site-search__results" aria-live="polite">
-              {!searchTerm.trim() && <p>Search by page title or description.</p>}
               {searchTerm.trim() && searchResults.length === 0 && <p>No pages found.</p>}
               {searchResults.map((page) => {
                 const href = page._type === "home" ? "/" : `/${page.slug}`;
@@ -308,7 +318,6 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
             </div>
           </div>
         </div>
-      </header>
     </Fragment>
   );
 }
