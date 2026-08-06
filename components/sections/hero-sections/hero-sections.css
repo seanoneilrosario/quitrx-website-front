@@ -84,6 +84,11 @@
     margin-bottom: 0;
 }
 
+.hero-description p:empty {
+  display: block;
+  height: 20px
+}
+
 .hero-description p {
   font-family: 'Quicksand';
 }

@@ -108,6 +108,8 @@ export type SectionType =
   | "text_image"
   | "faq"
   | "supportForm"
+  | "floatingCTA"
+  | "richtextImage"
 
 
 
@@ -127,6 +129,7 @@ export interface COMPONENTS {
   leftDescription?: PortableTextBlock[];
   rightDescription?: PortableTextBlock[];
   description?: PortableTextBlock[];
+  text?: PortableTextBlock[];
   activeItem?: number;
   desktop_left_width?: number;
   rows?: GridRow[];
@@ -143,6 +146,7 @@ export interface COMPONENTS {
   paddingTop?: number;
   paddingBottom?: number;
   sub_heading?: string;
+  hide_separator: boolean;
   members?: {
     image: {
       asset: {

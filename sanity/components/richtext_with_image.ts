@@ -2,54 +2,69 @@ import { ImageIcon } from "@sanity/icons";
 import { defineField, defineType } from "sanity";
 
 export default defineType({
-  name: "richtext_with_image",
+  name: "richtextImage",
   title: "Richtext With Image",
   type: "object",
   icon: ImageIcon,
   fields: [
     defineField({
-      name: "title",
-      title: "Title",
-      type: "string",
-    }),
-    defineField({
       name: "image",
-      title: "Image",
+      title: "Icon",
       type: "image",
       options: {
         hotspot: true,
       },
-      fields: [
-        defineField({
-          name: "alt",
-          title: "Alt Text",
-          type: "string",
-        }),
-        defineField({
-          name: "caption",
-          title: "Caption",
-          type: "string",
-        }),
+    }),
+
+    defineField({
+      name: "title_array",
+      title: "Title array",
+      type: "array",
+      of: [
+        {
+          type: "block",
+          styles: [
+            { title: "Normal", value: "normal" },
+          ],
+          lists: [],
+          marks: {
+            decorators: [
+              { title: "Strong", value: "strong" },
+              { title: "Emphasis", value: "em" },
+            ],
+          },
+        },
       ],
     }),
+
     defineField({
-      name: "background_image",
-      title: "Background Image",
-      type: "image",
-      options: {
-        hotspot: true,
-      },
-    }),
-    defineField({
-      name: "description",
-      title: "Description",
+      name: "content",
+      title: "Content",
       type: "array",
-      of: [{ type: "block" }],
+      of: [
+        {
+          type: "block",
+        },
+      ],
+    }),
+
+    defineField({
+      name: "paddingTop",
+      title: "Padding Top",
+      type: "number",
+      initialValue: 0,
+    }),
+
+    defineField({
+      name: "paddingBottom",
+      title: "Padding Bottom",
+      type: "number",
+      initialValue: 70,
     }),
   ],
   preview: {
     select: {
-      title: "title",
+      title: "title_array",
       media: "image",
     },
     prepare(selection) {

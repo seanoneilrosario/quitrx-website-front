@@ -1,80 +1,96 @@
-.richtext-with-image {
-
-  padding: 40px 0;
+.richtext-image {
+  padding: 0 0 70px;
+  background: #f6f5f3;
 }
 
-.richtext-with-image__container {
-  display: grid;
-  gap: 28px;
-  max-width: 1280px;
+.richtext-image .page-width {
+  max-width: 950px;
   margin: 0 auto;
-  /* padding: 0 20px; */
+  text-align: center;
 }
 
-.richtext-with-image__image {
+/* ==========================================
+   Icon
+========================================== */
+
+.richtext-image__icon {
+  margin: 0 auto 35px;
+  width: 110px;
+}
+
+.richtext-image__icon img {
   width: 100%;
-  position: relative;
-  overflow: hidden;
-  border-radius: 18px;
-}
-
-.richtext-with-image__img {
   display: block;
-  width: 100%;
-  margin: 0 auto;
+  max-width: 100px;
   height: auto;
-  max-height: 50px;
+  margin: auto;
 }
 
-.richtext-with-image__caption {
-  margin: 16px 0 0;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.72);
-  line-height: 1.5;
+/* ==========================================
+   Heading
+========================================== */
+
+.richtext-image__heading {
+  margin: 0 0 30px;
+
+  color: #035c67;
+
+  font-size: 35px;
+
+  line-height: 1.15;
+
+  font-weight: 300;
 }
 
-.richtext-with-image__content {
-  display: grid;
-  gap: 20px;
-}
-
-.richtext-with-image__title {
+.richtext-image__heading p {
   margin: 0;
-  font-size: 40px;
-  line-height: 1.05;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: #fff;
 }
 
-.richtext-with-image__description {
-  color: #fff;
-  font-size: 11px;
-  line-height: 10px;
-  letter-spacing: 0.22px;
+.richtext-image__heading strong {
+  font-weight: 800;
 }
 
-.richtext-with-image__description p:empty {
-  height: 20px
+/* ==========================================
+   Content
+========================================== */
+
+.richtext-image__content {
+  color: #035c67;
+
+  font-size: 20px;
+
+  line-height: 1.55;
+
+  font-weight: 700;
 }
 
-@media (min-width: 768px) {
-  .richtext-with-image {
-    padding: 54px 39px 141px;
+.richtext-image__content p {
+  margin: 0 0 28px;
+}
+
+.richtext-image__content p:last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================
+   Desktop
+========================================== */
+
+@media (min-width: 990px) {
+  .richtext-image {
+    padding: 0 0 110px;
   }
 
-  .richtext-with-image__title {
-    font-size: 48px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .richtext-with-image__container {
-    gap: 32px;
-    /* padding: 0 39px; */
+  .richtext-image__icon {
+    width: 130px;
+    margin-bottom: 40px;
   }
 
-  .richtext-with-image__description {
-    font-size: 11px;
+  .richtext-image__heading {
+    font-size: 45px;
+  }
+
+  .richtext-image__content {
+    font-size: 20px;
   }
 }

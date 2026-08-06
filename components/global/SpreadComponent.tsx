@@ -19,6 +19,9 @@ import TextBlocksIcon from "../sections/text-sections/TextBlocksIcon";
 import TextImage from "../sections/images/TextImage";
 import Faq from "../sections/text-sections/Faq";
 import SupportForm from "../sections/customs/SupportForm";
+import FloatingCTA from "../sections/text-sections/floatingCTA";
+import RichtextImage from "../sections/text-sections/RichtextWithImage";
+import { urlFor } from "@/sanity/lib/image";
 
 const sectionRenderers: Record<
   SectionType,
@@ -42,6 +45,7 @@ const sectionRenderers: Record<
       title_array={component.title_array || []}
       button_text={component.button_text || ""}
       button_url={component.button_url?.slug || ""}
+      hide_separator={component.hide_separator}
     />
   ),
   twoColumnLayout: (component) => (
@@ -55,14 +59,17 @@ const sectionRenderers: Record<
   imageGrid: (component) => (
     <ImageGrid rows={component.rows || []} />
   ),
-  // richtext_with_image: (component) => (
-  //   <RichtextWithImage
-  //     title={component.title || ""}
-  //     image={component.image}
-  //     description={component.description || []}
-  //     background_image={component.background_image || ""}
-  //   />
-  // ),
+  richtextImage: (component) => (
+    <RichtextImage
+      image={
+        component.image
+      }
+      title_array={component.title_array || []}
+      content={component.content}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
+    />
+  ),
   richtext_with_cta: (component) => (
     <RichtextWithCta
       title={component.title || ""}
@@ -171,6 +178,15 @@ const sectionRenderers: Record<
       title={component.title || ""}
       paddingTop={component.paddingTop || 0}
       paddingBottom={component.paddingBottom || 0}
+    />
+  ),
+  floatingCTA: (component) => (
+    <FloatingCTA
+      icon={component.icon}
+      title_array={component.title_array || []}
+      text={component.text || []}
+      button_text={component.button_text}
+      button_link={component.button_link}
     />
   ),
 };

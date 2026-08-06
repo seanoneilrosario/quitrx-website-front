@@ -21,6 +21,7 @@ interface BannerProps {
   title_array: PortableTextBlock[];
   button_text?: string;
   button_url?: string;
+  hide_separator: boolean;
 }
 
 export function Banner({
@@ -33,7 +34,8 @@ export function Banner({
   description,
   title_array,
   button_text,
-  button_url
+  button_url,
+  hide_separator
 }: BannerProps) {
   const handleScrollDown = (event?: React.MouseEvent<HTMLButtonElement>) => {
     event?.preventDefault();
@@ -94,7 +96,9 @@ export function Banner({
               </motion.div>
         )}
         
-        <span className="border-separator"></span>
+        {!hide_separator || hide_separator != null && (
+          <span className={`border-separator ${hide_separator}`}></span>
+        )}
             <motion.div
               className="hero-description"
               initial={{ y: 6, opacity: 0 }}
@@ -104,11 +108,14 @@ export function Banner({
               <PortableText value={description} />
         </motion.div>
         
-        <div className="banner-links">
-          <Link href={button_url || "#"} className="banner-button">
-            {button_text || "Learn More"}
-          </Link>
-        </div>
+        {button_text && 
+          <div className="banner-links">
+            <Link href={button_url || "#"} className="banner-button">
+              {button_text || "Learn More"}
+            </Link>
+          </div>
+        }
+        
       </div>
     <div className="text-img-fullbg_img">
       {back_image && 

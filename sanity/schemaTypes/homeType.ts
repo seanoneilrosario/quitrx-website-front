@@ -75,7 +75,7 @@ export const homeType = defineType({
         { type: "banner" },
         { type: "twoColumnLayout" },
         { type: "imageGrid" },
-        { type: "richtext_with_image" },
+        { type: "richtextImage" },
         { type: "heading_with_link" },
         { type: "prescription_comparison" },
         { type: "escript_banner" },
@@ -98,7 +98,7 @@ export const homeType = defineType({
               title: "Text Blocks",
               of: [
                 "twoColumnLayout",
-                "richtext_with_image",
+                "richtextImage",
                 "richtext_with_cta",
                 "richtextWithGroupedCTA",
                 "richtext",

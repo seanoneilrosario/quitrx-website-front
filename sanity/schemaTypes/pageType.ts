@@ -76,7 +76,7 @@ export const pageType = defineType({
         { type: "richtext_with_cta" },
         { type: "richtext" },
         { type: "richtext_with_grouped_cta" },
-        { type: "richtext_with_image" },
+        { type: "richtextImage" },
         { type: "heading_with_link" },
         { type: "multi_row" },
         { type: "contact_section" },
@@ -85,7 +85,8 @@ export const pageType = defineType({
         { type: "text_block_with_icon" },
         { type: "text_image" },
         { type: "faq"},
-        {type: "supportForm"}
+        {type: "supportForm"},
+        { type: "floatingCTA"}
       ],
       options: {
         insertMenu: {
@@ -102,7 +103,7 @@ export const pageType = defineType({
                 "twoColumnLayout",
                 "richtext_with_cta",
                 "richtext_with_grouped_cta",
-                "richtext_with_image",
+                "richtextImage",
                 "heading_with_link",
                 "contact_section",
                 "richtext",
@@ -110,6 +111,7 @@ export const pageType = defineType({
                 "escript_banner",
                 "text_block_with_icon",
                 "faq",
+                "floatingCTA"
                 ],
             },
             {

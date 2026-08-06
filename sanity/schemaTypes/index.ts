@@ -27,6 +27,7 @@ import textBlockWithIcon from '../components/textBlockWithIcon'
 import { textImage } from '../components/text_image'
 import faq from '../components/faq'
 import { externalForm } from '../components/external_form'
+import { floatingCTASchema } from '../components/floatingCta'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -57,6 +58,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     textBlockWithIcon,
     textImage,
     faq,
-    externalForm
+    externalForm,
+    floatingCTASchema,
   ],
 }

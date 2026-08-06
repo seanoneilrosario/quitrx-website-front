@@ -13,6 +13,13 @@ export const banner = defineType({
       type: "image",
       
     }),
+
+    defineField({
+      name: "hide_separator",
+      title: "Hide Separator",
+      type: "boolean",
+      initialValue: false
+    }),
     defineField({
       name: "doc_img",
       title: "Doc Image",
