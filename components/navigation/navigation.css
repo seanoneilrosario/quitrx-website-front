@@ -8,6 +8,13 @@
   color:#fff;
   transition: 0.5s all;
   right: 0;
+  padding: 15px 0;
+  transform: translateY(53px);
+  transition: transform 0.3s ease-in-out;
+}
+
+.site-header.site-header--scroll-up {
+  position: fixed;
 }
 
 .site-header__bar {
@@ -54,6 +61,7 @@
   text-align: center;
   text-decoration: none;
   text-transform: uppercase;
+  width: 142px;
 }
 
 .site-header__logo img {
@@ -124,15 +132,15 @@
 }
 
 .site-nav__panel {
-  width: min(100%, 420px);
+  width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   /* justify-content: space-between; */
   gap: 24px;
-  background: linear-gradient(180deg, #182B44 0%, #101a2a 100%);
+  background: #035c67;
   padding: 28px 24px 36px;
-  transform: translateX(100%);
+  transform: translateX(-100%);
   transition: transform 240ms ease;
 }
 
@@ -259,13 +267,36 @@
   top: 0;
 } */
 
+.mobile_nav_icons .svg-icon-search {
+  display: inline-block;
+  width: 18px;
+  height: auto;
+  cursor: pointer
+}
+
+.mobile_nav_icons .cart-button {
+  font-size: .8rem;
+}
+
+.mobile_nav_icons {
+  display: flex;
+  column-gap: .8rem;
+}
+
+.site-header__inner {
+  justify-content: space-between;
+  flex-direction: row-reverse;
+}
+
 @media (max-width: 640px) {
   .site-header__bar {
     padding: 18px 15px;
   }
 
-  .site-header__inner {
-    justify-content: space-between;
+  .site-header__logo {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%,0);
   }
 
   .site-header__logo img {
@@ -293,11 +324,15 @@
   }
 
   .site-nav__menu {
-    padding-top: 28px;
+    padding-top: 0;
   }
 
   .site-nav__menu a {
     font-size: 25px;
+  }
+  
+  .site-nav {
+    top: 139px;
   }
 }
 
@@ -307,13 +342,17 @@
 }
 
 .site-header--not-home .site-header__menu-button span {
-  background: #182B44;
+  background: #fff;
 }
 
 /* Slight hover state to match style */
 .site-header__menu-button:hover span {
   transform: translateX(0);
   opacity: 0.95;
+}
+
+.site-header__desktop {
+  display: none;
 }
 
 @media (max-width: 1023px) {
@@ -392,6 +431,51 @@
       top: 40px;
     }
 
+    .site-header__logo {
+      width: 220px;
+    }
+
+    .site-header {
+      padding: 0;
+    }
+
+    .site-header__desktop {
+      display: block;
+    }
+
+    .site-header__mobile {
+      display: none;
+    }
+
+    .site-header__cart.site-header__desktop {
+      width: 3rem;
+      height: auto;
+    }
+
+    .mobile_nav_icons {
+      align-items: center;
+    }
+
+    .mobile_nav_icons .svg-icon-search {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .site-header__cart.site-header__desktop svg {
+      width: 100%;
+      height: 100%
+    }
+
+    .site-header__logo {
+      order: 1;
+      position: absolute;
+      left: 5rem;
+    }
+
+    .site-header__inner {
+      justify-content: end;
+      column-gap: 2.5rem;
+    }
   
 }
 
@@ -429,3 +513,96 @@
 /* .site-header.site-header--scrolled {
   background-color: #182b447a;
 } */
+
+/* Marquee announcment bar */
+
+.site-marquee {
+  width: 100%;
+  overflow: hidden;
+  background-color: #ffffff;
+  border-top: 1px solid #1a1a1a;
+  border-bottom: 2px solid #2c7a7b; /* teal rule like your screenshot */
+  white-space: nowrap;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.site-marquee__track {
+  display: inline-flex;
+  animation: site-marquee-scroll 25s linear infinite;
+  will-change: transform;
+}
+
+.site-marquee__item {
+  flex-shrink: 0;
+  padding: 14px 48px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c7a7b;
+  font-family: var(--font-dm-sans, sans-serif); /* swap for your font var */
+}
+
+@keyframes site-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Optional: pause on hover */
+.site-marquee:hover .site-marquee__track {
+  animation-play-state: paused;
+}
+
+/* Menu button */
+.site-header__menu-button {
+  position: relative;
+  width: 24px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.site-header__menu-button span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 1px;
+  transition: transform 0.3s ease, opacity 0.3s ease, top 0.3s ease;
+}
+
+.site-header__menu-button span:nth-child(1) {
+  top: 0;
+}
+
+.site-header__menu-button span:nth-child(2) {
+  top: 8px;
+}
+
+.site-header__menu-button span:nth-child(3) {
+  top: 16px;
+}
+
+/* Open state — morph into an X */
+.site-header__menu-button--open span:nth-child(1) {
+  top: 8px;
+  transform: rotate(45deg);
+}
+
+.site-header__menu-button--open span:nth-child(2) {
+  opacity: 0;
+}
+
+.site-header__menu-button--open span:nth-child(3) {
+  top: 8px;
+  transform: rotate(-45deg);
+}

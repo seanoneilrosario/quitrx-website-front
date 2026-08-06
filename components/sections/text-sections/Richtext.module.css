@@ -24,7 +24,7 @@
 }
 
 .title {
-  font-size: 62px;
+  font-size: 55px;
   font-weight: 700;
   color: #035c67;
   font-family: 'Quicksand';
@@ -37,9 +37,9 @@
 }
 
 .description {
-  font-size: 19.2pxpx;
-    color: #035c67;
-    font-family: 'Quicksand';
+  font-size: 19.2px;
+  color: #035c67;
+  font-family: 'Quicksand';
 }
 
 .description p {
