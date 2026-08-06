@@ -111,6 +111,13 @@ export const navigationType = defineType({
               ],
             }),
             defineField({
+              name: "anchor",
+              title: "Anchor Link",
+              type: "string",
+              description:
+                "Optional - jump to a section on the page, e.g. about-us (no # needed). If an Internal Page is also set, this links to that section on that page. If left with no Internal Page, it links to a section on the current page.",
+            }),
+            defineField({
               name: "link",
               title: "External Link",
               type: "url",
@@ -118,6 +125,19 @@ export const navigationType = defineType({
                 "Optional - use this instead of page for external URLs.",
             }),
           ],
+          preview: {
+            select: {
+              title: "title",
+              anchor: "anchor",
+              link: "link",
+            },
+            prepare({ title, anchor, link }) {
+              const suffix = anchor ? ` (#${anchor})` : link ? ` (${link})` : "";
+              return {
+                title: `${title || "Untitled"}${suffix}`,
+              };
+            },
+          },
         },
       ],
     }),

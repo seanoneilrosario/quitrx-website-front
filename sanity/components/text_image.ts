@@ -3,6 +3,7 @@ import {
   defineField,
   defineType,
 } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export const textImage = defineType({
   name: "text_image",
@@ -10,6 +11,7 @@ export const textImage = defineType({
   type: "object",
 
   fields: [
+    sectionIdField,
     defineField({
       name: "theme",
       title: "Theme",

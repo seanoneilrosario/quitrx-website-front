@@ -16,6 +16,78 @@
   background-color: #397f77;
 }
 
+.promotional-banner-slider {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #eff6fb;
+}
+
+.promotional-banner-slider .swiper,
+.promotional-banner-slider .swiper-wrapper,
+.promotional-banner-slider .swiper-slide,
+.promotional-banner-slider picture,
+.promotional-banner-slider__link,
+.promotional-banner-slider__image {
+  display: block;
+  height: 100%;
+}
+
+.promotional-banner-slider img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.promotional-banner-slider .swiper-button-prev,
+.promotional-banner-slider .swiper-button-next {
+  color: #35659a;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color .2s ease, transform .2s ease;
+}
+
+.promotional-banner-slider .swiper-button-prev:hover,
+.promotional-banner-slider .swiper-button-next:hover {
+  background: none;
+  transform: scale(1.06);
+}
+
+.promotional-banner-slider .swiper-button-prev::after,
+.promotional-banner-slider .swiper-button-next::after {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.promotional-banner-slider .swiper-pagination-bullet {
+  width: 9px;
+  height: 9px;
+  opacity: .7;
+  background: #fff;
+}
+
+.promotional-banner-slider .swiper-pagination-bullet-active {
+  opacity: 1;
+  background: #35659a;
+}
+
+@media (max-width: 767px) {
+  .promotional-banner-slider .swiper-button-prev,
+  .promotional-banner-slider .swiper-button-next {
+    width: 36px;
+    height: 36px;
+  }
+
+  .promotional-banner-slider .swiper-button-prev::after,
+  .promotional-banner-slider .swiper-button-next::after {
+    font-size: 14px;
+  }
+}
+
 .hero-banner .hero-banner-bg {
   transition: transform 0.5s ease;
 }

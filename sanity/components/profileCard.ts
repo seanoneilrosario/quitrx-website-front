@@ -1,5 +1,6 @@
 import { UserIcon } from "@sanity/icons";
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export const profileCard = defineType({
   name: "profileCard",
@@ -7,6 +8,7 @@ export const profileCard = defineType({
   type: "object",
   icon: UserIcon,
   fields: [
+    sectionIdField,
     defineField({
       name: "image",
       title: "Image",

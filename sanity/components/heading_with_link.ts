@@ -1,5 +1,6 @@
 import {defineField, defineType} from "sanity";
 import {LinkIcon} from "@sanity/icons";
+import {sectionIdField} from "./sectionId";
 
 export default defineType({
   name: "heading_with_link",
@@ -7,6 +8,7 @@ export default defineType({
   type: "object",
   icon: LinkIcon,
   fields: [
+    sectionIdField,
     defineField({
       name: "eyebrow",
       title: "Eyebrow",

@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export const prescriptionComparison = defineType({
   name: "prescription_comparison",
@@ -6,6 +7,7 @@ export const prescriptionComparison = defineType({
   type: "object",
 
   fields: [
+    sectionIdField,
     defineField({
       name: "heading",
       title: "Heading",

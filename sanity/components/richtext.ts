@@ -1,10 +1,12 @@
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export default defineType({
   name: "richtext",
   title: "Rich Text",
   type: "object",
   fields: [
+    sectionIdField,
     defineField({
       name: "eyebrow",
       title: "Eyebrow",

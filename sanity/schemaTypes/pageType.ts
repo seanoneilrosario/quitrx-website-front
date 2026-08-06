@@ -86,7 +86,9 @@ export const pageType = defineType({
         { type: "text_image" },
         { type: "faq"},
         {type: "supportForm"},
-        { type: "floatingCTA"}
+        { type: "floatingCTA"},
+        {type: "banner_slider"},
+        {type: "promotional_banner_slider"}
       ],
       options: {
         insertMenu: {
@@ -117,7 +119,7 @@ export const pageType = defineType({
             {
               name: "banner",
               title: "Banners",
-              of: ["video_banner"],
+              of: ["video_banner", "promotional_banner_slider"],
             },
             {
               name: "image",

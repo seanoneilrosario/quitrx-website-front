@@ -1,5 +1,6 @@
 import { defineField, defineType } from 'sanity'
 import { TextIcon } from "@sanity/icons";
+import { sectionIdField } from "./sectionId";
 
 
 export default defineType({
@@ -8,6 +9,7 @@ export default defineType({
   type: 'object',
   icon: TextIcon,
   fields: [
+    sectionIdField,
     defineField({
       name: 'layoutPosition',
       title: 'Layout Position',

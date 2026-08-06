@@ -2,6 +2,7 @@
 
 import { ActivityIcon } from "@sanity/icons";
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export const richtextWithGroupedCTA = defineType({
   name: "richtext_with_grouped_cta",
@@ -9,6 +10,7 @@ export const richtextWithGroupedCTA = defineType({
   type: "object",
   icon: ActivityIcon,
   fields: [
+    sectionIdField,
     defineField({
       name: "title",
       title: "Title",

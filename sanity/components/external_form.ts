@@ -1,4 +1,5 @@
 import { defineField } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 
 export const externalForm = defineField({
@@ -6,6 +7,7 @@ export const externalForm = defineField({
   title: "Support Form",
   type: "object",
   fields: [
+    sectionIdField,
     defineField({
       name: "title",
       title: "Title",

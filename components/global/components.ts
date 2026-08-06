@@ -110,12 +110,14 @@ export type SectionType =
   | "supportForm"
   | "floatingCTA"
   | "richtextImage"
+  | "promotional_banner_slider"
 
 
 
 export interface COMPONENTS {
   _key: string;
   _type: SectionType;
+  sectionId?: string;
   title?: string;
   heading?: string;
   video_url?: string;
@@ -186,4 +188,15 @@ export interface COMPONENTS {
   bullets?: TextImageBullet[];
 
   items: FAQItem[];
+  slides?: {
+    _key?: string;
+    image?: string;
+    mobileImage?: string;
+    alt?: string;
+    pageSlug?: string;
+    pageType?: string;
+    url?: string;
+    openInNewTab?: boolean;
+  }[];
+  autoplay?: boolean;
 }

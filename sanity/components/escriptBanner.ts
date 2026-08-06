@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export const escriptBanner = defineType({
   name: "escript_banner",
@@ -6,6 +7,7 @@ export const escriptBanner = defineType({
   type: "object",
 
   fields: [
+    sectionIdField,
     defineField({
       name: "icon",
       title: "Icon",

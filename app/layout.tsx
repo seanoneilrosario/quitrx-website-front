@@ -9,11 +9,12 @@ import ThemeProvider, {
 } from "@/components/global/ThemeProvider";
 import Header, {
   type NavigationData,
+  type SearchPage,
 } from "@/components/navigation/Header";
 import { Footer, FooterProps } from "@/components/navigation/Footer";
 
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
-import { NAVIGATION, SETTINGS } from "@/sanity/lib/queries";
+import { HEADER_SEARCH_QUERY, NAVIGATION, SETTINGS } from "@/sanity/lib/queries";
 
 import logo from "@/public/logo.png";
 import "./globals.css";
@@ -56,6 +57,16 @@ const getSettings = cache(async () => {
   return result?.data ?? null;
 });
 
+const getSearchPages = cache(async () => {
+  const result = await sanityFetch({
+    query: defineQuery(HEADER_SEARCH_QUERY),
+    perspective: "published",
+    stega: false,
+  });
+
+  return result?.data ?? [];
+});
+
 export default async function RootLayout({
   children,
 }: {
@@ -63,9 +74,10 @@ export default async function RootLayout({
 }) {
   const { isEnabled } = await draftMode();
 
-  const [navigation, settings] = await Promise.all([
+  const [navigation, settings, searchPages] = await Promise.all([
     getNavigation(),
     getSettings(),
+    getSearchPages(),
   ]);
 
   return (
@@ -80,6 +92,7 @@ export default async function RootLayout({
         >
           <Header
             navigation={navigation as NavigationData | null}
+            searchPages={searchPages as SearchPage[]}
           />
 
           <div className="main-sections-wrapper">

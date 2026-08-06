@@ -1,5 +1,6 @@
 import {defineArrayMember, defineField, defineType} from "sanity";
 import {UsersIcon} from "@sanity/icons";
+import {sectionIdField} from "./sectionId";
 
 export default defineType({
   name: "text_block_with_icon",
@@ -8,6 +9,7 @@ export default defineType({
   icon: UsersIcon,
 
   fields: [
+    sectionIdField,
     defineField({
       name: "title_array",
       title: "Title Array",

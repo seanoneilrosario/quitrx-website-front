@@ -1,5 +1,6 @@
 import { ActivityIcon } from "@sanity/icons";
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export default defineType({
   name: "richtext_with_cta",
@@ -8,6 +9,7 @@ export default defineType({
   icon: ActivityIcon,
 
   fields: [
+    sectionIdField,
     defineField({
       name: "title",
       title: "Title",

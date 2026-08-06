@@ -1,5 +1,6 @@
 import { ImageIcon } from "@sanity/icons";
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export default defineType({
   name: "richtextImage",
@@ -7,6 +8,7 @@ export default defineType({
   type: "object",
   icon: ImageIcon,
   fields: [
+    sectionIdField,
     defineField({
       name: "image",
       title: "Icon",

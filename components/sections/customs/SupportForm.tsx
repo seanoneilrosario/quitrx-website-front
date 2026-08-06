@@ -19,6 +19,7 @@ export default function SupportForm({
         paddingTop,
         paddingBottom,
       }}
+      id="contact"
     >
       <div className="page-width">
 

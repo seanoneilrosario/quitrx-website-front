@@ -1,5 +1,6 @@
 import { ImageIcon } from "@sanity/icons";
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export const banner = defineType({
   name: "banner",
@@ -7,6 +8,7 @@ export const banner = defineType({
   type: "object",
   icon: ImageIcon,
   fields: [
+    sectionIdField,
     defineField({
       name: "back_image",
       title: "Back Image",

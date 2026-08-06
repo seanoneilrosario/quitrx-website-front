@@ -1,10 +1,12 @@
 import { defineField, defineType, defineArrayMember } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export default defineType({
   name: "faq",
   title: "FAQ",
   type: "object",
   fields: [
+    sectionIdField,
     defineField({
       name: "heading",
       title: "Heading",

@@ -22,6 +22,7 @@ import SupportForm from "../sections/customs/SupportForm";
 import FloatingCTA from "../sections/text-sections/floatingCTA";
 import RichtextImage from "../sections/text-sections/RichtextWithImage";
 import { urlFor } from "@/sanity/lib/image";
+import PromotionalBannerSlider from "../sections/hero-sections/PromotionalBannerSlider";
 
 const sectionRenderers: Record<
   SectionType,
@@ -189,6 +190,12 @@ const sectionRenderers: Record<
       button_link={component.button_link}
     />
   ),
+  promotional_banner_slider: (component) => (
+    <PromotionalBannerSlider
+      slides={component.slides || []}
+      autoplay={component.autoplay}
+    />
+  ),
 };
 
 export default function SpreadComponents({
@@ -226,6 +233,7 @@ export default function SpreadComponents({
         return (
           <div
             key={component._key ?? `${component._type}-${index}`}
+            id={component.sectionId || undefined}
             className={`${component._type}-section`}
           >
             {content}

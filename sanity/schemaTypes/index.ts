@@ -28,6 +28,8 @@ import { textImage } from '../components/text_image'
 import faq from '../components/faq'
 import { externalForm } from '../components/external_form'
 import { floatingCTASchema } from '../components/floatingCta'
+import banner_slider from '../components/banner_slider'
+import promotional_banner_slider from '../components/promotional_banner_slider'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -60,5 +62,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     faq,
     externalForm,
     floatingCTASchema,
+    banner_slider,
+    promotional_banner_slider,
   ],
 }

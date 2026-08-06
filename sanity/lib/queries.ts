@@ -1,6 +1,7 @@
 const PAGE_COMPONENTS = `
   components[]{
     _type,
+    sectionId,
     title,
     link,
     heading,
@@ -127,6 +128,17 @@ const PAGE_COMPONENTS = `
     items[]{
       question,
       answer
+    },
+    autoplay,
+    slides[]{
+      _key,
+      "image": image.asset->url,
+      "mobileImage": mobileImage.asset->url,
+      alt,
+      url,
+      openInNewTab,
+      "pageSlug": page->slug.current,
+      "pageType": page->_type
     }
   }
 `;
@@ -155,6 +167,7 @@ export const NAVIGATION = `*[_type == "navigation"][0]{
     link,
     "href": coalesce(
       link,
+      anchor,
       select(
         page.slug->_type == "home" => "/",
         defined(page.slug->slug.current) => "/" + page.slug->slug.current,
@@ -206,6 +219,14 @@ export const ALLPAGE_QUERY = `*[_type == "page"]{
   title,
   "slug": slug.current,
   _type
+}`;
+
+export const HEADER_SEARCH_QUERY = `*[_type in ["page", "home"]] | order(title asc){
+  _id,
+  _type,
+  title,
+  "slug": slug.current,
+  metaDescription
 }`;
 
 export const FACE_QUERY = `*[_type == "page" && slug.current == "face"][0]{

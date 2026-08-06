@@ -1,5 +1,6 @@
 import {defineArrayMember, defineField, defineType} from "sanity";
 import {EnvelopeIcon} from "@sanity/icons";
+import {sectionIdField} from "./sectionId";
 
 export default defineType({
   name: "contact_section",
@@ -8,6 +9,7 @@ export default defineType({
   icon: EnvelopeIcon,
 
   fields: [
+    sectionIdField,
     defineField({
       name: "eyebrow",
       title: "Eyebrow",

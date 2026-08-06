@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineField, defineType } from 'sanity'
 import { ImagesIcon } from '@sanity/icons'
+import { sectionIdField } from "./sectionId";
 
 export default defineType({
   name: 'imageGrid',
@@ -8,6 +9,7 @@ export default defineType({
   type: 'object',
   icon: ImagesIcon,
   fields: [
+    sectionIdField,
     defineField({
       name: 'rows',
       title: 'Image Rows',

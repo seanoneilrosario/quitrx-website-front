@@ -1,5 +1,6 @@
 import { VideoIcon } from "@sanity/icons";
 import { defineField, defineType } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export const videoBanner = defineType({
   name: "video_banner",
@@ -7,6 +8,7 @@ export const videoBanner = defineType({
   type: "object",
   icon: VideoIcon,
   fields: [
+    sectionIdField,
     defineField({
       name: "eyebrow",
       title: "Eyebrow",

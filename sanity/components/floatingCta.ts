@@ -1,4 +1,5 @@
 import { defineField } from "sanity";
+import { sectionIdField } from "./sectionId";
 
 export const floatingCTASchema = defineField({
   name: "floatingCTA",
@@ -6,6 +7,7 @@ export const floatingCTASchema = defineField({
   type: "object",
 
   fields: [
+    sectionIdField,
     defineField({
       name: "icon",
       title: "Icon",

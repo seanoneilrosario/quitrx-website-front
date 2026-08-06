@@ -29,7 +29,7 @@ export default function Faq({
         paddingBottom,
       }}
     >
-      <div className="page-width">
+      <div className="page-width" id="faq">
 
         <h2 className="faq__heading">
           {heading}

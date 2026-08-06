@@ -82,7 +82,9 @@ export const homeType = defineType({
         { type: "text_block_with_icon" },
         { type: "text_image" },
         { type: "faq"},
-        {type: "supportForm"}
+        {type: "supportForm"},
+        {type: "banner_slider"},
+        {type: "promotional_banner_slider"}
         
       ],
       options: {
@@ -112,7 +114,7 @@ export const homeType = defineType({
             {
               name: "banner",
               title: "Banners",
-              of: ["video_banner"],
+              of: ["video_banner", "promotional_banner_slider"],
             },
             {
               name: "image",
