@@ -88,7 +88,9 @@ export const pageType = defineType({
         {type: "supportForm"},
         { type: "floatingCTA"},
         {type: "banner_slider"},
-        {type: "promotional_banner_slider"}
+        {type: "promotional_banner_slider"},
+        {type: "brand_grid"},
+        {type: "product_api_grid"}
       ],
       options: {
         insertMenu: {
@@ -124,13 +126,14 @@ export const pageType = defineType({
             {
               name: "image",
               title: "Images",
-              of: ["imageGrid", "multi_row", "text_image"],
+              of: ["imageGrid", "multi_row", "text_image", "brand_grid"],
             },
             {
               name: "custom-apps",
               title: "Custom Apps",
               of: [
-                "supportForm"
+                "supportForm",
+                "product_api_grid"
               ],
             },
           ],

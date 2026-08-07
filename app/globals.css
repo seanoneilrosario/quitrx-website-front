@@ -67,8 +67,16 @@ html {
 body {
   background-color: transparent;
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: "Quicksand", sans-serif;
   font-weight: normal;
+}
+
+button,
+input,
+select,
+textarea,
+option {
+  font-family: "Quicksand", sans-serif;
 }
 
 .page-width {

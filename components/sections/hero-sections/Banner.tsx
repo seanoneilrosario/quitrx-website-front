@@ -8,7 +8,6 @@ import { PortableTextBlock } from "@/components/global/components";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import arrow from "@/public/Icon feather-arrow-down.svg";
 
 interface BannerProps {
   image: string;
@@ -18,9 +17,12 @@ interface BannerProps {
   link?: string;
   title_image?: string;
   description: PortableTextBlock[];
+  disclaimer: PortableTextBlock[];
   title_array: PortableTextBlock[];
   button_text?: string;
   button_url?: string;
+  secondary_button_text?: string;
+  secondary_button_link?: string;
   hide_separator: boolean;
 }
 
@@ -32,21 +34,14 @@ export function Banner({
   link,
   title_image,
   description,
+  disclaimer,
   title_array,
   button_text,
   button_url,
+  secondary_button_text,
+  secondary_button_link,
   hide_separator
 }: BannerProps) {
-  const handleScrollDown = (event?: React.MouseEvent<HTMLButtonElement>) => {
-    event?.preventDefault();
-    event?.stopPropagation();
-
-    window.scrollBy({
-      top: 500,
-      behavior: "smooth"
-    });
-  };
-
   console.log(doc_img)
 
   const content = (
@@ -99,22 +94,46 @@ export function Banner({
         {!hide_separator || hide_separator != null && (
           <span className={`border-separator ${hide_separator}`}></span>
         )}
-            <motion.div
-              className="hero-description"
-              initial={{ y: 6, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.7, ease: "easeOut", delay: 0.12 }}
-            >
-              <PortableText value={description} />
-        </motion.div>
-        
-        {button_text && 
+
+        {description?.length > 0 && (
+          <motion.div
+            className="hero-description"
+            initial={{ y: 6, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: 0.12 }}
+          >
+            <PortableText value={description} />
+          </motion.div>
+        )}
+
+        {(button_text || secondary_button_text) &&
           <div className="banner-links">
-            <Link href={button_url || "#"} className="banner-button">
-              {button_text || "Learn More"}
-            </Link>
+            {button_text && (
+              <Link href={button_url || "#"} className="banner-button banner-button--primary">
+                {button_text}
+              </Link>
+            )}
+            {secondary_button_text && (
+              <Link
+                href={secondary_button_link || "#"}
+                className="banner-button banner-button--secondary"
+              >
+                {secondary_button_text}
+              </Link>
+            )}
           </div>
         }
+
+        {disclaimer?.length > 0 && (
+          <motion.div
+            className="hero-disclaimer"
+            initial={{ y: 6, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: 0.12 }}
+          >
+            <PortableText value={disclaimer} />
+          </motion.div>
+        )}
         
       </div>
     <div className="text-img-fullbg_img">

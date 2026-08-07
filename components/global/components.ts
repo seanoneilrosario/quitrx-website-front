@@ -64,6 +64,9 @@ export interface TextBlocksIconBox {
   title?: string;
 
   description?: PortableTextBlock[];
+  button_text?: string;
+  button_link?: string;
+  disclaimer?: PortableTextBlock[];
 
   label_1?: string;
   description_1?: string;
@@ -111,6 +114,8 @@ export type SectionType =
   | "floatingCTA"
   | "richtextImage"
   | "promotional_banner_slider"
+  | "brand_grid"
+  | "product_api_grid"
 
 
 
@@ -131,6 +136,7 @@ export interface COMPONENTS {
   leftDescription?: PortableTextBlock[];
   rightDescription?: PortableTextBlock[];
   description?: PortableTextBlock[];
+  disclaimer?: PortableTextBlock[];
   text?: PortableTextBlock[];
   activeItem?: number;
   desktop_left_width?: number;
@@ -143,10 +149,29 @@ export interface COMPONENTS {
   right_description?: string;
   button_text?: string;
   button_link?: string;
+  secondary_button_text?: string;
+  secondary_button_link?: string;
   background_image?: string;
   eyebrow_max_width?: number;
   paddingTop?: number;
   paddingBottom?: number;
+  productLimit?: number;
+  comparisonIcon?: string;
+  audience?: string;
+  card_title?: string;
+  card_description?: PortableTextBlock[];
+  comparison_features?: {
+    _key?: string;
+    text?: string;
+    details?: string[];
+  }[];
+  comparison_button_text?: string;
+  comparison_button_link?: string;
+  comparison_disclaimer?: PortableTextBlock[];
+  desktopPaddingTop?: number;
+  desktopPaddingBottom?: number;
+  mobilePaddingTop?: number;
+  mobilePaddingBottom?: number;
   sub_heading?: string;
   hide_separator: boolean;
   members?: {
@@ -199,4 +224,14 @@ export interface COMPONENTS {
     openInNewTab?: boolean;
   }[];
   autoplay?: boolean;
+  brands?: {
+    _key?: string;
+    name?: string;
+    logo?: string;
+    alt?: string;
+    pageSlug?: string;
+    pageType?: string;
+    url?: string;
+    openInNewTab?: boolean;
+  }[];
 }

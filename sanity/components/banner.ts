@@ -61,12 +61,41 @@ export const banner = defineType({
     }),
     defineField({
       name: "description",
-      title: "Description",
+      title: "Supporting Text",
       type: "array",
       of: [
         {
           type: "block",
         }
+      ],
+    }),
+    defineField({
+      name: "disclaimer",
+      title: "Compliance Note",
+      description: "Displayed as the smaller bulleted text below the buttons.",
+      type: "array",
+      of: [
+        {
+          type: "block",
+          marks: {
+            annotations: [
+              {
+                name: "link",
+                type: "object",
+                title: "Link",
+                fields: [
+                  {
+                    name: "href",
+                    type: "url",
+                    title: "URL",
+                    validation: (Rule) =>
+                      Rule.uri({ allowRelative: true, scheme: ["http", "https"] }),
+                  },
+                ],
+              },
+            ],
+          },
+        },
       ],
     }),
 
@@ -80,6 +109,19 @@ export const banner = defineType({
       title: "Button Url",
       type: "reference",
       to: [{type: 'page'}]
+    }),
+    defineField({
+      name: "secondary_button_text",
+      title: "Secondary Button Text",
+      type: "string",
+      description: "For example: Login",
+    }),
+    defineField({
+      name: "secondary_button_link",
+      title: "Secondary Button Link",
+      type: "string",
+      description: "Enter an internal path such as /login or a full URL.",
+      hidden: ({ parent }) => !parent?.secondary_button_text,
     }),
   ],
   preview: {

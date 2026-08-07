@@ -1,0 +1,120 @@
+.section {
+  width: 100%;
+  padding: var(--brand-grid-desktop-padding-top) 0
+    var(--brand-grid-desktop-padding-bottom);
+  background: #07656c;
+  color: #fff;
+}
+
+.container {
+  width: min(100% - 40px, 2380px);
+  margin: 0 auto;
+}
+
+.heading {
+  margin: 0 0 clamp(44px, 4vw, 72px);
+  font-family: "Quicksand", sans-serif;
+  font-size: clamp(38px, 3vw, 64px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 1.2rem;
+  row-gap: clamp(38px, 4vw, 64px);
+}
+
+.brand {
+  display: flex;
+  flex: 0 0 calc((100% - (3 * clamp(20px, 2vw, 36px))) / 4);
+  min-width: 0;
+  flex-direction: column;
+  gap: 22px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.logoCard {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 1.22 / 1;
+  overflow: hidden;
+  place-items: center;
+  padding: 1.5rem;
+  border-radius: clamp(24px, 2vw, 44px);
+  background: #fff;
+}
+
+.logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.brand:hover .logo,
+.brand:focus-visible .logo {
+  transform: scale(1.04);
+}
+
+.brand:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid #3effc0;
+  outline-offset: 6px;
+}
+
+.name {
+  font-family: "Quicksand", sans-serif;
+  font-size: clamp(18px, 1.35vw, 28px);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+@media (max-width: 989px) {
+  .brand {
+    flex-basis: calc((100% - clamp(20px, 2vw, 36px)) / 2);
+  }
+}
+
+@media (max-width: 599px) {
+  .section {
+    padding: var(--brand-grid-mobile-padding-top) 0
+      var(--brand-grid-mobile-padding-bottom);
+  }
+
+  .container {
+    width: min(100% - 28px, 2380px);
+  }
+
+  .heading {
+    margin-bottom: 36px;
+  }
+
+  .grid {
+    column-gap: 14px;
+    row-gap: 32px;
+  }
+
+  .brand {
+    flex-basis: calc((100% - 14px) / 2);
+    gap: 14px;
+  }
+
+  .logoCard {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .name {
+    font-size: 15px;
+  }
+}

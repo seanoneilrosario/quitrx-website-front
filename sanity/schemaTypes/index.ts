@@ -30,6 +30,8 @@ import { externalForm } from '../components/external_form'
 import { floatingCTASchema } from '../components/floatingCta'
 import banner_slider from '../components/banner_slider'
 import promotional_banner_slider from '../components/promotional_banner_slider'
+import brand_grid from '../components/brand_grid'
+import product_api_grid from '../components/product_api_grid'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -64,5 +66,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     floatingCTASchema,
     banner_slider,
     promotional_banner_slider,
+    brand_grid,
+    product_api_grid,
   ],
 }

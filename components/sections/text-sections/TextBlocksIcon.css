@@ -1,6 +1,5 @@
 .text-blocks-icon_wrap {
   background: #fff;
-  padding: 30px 0 30px;
 }
 
 .text-blocks-icon_heading {
@@ -24,13 +23,9 @@
 .text-blocks-icon_sub-head {
   margin: 0;
   color: #4a4a4a;
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1.6;
 }
-
-/* ==========================================
-   Container
-========================================== */
 
 .text-blocks-icon_container {
   display: flex;
@@ -38,185 +33,180 @@
   gap: 35px;
 }
 
-/* ==========================================
-   Card
-========================================== */
-
 .text-blocks-icon_box {
   display: flex;
   flex-direction: column;
-  gap: 35px;
+  gap: 44px;
   align-items: center;
-
-  background: #F6F5F3;
-
+  padding: 28px;
   border-radius: 36px;
-
-  padding: 35px;
-
-  transition: .3s ease;
+  background: #f6f5f3;
+  transition: transform .3s ease;
 }
 
 .text-blocks-icon_box:hover {
   transform: translateY(-4px);
 }
 
-/* ==========================================
-   Image
-========================================== */
-
 .text-blocks-icon_img {
-  width: 150px;
-  min-width: 150px;
+  display: grid;
+  width: 180px;
+  min-width: 180px;
+  aspect-ratio: 1;
+  place-items: center;
+  padding: 40px;
+  border-radius: 50%;
+  background: #3effc0;
 }
 
 .icon_img {
-  width: 100%;
   display: block;
-  height: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
-
-/* ==========================================
-   Content
-========================================== */
 
 .text-blocks-icon_contents {
   flex: 1;
+  min-width: 0;
 }
 
 .steps {
-
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
-  padding: 3px 18px;
-
+  margin-bottom: 34px;
+  padding: 8px 24px;
   border-radius: 999px;
-
   background: #44fcc3;
-
   color: #397f77;
-
   font-size: 20px;
-
   font-weight: 700;
-
-  /* text-transform: uppercase; */
-
-  margin-bottom: 18px;
 }
 
 .text-blocks-icon_contents h4 {
-  margin: 0 0 10px;
-  color: #123f45;
-  font-size: 25px;
-  line-height: 1.2;
+  margin: 0 0 25px;
+  color: #035c67;
+  font-size: clamp(32px, 3vw, 54px);
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .text-blocks-icon_description {
-  margin-bottom: 30px;
+  margin-bottom: 44px;
 }
 
 .text-blocks-icon_description p {
   margin: 0;
-  font-size: 19px;
-  line-height: 1.6;
-  color: #333;
-  font-weight: 700;
+  color: #292929;
+  font-size: clamp(20px, 1.7vw, 30px);
+  font-weight: 600;
+  line-height: 1.5;
 }
 
-/* ==========================================
-   Feature List
-========================================== */
+.text-blocks-icon_button {
+  display: inline-flex;
+  min-width: 290px;
+  height: 45px;
+  max-height: 45px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 24px;
+  border-radius: 14px;
+  background: #066773;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-decoration: none;
+  transition: transform .2s ease, background-color .2s ease;
+}
+
+.text-blocks-icon_button:hover {
+  background: #035c67;
+  transform: translateY(-2px);
+}
+
+.text-blocks-icon_disclaimer {
+  position: relative;
+  max-width: 523px;
+  margin-top: 34px;
+  padding-left: 20px;
+  color: #035c67;
+  font-size: .7rem;
+  font-weight: 600;
+  line-height: .9rem;
+}
+
+.text-blocks-icon_disclaimer::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  content: "•";
+}
+
+.text-blocks-icon_disclaimer p {
+  margin: 0;
+}
+
+.text-blocks-icon_disclaimer a {
+  color: inherit;
+  text-decoration: underline;
+}
 
 .feature-list {
-  /* border-top: 1px solid #DDDDDD; */
+  width: 100%;
+  margin-top: 24px;
 }
 
 .feature-row {
-
   display: grid;
-
-  grid-template-columns: 150px 1fr;
-
-  gap: 24px;
-
-  align-items: baseline;
-
-  padding: 10px 0;
+  grid-template-columns: minmax(170px, 240px) 1fr;
+  gap: clamp(28px, 4vw, 54px);
+  align-items: center;
+  padding: 18px 0;
 }
 
-.feature-row+.feature-row {
-  border-top: 1px solid #DDDDDD;
+.feature-row + .feature-row {
+  border-top: 1px solid #ddd;
 }
-
-/* ==========================================
-   Labels
-========================================== */
 
 .feature-label {
-
   display: inline-flex;
-
-  justify-content: center;
   align-items: center;
-
-  padding: 12px 18px;
-
-  border-radius: 10px;
-
+  justify-content: center;
+  min-height: 58px;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-size: 20px;
   font-weight: 700;
-
-  font-size: 14px;
-
   line-height: 1;
-
   text-align: center;
 }
 
 .feature-label--green {
-
   background: #44fcc3;
-
-  color: #035C67;
+  color: #035c67;
 }
 
 .feature-label--grey {
-
-  background: #E6E6E6;
-
+  background: #e6e6e6;
   color: #0a191e;
 }
 
-/* ==========================================
-   Text
-========================================== */
-
 .feature-text {
+  max-width: none;
   color: #2d2d2d;
-  font-weight: 700;
-  font-size: 20px;
-  line-height: 1.6;
-  max-width: 400px;
+  font-size: clamp(17px, 1.5vw, 22px);
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 .feature-text p {
   margin: 0;
 }
 
-/* ==========================================
-   Desktop
-========================================== */
-
 @media (min-width: 990px) {
-
-  .text-blocks-icon_wrap {
-    padding: 60px 0 60px;
-  }
-
   .text-blocks-icon_title {
     font-size: 50px;
   }
@@ -226,45 +216,29 @@
   }
 
   .text-blocks-icon_box {
-
     flex-direction: row;
-
+    gap: clamp(60px, 7vw, 120px);
     align-items: center;
-
-    gap: 70px;
-
-    padding: 60px;
+    padding: clamp(42px, 4vw, 64px) clamp(45px, 5vw, 75px);
+    border-radius: 52px;
   }
 
   .text-blocks-icon_img {
-    width: 180px;
-    min-width: 180px;
-  }
-
-  .text-blocks-icon_contents h4 {
-    font-size: 25px;
-  }
-
-  .steps {
-    font-size: 20px;
+    width: clamp(220px, 17vw, 280px);
+    min-width: clamp(220px, 17vw, 280px);
+    padding: clamp(42px, 3.5vw, 60px);
   }
 
   .feature-label {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .feature-text {
-    font-size: 20px;
+    font-size: clamp(18px, 1.5vw, 22px);
   }
-
 }
 
-/* ==========================================
-   Mobile
-========================================== */
-
 @media (max-width: 989px) {
-
   .text-blocks-icon_heading {
     margin-bottom: 45px;
   }
@@ -277,17 +251,33 @@
     width: 100%;
   }
 
+  .text-blocks-icon_contents h4 {
+    margin-bottom: 25px;
+  }
+
+  .text-blocks-icon_description {
+    margin-bottom: 30px;
+  }
+
+  .text-blocks-icon_button {
+    width: min(100%, 320px);
+    min-width: 0;
+  }
+
+  .text-blocks-icon_disclaimer {
+    margin: 30px auto 0;
+    text-align: left;
+  }
+
   .feature-row {
-
     grid-template-columns: 1fr;
-
     gap: 14px;
-
+    padding: 20px 0;
     text-align: center;
   }
 
   .feature-label {
-    width: fit-content;
+    width: min(100%, 280px);
     margin: 0 auto;
   }
 
@@ -295,5 +285,4 @@
   .feature-row .feature-text {
     margin: 0 auto;
   }
-
 }

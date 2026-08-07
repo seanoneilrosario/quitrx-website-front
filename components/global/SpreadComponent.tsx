@@ -23,6 +23,8 @@ import FloatingCTA from "../sections/text-sections/floatingCTA";
 import RichtextImage from "../sections/text-sections/RichtextWithImage";
 import { urlFor } from "@/sanity/lib/image";
 import PromotionalBannerSlider from "../sections/hero-sections/PromotionalBannerSlider";
+import BrandGrid from "../sections/images/BrandGrid";
+import ProductApiGrid from "../sections/products/ProductApiGrid";
 
 const sectionRenderers: Record<
   SectionType,
@@ -43,9 +45,12 @@ const sectionRenderers: Record<
       link={component.link}
       title_image={component.title_image || ""}
       description={component.description || []}
+      disclaimer={component.disclaimer || []}
       title_array={component.title_array || []}
       button_text={component.button_text || ""}
       button_url={component.button_url?.slug || ""}
+      secondary_button_text={component.secondary_button_text || ""}
+      secondary_button_link={component.secondary_button_link || ""}
       hide_separator={component.hide_separator}
     />
   ),
@@ -122,6 +127,14 @@ const sectionRenderers: Record<
     <TextBlocks
       heading={component.heading || ""}
       description={component.description || []}
+      icon={component.comparisonIcon}
+      audience={component.audience}
+      cardTitle={component.card_title}
+      cardDescription={component.card_description}
+      features={component.comparison_features || []}
+      buttonText={component.comparison_button_text}
+      buttonLink={component.comparison_button_link}
+      disclaimer={component.comparison_disclaimer}
       paddingTop={component.paddingTop || 0}
       paddingBottom={component.paddingBottom || 0}
       // isLoggedIn={isLoggedIn}
@@ -147,8 +160,8 @@ const sectionRenderers: Record<
       title_array={component.title_array || []}
       subHeading={component.sub_heading || ""}
       box={component.box || []}
-      paddingTop={component.paddingTop || 0}
-      paddingBottom={component.paddingBottom || 0}
+      paddingTop={component.paddingTop ?? 60}
+      paddingBottom={component.paddingBottom ?? 60}
     />
   ),
   text_image: (component) => (
@@ -194,6 +207,24 @@ const sectionRenderers: Record<
     <PromotionalBannerSlider
       slides={component.slides || []}
       autoplay={component.autoplay}
+    />
+  ),
+  brand_grid: (component) => (
+    <BrandGrid
+      heading={component.heading}
+      brands={component.brands || []}
+      desktopPaddingTop={component.desktopPaddingTop}
+      desktopPaddingBottom={component.desktopPaddingBottom}
+      mobilePaddingTop={component.mobilePaddingTop}
+      mobilePaddingBottom={component.mobilePaddingBottom}
+    />
+  ),
+  product_api_grid: (component) => (
+    <ProductApiGrid
+      heading={component.heading}
+      productLimit={component.productLimit}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
     />
   ),
 };

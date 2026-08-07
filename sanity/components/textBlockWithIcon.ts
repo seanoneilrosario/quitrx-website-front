@@ -22,6 +22,20 @@ export default defineType({
       type: "text",
     }),
     defineField({
+      name: "paddingTop",
+      title: "Padding Top (px)",
+      type: "number",
+      initialValue: 60,
+      validation: (Rule) => Rule.min(0),
+    }),
+    defineField({
+      name: "paddingBottom",
+      title: "Padding Bottom (px)",
+      type: "number",
+      initialValue: 60,
+      validation: (Rule) => Rule.min(0),
+    }),
+    defineField({
       name: "box",
       title: "Box",
       type: "array",
@@ -62,6 +76,26 @@ export default defineType({
             defineField({
               name: "description",
               title: "Description",
+              type: "array",
+              of: [{ type: "block" }],
+            }),
+            defineField({
+              name: "button_text",
+              title: "Button Text",
+              type: "string",
+              description: "For example: Get Started",
+            }),
+            defineField({
+              name: "button_link",
+              title: "Button Link",
+              type: "string",
+              description: "Enter an internal path such as /apply or a full URL.",
+              hidden: ({ parent }) => !parent?.button_text,
+            }),
+            defineField({
+              name: "disclaimer",
+              title: "Compliance Note",
+              description: "Optional bulleted note displayed below the button.",
               type: "array",
               of: [{ type: "block" }],
             }),

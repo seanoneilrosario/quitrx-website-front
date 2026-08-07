@@ -751,7 +751,7 @@
   font-size: 16px;
   font-weight: 600;
   color: #2c7a7b;
-  font-family: var(--font-dm-sans, sans-serif); /* swap for your font var */
+  font-family: "Quicksand", sans-serif;
 }
 
 @keyframes site-marquee-scroll {

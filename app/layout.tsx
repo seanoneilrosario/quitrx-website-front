@@ -16,7 +16,6 @@ import { Footer, FooterProps } from "@/components/navigation/Footer";
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { HEADER_SEARCH_QUERY, NAVIGATION, SETTINGS } from "@/sanity/lib/queries";
 
-import logo from "@/public/logo.png";
 import "./globals.css";
 
 export const revalidate = 300;
@@ -27,8 +26,8 @@ export const metadata: Metadata = {
   title: "MCQ Capital LLC",
 
   icons: {
-    icon: logo.src,
-    shortcut: logo.src,
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
   },
 
   other: {

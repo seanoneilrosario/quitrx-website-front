@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { PortableText } from "next-sanity";
 import { PortableTextBlock } from "@/components/global/components";
 import "./TextBlocksIcon.css"
@@ -10,6 +11,9 @@ interface Box {
   step?: string;
   title?: string;
   description?: PortableTextBlock[];
+  button_text?: string;
+  button_link?: string;
+  disclaimer?: PortableTextBlock[];
 
   label_1?: string;
   description_1?: string;
@@ -47,7 +51,7 @@ const TextBlocksIcon = ({
   return (
     <section
       className="text-blocks-icon_wrap"
-
+      style={{ paddingTop, paddingBottom }}
     >
       <div className="page-width">
         <div className="text-blocks-icon_heading">
@@ -59,6 +63,10 @@ const TextBlocksIcon = ({
             <div className="text-blocks-icon_sub-head">
               <PortableText value={description} />
             </div>
+          )}
+
+          {!description && subHeading && (
+            <p className="text-blocks-icon_sub-head">{subHeading}</p>
           )}
         </div>
 
@@ -97,83 +105,49 @@ const TextBlocksIcon = ({
                   </div>
                 )}
 
+                {item.button_text && (
+                  <Link
+                    href={item.button_link || "#"}
+                    className="text-blocks-icon_button"
+                  >
+                    {item.button_text}
+                  </Link>
+                )}
+
+                {item.disclaimer && (
+                  <div className="text-blocks-icon_disclaimer">
+                    <PortableText value={item.disclaimer} />
+                  </div>
+                )}
+
                 <div className="feature-list">
 
                   {(item.label_1 || item.description_1) && (
-                    <div
-                      className={`feature-row ${
-                        item.row_direction ? "column-direction" : ""
-                      }`}
-                      style={
-                        item.row_direction
-                          ? {
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "10px",
-                            }
-                          : undefined
-                      }
-                    >
+                    <div className="feature-row">
                       <div className="feature-label feature-label--green">
                         {item.label_1}
                       </div>
 
-                      <div
-                        className="feature-text"
-                        style={
-                          item.row_direction
-                            ? { maxWidth: "100%" }
-                            : undefined
-                        }
-                      >
+                      <div className="feature-text">
                         {item.description_1}
                       </div>
                     </div>
                   )}
 
                   {(item.label_2 || item.description_2) && (
-                    <div
-                      className={`feature-row ${
-                        item.row_direction ? "column-direction" : ""
-                      }`}
-                      style={
-                        item.row_direction
-                          ? {
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "10px",
-                            }
-                          : undefined
-                      }
-                    >
+                    <div className="feature-row">
                       <div className="feature-label feature-label--grey">
                         {item.label_2}
                       </div>
 
-                      <div
-                        className="feature-text"
-                        style={
-                          item.row_direction
-                            ? { maxWidth: "100%" }
-                            : undefined
-                        }
-                      >
+                      <div className="feature-text">
                         {item.description_2}
                       </div>
                     </div>
                   )}
 
                   {(item.label_3 || item.description_3) && (
-                    <div
-                      className={`feature-row ${
-                        item.row_direction ? "column-direction" : ""
-                      }`}
-                      style={
-                        item.row_direction
-                          ? { flexDirection: "column" }
-                          : undefined
-                      }
-                    >
+                    <div className="feature-row">
                       <div className="feature-label feature-label--green">
                         {item.label_3}
                       </div>

@@ -84,7 +84,9 @@ export const homeType = defineType({
         { type: "faq"},
         {type: "supportForm"},
         {type: "banner_slider"},
-        {type: "promotional_banner_slider"}
+        {type: "promotional_banner_slider"},
+        {type: "brand_grid"},
+        {type: "product_api_grid"}
         
       ],
       options: {
@@ -119,13 +121,14 @@ export const homeType = defineType({
             {
               name: "image",
               title: "Images",
-              of: ["imageGrid", "text_image"],
+              of: ["imageGrid", "text_image", "brand_grid"],
             },
             {
               name: "custom-apps",
               title: "Custom Apps",
               of: [
-                "supportForm"
+                "supportForm",
+                "product_api_grid"
               ],
             },
           ],
