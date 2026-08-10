@@ -223,6 +223,7 @@ const sectionRenderers: Record<
     <ProductApiGrid
       heading={component.heading}
       productLimit={component.productLimit}
+      displayMode={component.displayMode}
       paddingTop={component.paddingTop}
       paddingBottom={component.paddingBottom}
     />

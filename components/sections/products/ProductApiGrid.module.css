@@ -17,9 +17,12 @@
 }
 
 .card {
+  display: block;
   overflow: hidden;
   border-radius: 22px;
   background: #fff;
+  color: inherit;
+  text-decoration: none;
 }
 
 .imageWrap {
@@ -35,6 +38,13 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.allTile {
+  color: #2f6870;
+  font-size: clamp(64px, 8vw, 128px);
+  font-weight: 800;
+  letter-spacing: -.08em;
 }
 
 .content {
@@ -53,6 +63,11 @@
   color: #397f77;
   font-size: 18px;
   font-weight: 700;
+}
+
+.count {
+  margin: 10px 0 0;
+  color: #397f77;
 }
 
 .status,

@@ -13,6 +13,7 @@ const PAGE_COMPONENTS = `
     paddingTop,
     paddingBottom,
     productLimit,
+    displayMode,
     "comparisonIcon": comparison_icon.asset->url,
     audience,
     card_title,

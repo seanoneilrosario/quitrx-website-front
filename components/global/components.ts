@@ -156,6 +156,7 @@ export interface COMPONENTS {
   paddingTop?: number;
   paddingBottom?: number;
   productLimit?: number;
+  displayMode?: "collections" | "products";
   comparisonIcon?: string;
   audience?: string;
   card_title?: string;

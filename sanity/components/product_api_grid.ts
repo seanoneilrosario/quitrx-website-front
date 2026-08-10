@@ -8,6 +8,19 @@ export default defineType({
   fields: [
     sectionIdField,
     defineField({ name: "heading", title: "Heading", type: "string", initialValue: "Products" }),
+    defineField({
+      name: "displayMode",
+      title: "Display",
+      type: "string",
+      initialValue: "collections",
+      options: {
+        layout: "radio",
+        list: [
+          { title: "Collections", value: "collections" },
+          { title: "Individual Products", value: "products" },
+        ],
+      },
+    }),
     defineField({ name: "productLimit", title: "Maximum Products", type: "number", initialValue: 12, validation: (Rule) => Rule.min(1).max(100) }),
     defineField({ name: "paddingTop", title: "Padding Top (px)", type: "number", initialValue: 60, validation: (Rule) => Rule.min(0) }),
     defineField({ name: "paddingBottom", title: "Padding Bottom (px)", type: "number", initialValue: 60, validation: (Rule) => Rule.min(0) }),

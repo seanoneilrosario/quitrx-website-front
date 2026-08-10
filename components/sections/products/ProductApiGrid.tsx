@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import styles from "./ProductApiGrid.module.css";
 
 type ApiRecord = Record<string, unknown>;
@@ -10,6 +11,7 @@ type ProductApiGridProps = {
   productLimit?: number;
   paddingTop?: number;
   paddingBottom?: number;
+  displayMode?: "collections" | "products";
 };
 
 function asRecord(value: unknown): ApiRecord | undefined {
@@ -51,11 +53,25 @@ function getPrice(product: ApiRecord) {
   return typeof value === "string" ? value : undefined;
 }
 
+function getCollectionEntries(products: ApiRecord[]): Array<[string, ApiRecord]> {
+  const entries = Array.from(
+    products.reduce((collections, product) => {
+      const brand = asRecord(product.brand);
+      const slug = getText(brand || {}, ["slug"]);
+      if (slug && !collections.has(slug)) collections.set(slug, product);
+      return collections;
+    }, new Map<string, ApiRecord>()),
+  );
+
+  return products.length ? [["all-products", products[0]], ...entries] : entries;
+}
+
 export default function ProductApiGrid({
   heading = "Products",
   productLimit = 12,
   paddingTop = 60,
   paddingBottom = 60,
+  displayMode = "collections",
 }: ProductApiGridProps) {
   const [products, setProducts] = useState<ApiRecord[]>([]);
   const [error, setError] = useState("");
@@ -71,7 +87,7 @@ export default function ProductApiGrid({
           const message = getText(asRecord(payload) || {}, ["error"]);
           throw new Error(message || "Unable to load products.");
         }
-        setProducts(getProducts(payload).slice(0, productLimit));
+        setProducts(getProducts(payload));
       })
       .catch((requestError: unknown) => {
         if (requestError instanceof DOMException && requestError.name === "AbortError") return;
@@ -80,7 +96,7 @@ export default function ProductApiGrid({
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [productLimit]);
+  }, []);
 
   return (
     <section className={styles.section} style={{ paddingTop, paddingBottom }}>
@@ -93,14 +109,39 @@ export default function ProductApiGrid({
         )}
 
         <div className={styles.grid}>
-          {products.map((product, index) => {
+          {displayMode === "collections" &&
+            getCollectionEntries(products).slice(0, productLimit).map(([slug, product]) => {
+              const brand = asRecord(product.brand) || {};
+              const isAll = slug === "all-products";
+              const name = isAll ? "All Products" : getText(brand, ["name"]) || "Collection";
+              const image = isAll ? undefined : getText(brand, ["logo"]) || getImage(product);
+              const count = isAll ? products.length : products.filter(
+                (item) => getText(asRecord(item.brand) || {}, ["slug"]) === slug,
+              ).length;
+
+              return (
+                <Link href={`/collections/${slug}`} className={styles.card} key={slug}>
+                  <div className={styles.imageWrap}>
+                    {image ? <img src={image} alt={name} className={styles.image} /> : <span className={styles.allTile}>ALL</span>}
+                  </div>
+                  <div className={styles.content}>
+                    <h3>{name}</h3>
+                    <p className={styles.count}>{count} product{count === 1 ? "" : "s"}</p>
+                  </div>
+                </Link>
+              );
+            })}
+
+          {displayMode === "products" && products.slice(0, productLimit).map((product, index) => {
             const name = getText(product, ["name", "title", "productName"]) || "Product";
             const image = getImage(product);
             const price = getPrice(product);
             const id = getText(product, ["id", "_id", "sku"]) || `${name}-${index}`;
 
-            return (
-              <article className={styles.card} key={id}>
+            const productId = getText(product, ["id", "_id"]);
+            const slug = getText(product, ["slug"]);
+            const card = (
+              <>
                 <div className={styles.imageWrap}>
                   {image ? <img src={image} alt={name} className={styles.image} /> : null}
                 </div>
@@ -108,7 +149,13 @@ export default function ProductApiGrid({
                   <h3>{name}</h3>
                   {price && <p className={styles.price}>{price}</p>}
                 </div>
-              </article>
+              </>
+            );
+
+            return productId || slug ? (
+              <Link href={productId ? `/product/${encodeURIComponent(productId)}` : `/products/${slug}`} className={styles.card} key={id}>{card}</Link>
+            ) : (
+              <article className={styles.card} key={id}>{card}</article>
             );
           })}
         </div>
