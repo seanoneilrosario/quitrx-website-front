@@ -114,7 +114,7 @@ export default function ProductApiGrid({
               const brand = asRecord(product.brand) || {};
               const isAll = slug === "all-products";
               const name = isAll ? "All Products" : getText(brand, ["name"]) || "Collection";
-              const image = isAll ? undefined : getText(brand, ["logo"]) || getImage(product);
+              const image = isAll ?  undefined : getText(brand, ["logo"]) || getImage(product);
               const count = isAll ? products.length : products.filter(
                 (item) => getText(asRecord(item.brand) || {}, ["slug"]) === slug,
               ).length;
@@ -122,7 +122,7 @@ export default function ProductApiGrid({
               return (
                 <Link href={`/collections/${slug}`} className={styles.card} key={slug}>
                   <div className={styles.imageWrap}>
-                    {image ? <img src={image} alt={name} className={styles.image} /> : <span className={styles.allTile}>ALL</span>}
+                    {image ? <img src={image} alt={name} className={styles.image} loading="eager" /> : <span className={styles.allTile}>ALL</span>}
                   </div>
                   <div className={styles.content}>
                     <h3>{name}</h3>
@@ -143,7 +143,7 @@ export default function ProductApiGrid({
             const card = (
               <>
                 <div className={styles.imageWrap}>
-                  {image ? <img src={image} alt={name} className={styles.image} /> : null}
+                  {image ? <img src={image} alt={name} className={styles.image} loading="eager" /> : null}
                 </div>
                 <div className={styles.content}>
                   <h3>{name}</h3>

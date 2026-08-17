@@ -1,0 +1,3 @@
+import { PageHeading } from "@/components/account/AccountShell";
+const orders = [["QR-10482","15 Aug 2026","In transit","$89.95"],["QR-10113","18 Jul 2026","Delivered","$89.95"],["QR-09864","20 Jun 2026","Delivered","$64.50"]];
+export default function OrdersPage(){return <><PageHeading eyebrow="Purchase history" title="Your orders" copy="Review deliveries, order details, and receipts."/><section className="account-card table-card"><div className="account-table header"><span>Order</span><span>Date</span><span>Status</span><span>Total</span></div>{orders.map((o)=><div className="account-table" key={o[0]}><strong>{o[0]}</strong><span>{o[1]}</span><span><i className="status">{o[2]}</i></span><strong>{o[3]}</strong></div>)}</section></>}

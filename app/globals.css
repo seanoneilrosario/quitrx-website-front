@@ -206,3 +206,11 @@ blockquote {
 }
 
 
+.account-page .site-marquee, 
+.account-page .site-header {
+  display: none !important;
+}
+
+.account-page .main-sections-wrapper {
+  padding-top: 0 !important;
+}

@@ -71,6 +71,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const pathname = usePathname()
   const isHome = pathname === "/";
   const isAdmin = pathname.startsWith("/admin");
+  const isAccountPage = pathname === "/account" || pathname === "/account/login";
   const searchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return [];
@@ -120,10 +121,13 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     } else {
       body.classList.add("template-page");
     }
+
+    body.classList.toggle("account-page", isAccountPage);
+
     return () => {
-      body.classList.remove(...BODY_TEMPLATE_CLASSES);
+      body.classList.remove(...BODY_TEMPLATE_CLASSES, "account-page");
     };
-  }, [isAdmin, isHome]);
+  }, [isAdmin, isHome, isAccountPage]);
   if (pathname.includes("/admin")) {
     return null
   }
