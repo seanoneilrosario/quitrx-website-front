@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navigation = [
-  ["/account", "Overview", "home"],
-  ["/account/orders", "Orders", "bag"],
-  ["/account/prescriptions", "Prescriptions", "script"],
-  ["/account/consultations", "Consultations", "calendar"],
-  ["/account/profile", "Profile", "user"],
-  ["/account/security", "Security", "lock"],
+  ["/account", "Account", "home"],
+  [null, "Status", "status"],
+  ["/account/orders", "Shop Products", "bag"],
+  ["/account/prescriptions", "Get eScript ($49)", "script"],
+  ["/account/consultations", "Speak to our pharmacist", "calendar"],
+  ["/account/profile", "Upload Prescription", "user"],
+  ["/account/security", "Contact Us", "lock"],
 ] as const;
 
 function Icon({ name }: { name: string }) {
@@ -20,6 +21,7 @@ function Icon({ name }: { name: string }) {
     calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></>,
     user: <><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>,
     lock: <><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></>,
+    status: <><circle cx="12" cy="12" r="7"/><path d="M12 7v5l3 3"/></>,
   };
   return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
@@ -29,20 +31,37 @@ export default function AccountShell({ children }: { children: React.ReactNode }
   return (
     <div className="account-shell">
       <aside className="account-sidebar">
+        <div className="account-brand" aria-label="QuitRx logo">
+          <span className="account-brand__mark">Quit</span>
+          <span className="account-brand__rx">Rx</span>
+        </div>
         <div className="account-sidebar__intro">
           <span className="account-avatar">AM</span>
-          <div><strong>Alex Morgan</strong><span>Customer account</span></div>
+          <div><strong>Arvin</strong><span>Welcome, Arvin</span></div>
         </div>
         <nav aria-label="Account navigation">
           {navigation.map(([href, label, icon]) => {
+            if (!href) {
+              return (
+                <div key={label} className="account-nav-status">
+                  <Icon name={icon} />
+                  <span>{label}</span>
+                </div>
+              );
+            }
+
             const active = href === "/account" ? pathname === href : pathname.startsWith(href);
-            return <Link key={href} href={href} className={active ? "active" : ""}><Icon name={icon}/><span>{label}</span></Link>;
+            return (
+              <Link key={href} href={href} className={active ? "active" : ""}>
+                <Icon name={icon} />
+                <span>{label}</span>
+              </Link>
+            );
           })}
         </nav>
-        <Link href="/" className="account-signout"><span aria-hidden="true">↗</span> Sign out</Link>
+        <Link href="/" className="account-signout"><span aria-hidden="true">↗</span> Sign Out</Link>
       </aside>
       <main className="account-main">
-        <div className="account-demo-note"><span>Demo preview</span> Connect authentication and QuitHero to show live customer information.</div>
         {children}
       </main>
     </div>

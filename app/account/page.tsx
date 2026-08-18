@@ -1,21 +1,171 @@
 import Link from "next/link";
-import { PageHeading } from "@/components/account/AccountShell";
 
-export default function AccountPage() {
-  return <>
-    <PageHeading eyebrow="Saturday, 15 August" title="Good morning, Alex" copy="Here’s an overview of your QuitRX care and recent activity." action={<Link className="account-button secondary" href="/account/profile">Manage profile</Link>}/>
-    <section className="account-hero-card">
-      <div><span className="account-kicker">Your quit journey</span><h2>You’re making meaningful progress.</h2><p>Your treatment plan is active. Keep following the directions from your prescriber, and reach out if you need support.</p><div className="account-progress"><span style={{width:"62%"}}/></div><small>Plan progress · Week 5 of 8</small></div>
-      <div className="account-hero-stat"><strong>35</strong><span>smoke-free days</span></div>
-    </section>
-    <div className="account-grid stats">
-      <article className="account-stat"><span>Next consultation</span><strong>22 Aug</strong><small>10:30 am · Telehealth</small></article>
-      <article className="account-stat"><span>Prescription repeats</span><strong>2 left</strong><small>Valid until 12 Dec 2026</small></article>
-      <article className="account-stat"><span>Latest order</span><strong>On its way</strong><small>Expected 18–20 Aug</small></article>
-    </div>
-    <div className="account-grid dashboard-bottom">
-      <section className="account-card"><div className="card-heading"><div><span>Order #QR-10482</span><h2>Your order is on its way</h2></div><span className="status">In transit</span></div><div className="timeline"><i className="done"/><i className="done"/><i className="current"/><i/></div><div className="timeline-labels"><span>Ordered</span><span>Packed</span><span>Shipped</span><span>Delivered</span></div><p className="muted">Estimated delivery: 18–20 August</p><Link className="text-link" href="/account/orders">View order details →</Link></section>
-      <section className="account-card support-card"><span className="account-kicker">Need a hand?</span><h2>We’re here to support you.</h2><p>Speak with the QuitRX team about your order, treatment, or account.</p><Link className="account-button" href="/contact">Contact support</Link></section>
-    </div>
-  </>;
+type QuitHeroCustomer = {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  tags?: string[];
+  scriptExpiry?: string;
+  scriptActive?: boolean;
+  address?: {
+    line1?: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+  };
+};
+
+function formatDate(date?: string) {
+  if (!date) return "Not available";
+
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "Not available";
+
+  return new Intl.DateTimeFormat("en-AU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(parsed);
+}
+
+async function getCustomer() {
+  const apiUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  try {
+    const response = await fetch(`${apiUrl}/api/quithero-customers?search=seanrosario119@gmail.com`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return Array.isArray(data) ? (data[0] as QuitHeroCustomer | undefined) : (data?.[0] as QuitHeroCustomer | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export default async function AccountPage() {
+  const customer = await getCustomer();
+  const firstName = customer?.firstName ?? "Arvin";
+  const lastName = customer?.lastName ?? "";
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Customer";
+  const email = customer?.email ?? "No email available";
+  const phone = customer?.phone ?? "No phone available";
+  const scriptIsActive = Boolean(
+    customer?.scriptActive ?? customer?.tags?.some((tag) => /script/i.test(String(tag))),
+  );
+  const expiryDate = formatDate(customer?.scriptExpiry);
+  const address = customer?.address;
+  const addressLines = [
+    address?.line1,
+    address?.line2,
+    [address?.city, address?.state, address?.postcode].filter(Boolean).join(" "),
+    address?.country,
+  ].filter(Boolean);
+
+  return (
+    <>
+      <header className="account-overview__header">
+        <h1>{firstName}</h1>
+      </header>
+
+      <section className="account-overview__grid">
+        <article className="account-panel account-panel--overview">
+          <div className="account-panel__icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 3h12v18H6z" />
+              <path d="M9 8h6M9 12h6M9 16h3" />
+            </svg>
+          </div>
+          <div className="account-panel__content">
+            <h2>Script</h2>
+            <p>Overview</p>
+            <div className="account-panel__status-row">
+              <span className="account-badge account-badge--success">• {scriptIsActive ? "Active" : "Inactive"}</span>
+            </div>
+            <div className="account-panel__meta">
+              <span>Expiry Date: {expiryDate}</span>
+            </div>
+          </div>
+          <button type="button" className="account-button account-button--primary">Renew for free</button>
+        </article>
+
+        <article className="account-panel account-panel--address">
+          <div className="account-panel__icon account-panel__icon--muted">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s6-5.5 6-11a6 6 0 1 0-12 0c0 5.5 6 11 6 11Z" />
+              <circle cx="12" cy="10" r="2.5" />
+            </svg>
+          </div>
+          <div className="account-panel__content">
+            <h2>Your</h2>
+            <p>Address</p>
+            <div className="account-address-block">
+              <strong>{fullName}</strong>
+              {addressLines.length ? (
+                addressLines.map((line) => <span key={line}>{line}</span>)
+              ) : (
+                <>
+                  <span>{email}</span>
+                  <span>{phone}</span>
+                </>
+              )}
+            </div>
+            <Link href="/account/profile" className="link-button">View addresses (1)</Link>
+          </div>
+        </article>
+
+        <article className="account-panel account-panel--orders">
+          <div className="account-panel__icon account-panel__icon--muted">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 8h14l-1 13H6L5 8Z" />
+              <path d="M9 10V6a3 3 0 0 1 6 0v4" />
+            </svg>
+          </div>
+          <div className="account-panel__content">
+            <h2>Orders</h2>
+            <p>1 Orders</p>
+            <Link href="/account/orders" className="account-button account-button--primary account-button--compact">View Orders</Link>
+          </div>
+        </article>
+      </section>
+
+      <section className="account-order-history">
+        <div className="account-order-history__header">
+          <span className="account-order-history__icon">🧾</span>
+          <h2>Order History</h2>
+        </div>
+
+        <div className="account-order-table">
+          <div className="account-order-table__row account-order-table__head">
+            <span>Order Number</span>
+            <span>Date</span>
+            <span>Fulfillment Status</span>
+          </div>
+
+          <div className="account-order-table__row">
+            <span>QRX1170</span>
+            <span>August 05, 2026</span>
+            <span className="account-order-status"><i /> Unfulfilled</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="account-banner">
+        <div className="account-banner__content">
+          <span className="account-banner__icon">✉️</span>
+          <div>
+            <h3>Need an eScript?</h3>
+            <p>Get a $49 eScript to use at your local pharmacy.</p>
+          </div>
+        </div>
+        <button type="button" className="account-button account-button--primary account-button--banner">Get eScript</button>
+      </section>
+    </>
+  );
 }
