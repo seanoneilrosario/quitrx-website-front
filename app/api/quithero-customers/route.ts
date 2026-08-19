@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const CUSTOMERS_URL = "https://retail-api.quithero.com.au/customers";
+const CUSTOMERS_URL = `${(process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "")}/customers`;
 
 export async function GET(request: NextRequest) {
   // This diagnostic endpoint can expose customer data, so never deploy it.

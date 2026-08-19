@@ -2,6 +2,29 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Create a local `.env` file with the server-only QuitHero configuration:
+
+```env
+QUITHERO_API_BASE_URL=https://retail-api.quithero.com.au
+QUITHERO_API_KEY=your_quithero_api_key
+AUTH_SESSION_SECRET=use_a_random_value_of_at_least_32_characters
+```
+
+Do not prefix either variable with `NEXT_PUBLIC_`; the API key must never be included in browser code.
+
+The reusable customer synchronization service is in `lib/quithero-customers.ts`. Once the authentication provider has verified a login and returned the authenticated user, its server-side success callback should await the non-strict wrapper before redirecting:
+
+```ts
+await syncQuitHeroCustomerWithoutBlocking({
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  phone: user.phone,
+});
+```
+
+This repository currently has no authentication provider, session implementation, or successful-login callback: `app/account/login/page.tsx` is explicitly a demo page. Add the call above only after the real provider has authenticated the user; do not trust profile data posted directly by a browser.
+
 First, run the development server:
 
 ```bash

@@ -40,7 +40,7 @@ export type QuitHeroProduct = {
   variants?: QuitHeroVariant[];
 };
 
-const API_BASE = "https://retail-api.quithero.com.au";
+const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
 
 async function quitHeroFetch<T>(path: string): Promise<T> {
   const apiKey = process.env.QUITHERO_API_KEY;

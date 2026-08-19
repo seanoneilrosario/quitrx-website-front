@@ -126,16 +126,54 @@
 }
 
 .account-signout {
-  margin-top: auto;
   padding: 12px 14px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.14);
+  width: 100%;
+  cursor: pointer;
 }
+
+.account-signout-form { margin-top: auto; }
+
+.account-profile-details { margin-top: 24px; }
+.account-profile-details h2 { margin-bottom: 20px; }
+.account-profile-details dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid #e0e9e6; border-radius: 12px; background: #e0e9e6; }
+.account-profile-details dl > div { display: grid; gap: 5px; padding: 16px; background: #fff; }
+.account-profile-details dt { color: #607578; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.account-profile-details dd { margin: 0; color: #173d45; overflow-wrap: anywhere; }
+.account-load-message { margin: 0; color: #526d71; }
 
 .account-main {
   padding: 26px 26px 40px;
   min-width: 0;
 }
+
+.account-login-page { min-height: 100svh; }
+.customer-login { min-height: 100svh; display: grid; place-items: center; position: relative; isolation: isolate; padding: 24px; background: linear-gradient(115deg, rgba(3, 71, 80, .96), rgba(18, 111, 109, .82)), radial-gradient(circle at 75% 25%, #67e3c1 0 8%, transparent 8.5%); }
+.customer-login__backdrop { position: absolute; inset: 0; z-index: -1; }
+.customer-login__dialog { width: min(100%, 540px); position: relative; padding: clamp(30px, 5vw, 56px); border-radius: 24px; background: #fff; box-shadow: 0 28px 80px rgba(2, 42, 47, .32); }
+.customer-login__close { position: absolute; top: 18px; right: 20px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: #31555a; text-decoration: none; font-size: 28px; }
+.customer-login__close:hover { background: #edf7f4; }
+.customer-login__brand { margin-bottom: 52px; color: #075d67; font-size: 38px; font-weight: 800; letter-spacing: -.07em; }
+.customer-login__brand span { margin-left: 4px; padding: 2px 7px; border-radius: 9px; background: #66e5bd; font-size: 22px; }
+.customer-login__tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 28px; padding: 4px; border-radius: 12px; background: #edf5f3; }
+.customer-login__tabs button { padding: 10px 14px; border: 0; border-radius: 9px; background: transparent; color: #537176; cursor: pointer; font: inherit; font-weight: 700; }
+.customer-login__tabs button.active { background: #fff; color: #075d67; box-shadow: 0 2px 8px rgba(7, 93, 103, .1); }
+.customer-login__copy h1 { margin: 8px 0 10px; color: #103c45; font-size: clamp(32px, 5vw, 44px); line-height: 1.05; letter-spacing: -.045em; }
+.customer-login__copy p { margin: 0; color: #5d7477; line-height: 1.6; }
+.customer-login__form { display: grid; gap: 10px; margin-top: 30px; }
+.customer-login__form > label { color: #24494f; font-size: 13px; font-weight: 700; }
+.customer-login__field { display: grid; grid-template-columns: 1fr auto; align-items: center; overflow: hidden; border: 1.5px solid #aac8c5; border-radius: 13px; background: #fff; }
+.customer-login__field:focus-within { border-color: #08717b; box-shadow: 0 0 0 3px rgba(8, 113, 123, .12); }
+.customer-login__field input { min-width: 0; padding: 16px 17px; border: 0; outline: 0; color: #163c43; font: inherit; }
+.customer-login__field button { width: 52px; align-self: stretch; border: 0; background: transparent; color: #075d67; cursor: pointer; font-size: 26px; }
+.customer-login__field button:disabled, .customer-login__submit:disabled { cursor: wait; opacity: .65; }
+.customer-login__submit { width: 100%; margin-top: 8px; padding: 15px 20px; border-radius: 12px; }
+.customer-login__error, .customer-login__note { font-size: 12px; }
+.customer-login__error { margin: 2px 0 0; color: #a72d37; }
+.customer-login__note { margin: 22px 0 0; color: #758689; line-height: 1.5; text-align: center; }
+.customer-login__spinner { display: inline-block; width: 17px; height: 17px; border: 2px solid #a9cac6; border-top-color: #075d67; border-radius: 50%; animation: customer-login-spin .7s linear infinite; }
+@keyframes customer-login-spin { to { transform: rotate(360deg); } }
 
 .account-overview__header {
   padding: 0 0 18px;
@@ -771,5 +809,6 @@
   .account-form {
     grid-template-columns: 1fr;
   }
-}
 
+  .account-profile-details dl { grid-template-columns: 1fr; }
+}

@@ -28,6 +28,11 @@ function Icon({ name }: { name: string }) {
 
 export default function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  if (pathname === "/account/login") {
+    return <main className="account-login-page">{children}</main>;
+  }
+
   return (
     <div className="account-shell">
       <aside className="account-sidebar">
@@ -36,8 +41,8 @@ export default function AccountShell({ children }: { children: React.ReactNode }
           <span className="account-brand__rx">Rx</span>
         </div>
         <div className="account-sidebar__intro">
-          <span className="account-avatar">AM</span>
-          <div><strong>Arvin</strong><span>Welcome, Arvin</span></div>
+          <span className="account-avatar">QR</span>
+          <div><strong>My account</strong><span>QuitRX customer</span></div>
         </div>
         <nav aria-label="Account navigation">
           {navigation.map(([href, label, icon]) => {
@@ -59,7 +64,9 @@ export default function AccountShell({ children }: { children: React.ReactNode }
             );
           })}
         </nav>
-        <Link href="/" className="account-signout"><span aria-hidden="true">↗</span> Sign Out</Link>
+        <form className="account-signout-form" action="/api/account/logout" method="post">
+          <button type="submit" className="account-signout"><span aria-hidden="true">→</span> Sign Out</button>
+        </form>
       </aside>
       <main className="account-main">
         {children}
