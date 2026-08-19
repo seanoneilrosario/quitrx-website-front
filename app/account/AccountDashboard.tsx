@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers";
 
 function addressLines(customer: QuitHeroCustomer) {
@@ -17,6 +18,13 @@ function addressLines(customer: QuitHeroCustomer) {
 
 function value(field: string | number | undefined) {
   return field === undefined || field === "" ? "Not available" : String(field);
+}
+
+function formatDate(date?: string) {
+  if (!date) return "Not available";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return new Intl.DateTimeFormat("en-AU", { day: "2-digit", month: "short", year: "numeric" }).format(parsed);
 }
 
 export default function AccountDashboard() {
@@ -46,24 +54,61 @@ export default function AccountDashboard() {
   const firstName = customer.firstName ?? "Customer";
   const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(" ") || "Customer";
   const addresses = addressLines(customer);
+  const hasActiveScriptTag = customer.tags?.some(
+    (tag) => tag.trim().toLowerCase() === "scriptactive",
+  ) ?? false;
+  const scriptIsActive = customer.scriptActive === true || hasActiveScriptTag;
 
   return <>
     <header className="account-overview__header"><h1>{firstName}</h1></header>
     <section className="account-overview__grid">
-      <article className="account-panel"><div className="account-panel__content"><h2>Account profile</h2><p>{fullName}</p><p>{value(customer.email)}</p><p>{value(customer.phone)}</p></div></article>
-      <article className="account-panel"><div className="account-panel__content"><h2>Address</h2><div className="account-address-block">{addresses.length ? addresses.map((line) => <span key={line}>{line}</span>) : <span>Not available</span>}</div></div></article>
-      <article className="account-panel"><div className="account-panel__content"><h2>Orders</h2><p>{value(customer.numberOfOrders)} total orders</p><p>{customer.totalSpent === undefined ? "Not available" : `${customer.currencyCode ?? ""} ${customer.totalSpent}`.trim()}</p></div></article>
+      <article className="account-panel account-panel--overview">
+        <div className="account-panel__heading"><div className="account-panel__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div><h2>Script<br/>Overview</h2></div>
+        <div className="account-panel__content">
+          <p className={scriptIsActive ? "account-script-status active" : "account-script-status"}>{scriptIsActive ? "Active" : "Inactive"}</p>
+          <p><strong>Expiry Date:</strong> {formatDate(customer.scriptExpiry)}</p>
+        </div>
+        <Link href="/account/prescriptions" className="account-button account-button--primary account-button--compact">Renew for free</Link>
+      </article>
+
+      <article className="account-panel account-panel--address">
+        <div className="account-panel__heading"><div className="account-panel__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6-5.5 6-11a6 6 0 1 0-12 0c0 5.5 6 11 6 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></div><h2>Your<br/>Address</h2></div>
+        <div className="account-panel__content account-address-block">
+          <strong>{fullName}</strong>
+          {addresses.length ? addresses.map((line) => <span key={line}>{line}</span>) : <span>Address not available</span>}
+          <span>{value(customer.email)}</span>
+          <span>{value(customer.phone)}</span>
+        </div>
+        <Link href="/account/profile" className="account-panel__text-link">View addresses</Link>
+      </article>
+
+      <article className="account-panel account-panel--orders">
+        <div className="account-panel__heading"><div className="account-panel__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 13H6L5 8Z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg></div><h2>Orders</h2></div>
+        <div className="account-panel__content"><p><strong>{customer.numberOfOrders ?? 0}</strong> Orders</p>{customer.totalSpent !== undefined && <p>{`${customer.currencyCode ?? ""} ${customer.totalSpent}`.trim()} total spent</p>}</div>
+        <Link href="/account/orders" className="account-button account-button--primary account-button--compact">View Orders</Link>
+      </article>
     </section>
-    <section className="account-card account-profile-details">
-      <h2>Customer information</h2>
-      <dl>
-        <div><dt>First name</dt><dd>{value(customer.firstName)}</dd></div>
-        <div><dt>Last name</dt><dd>{value(customer.lastName)}</dd></div>
-        <div><dt>Email</dt><dd>{value(customer.email)}</dd></div>
-        <div><dt>Phone</dt><dd>{value(customer.phone)}</dd></div>
-        <div><dt>Customer ID</dt><dd>{value(customer.id)}</dd></div>
-        <div><dt>Account state</dt><dd>{value(customer.state)}</dd></div>
-      </dl>
+
+    <section className="account-order-history">
+      <div className="account-order-history__header"><span className="account-order-history__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><h2>Order History</h2></div>
+      <div className="account-order-table">
+        <div className="account-order-table__row account-order-table__head"><span>Order Number</span><span>Date</span><span>Fulfillment Status</span></div>
+        <div className="account-order-table__empty">Order details are not available from the customer response.</div>
+      </div>
     </section>
+    {hasActiveScriptTag && (
+      <section className="account-banner">
+        <div className="account-banner__content">
+          <span className="account-banner__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>
+          </span>
+          <div>
+            <h3>Need an eScript?</h3>
+            <p>Get a $49 eScript to use at your local pharmacy.</p>
+          </div>
+        </div>
+        <Link href="/account/prescriptions" className="account-button account-button--banner">Get eScript</Link>
+      </section>
+    )}
   </>;
 }

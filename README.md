@@ -8,6 +8,7 @@ Create a local `.env` file with the server-only QuitHero configuration:
 QUITHERO_API_BASE_URL=https://retail-api.quithero.com.au
 QUITHERO_API_KEY=your_quithero_api_key
 AUTH_SESSION_SECRET=use_a_random_value_of_at_least_32_characters
+SHOPIFY_CUSTOMER_LOGIN_URL=https://shopify.com/authentication/your-store-id/login
 ```
 
 Do not prefix either variable with `NEXT_PUBLIC_`; the API key must never be included in browser code.

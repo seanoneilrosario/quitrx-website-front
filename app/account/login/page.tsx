@@ -4,5 +4,5 @@ import LoginPopup from "./LoginPopup";
 
 export default async function LoginPage() {
   if (await getCustomerSession()) redirect("/account");
-  return <LoginPopup />;
+  return <LoginPopup socialLoginUrl={process.env.SHOPIFY_CUSTOMER_LOGIN_URL} />;
 }
