@@ -47,6 +47,8 @@ export type CreateQuitHeroCustomer = Omit<QuitHeroCustomer, "id"> & {
   email: string;
 };
 
+export type UpdateQuitHeroCustomer = Partial<Omit<QuitHeroCustomer, "id">>;
+
 export type QuitHeroAuthenticatedUser = {
   email?: string | null;
   firstName?: string | null;
@@ -158,6 +160,22 @@ export async function createQuitHeroCustomer(customer: CreateQuitHeroCustomer) {
     method: "POST",
     body: JSON.stringify(customer),
   });
+}
+
+export async function updateQuitHeroCustomer(
+  id: string,
+  customer: UpdateQuitHeroCustomer,
+) {
+  const customerId = id.trim();
+  if (!customerId) throw new Error("Customer ID is required.");
+
+  return quitHeroRequest<QuitHeroCustomer>(
+    `/customers/${encodeURIComponent(customerId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(customer),
+    },
+  );
 }
 
 export function isQuitHeroDuplicateError(error: unknown) {

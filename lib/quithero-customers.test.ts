@@ -6,6 +6,7 @@ import {
   findQuitHeroCustomerByEmail,
   syncQuitHeroCustomer,
   syncQuitHeroCustomerWithoutBlocking,
+  updateQuitHeroCustomer,
 } from "./quithero-customers";
 
 const fetchMock = vi.fn();
@@ -25,6 +26,35 @@ beforeEach(() => {
 });
 
 describe("QuitHero customer synchronization", () => {
+  it("PATCHes a customer by ID", async () => {
+    fetchMock.mockResolvedValueOnce(response({ id: "customer/123", firstName: "Updated" }));
+
+    const customer = await updateQuitHeroCustomer(" customer/123 ", {
+      firstName: "Updated",
+      phone: "0412345678",
+    });
+
+    expect(customer.firstName).toBe("Updated");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://retail-api.test/customers/customer%2F123",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ firstName: "Updated", phone: "0412345678" }),
+        headers: expect.objectContaining({
+          "content-type": "application/json",
+          "x-api-key": "test-key",
+        }),
+      }),
+    );
+  });
+
+  it("requires a customer ID before updating", async () => {
+    await expect(updateQuitHeroCustomer("  ", { firstName: "Updated" })).rejects.toThrow(
+      "Customer ID is required.",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("does not POST when a matching customer exists", async () => {
     fetchMock.mockResolvedValueOnce(response({ data: [{ email: " Customer@Example.com " }] }));
 

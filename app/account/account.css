@@ -152,7 +152,20 @@
 .customer-login { min-height: 100svh; display: grid; place-items: center; position: relative; isolation: isolate; padding: 24px; background: linear-gradient(115deg, rgba(3, 71, 80, .96), rgba(18, 111, 109, .82)), radial-gradient(circle at 75% 25%, #67e3c1 0 8%, transparent 8.5%); }
 .customer-login__backdrop { position: absolute; inset: 0; z-index: -1; }
 .customer-login__dialog { width: min(100%, 540px); position: relative; padding: clamp(30px, 5vw, 56px); border-radius: 24px; background: #fff; box-shadow: 0 28px 80px rgba(2, 42, 47, .32); }
-.customer-login__close { position: absolute; top: 18px; right: 20px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: #31555a; text-decoration: none; font-size: 28px; }
+.customer-login__close {
+  color: #31555a;
+  border-radius: 50%;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  font-size: 28px;
+  text-decoration: none;
+  display: flex;
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  right: 20px;
+}
 .customer-login__close:hover { background: #edf7f4; }
 .customer-login__brand { margin-bottom: 52px; color: #075d67; font-size: 38px; font-weight: 800; letter-spacing: -.07em; }
 .customer-login__brand span { margin-left: 4px; padding: 2px 7px; border-radius: 9px; background: #66e5bd; font-size: 22px; }
@@ -189,6 +202,84 @@
   margin: 0;
   letter-spacing: -0.06em;
   color: #17313b;
+}
+
+.account-assessment-card {
+  min-height: 440px;
+  padding: clamp(38px, 5vw, 70px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid #3de8c1;
+  border-radius: 22px;
+  background: #0d6972;
+  color: #fff;
+  text-align: center;
+}
+
+.account-assessment-card__heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.account-assessment-card__heading h2 {
+  margin: 0;
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.1;
+}
+
+.account-assessment-card__icon {
+  width: 82px;
+  height: 82px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #78edbd;
+  color: #08606c;
+}
+
+.account-assessment-card__icon svg {
+  width: 50px;
+  height: 50px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.account-assessment-card__copy {
+  margin: 44px 0 36px;
+  font-size: clamp(18px, 2vw, 25px);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.account-assessment-card__button {
+  width: min(100%, 340px);
+  padding: 16px 24px;
+  border-radius: 12px;
+  background: #3de8c1;
+  color: #075d67;
+  font-size: 22px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform .2s ease, background-color .2s ease;
+}
+
+.account-assessment-card__button:hover { background: #78edbd; transform: translateY(-1px); }
+.account-assessment-card__button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+.account-assessment-card__disclaimer {
+  max-width: 720px;
+  margin: 34px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
 }
 
 .account-overview__grid {
@@ -812,6 +903,11 @@
 }
 
 @media (max-width: 560px) {
+  .account-assessment-card { min-height: 0; padding: 32px 22px; }
+  .account-assessment-card__heading { flex-direction: column; gap: 18px; }
+  .account-assessment-card__copy { margin: 28px 0; }
+  .account-assessment-card__button { font-size: 18px; }
+
   .account-sidebar nav a span,
   .account-nav-status span {
     display: none;
