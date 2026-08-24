@@ -8,6 +8,8 @@ Create a local `.env` file with the server-only QuitHero configuration:
 QUITHERO_API_BASE_URL=https://retail-api.quithero.com.au
 QUITHERO_API_KEY=your_quithero_api_key
 AUTH_SECRET=use_a_random_value_of_at_least_32_characters
+# Optional: use a different 32+ character secret for email customer sessions.
+AUTH_SESSION_SECRET=use_a_different_random_value_of_at_least_32_characters
 AUTH_GOOGLE_ID=your_google_oauth_client_id
 AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
 AUTH_FACEBOOK_ID=your_facebook_app_id
@@ -28,6 +30,8 @@ await syncQuitHeroCustomerWithoutBlocking({
 ```
 
 Authentication is handled by Auth.js. Register `/api/auth/callback/google` and `/api/auth/callback/facebook` on your public site URL with the corresponding OAuth provider. Successful verified social logins automatically synchronize the customer with QuitHero.
+
+`AUTH_SECRET` signs both Auth.js and email customer sessions. If `AUTH_SESSION_SECRET` is configured, it is used for email customer sessions instead.
 
 First, run the development server:
 
