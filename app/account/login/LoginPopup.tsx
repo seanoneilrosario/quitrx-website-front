@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { accessCustomerAccount, type CustomerAccessState } from "./actions";
+import { accessCustomerAccount, signInWithFacebook, signInWithGoogle, type CustomerAccessState } from "./actions";
 
 const initialState: CustomerAccessState = {};
 
-export default function LoginPopup({ socialLoginUrl }: { socialLoginUrl?: string }) {
+export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleEnabled: boolean; facebookEnabled: boolean }) {
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
 
   return (
@@ -22,8 +22,8 @@ export default function LoginPopup({ socialLoginUrl }: { socialLoginUrl?: string
         </div>
 
         <div className="customer-login__socials">
-          {socialLoginUrl ? <a href={socialLoginUrl} aria-label="Continue with Google"><span className="google-mark">G</span></a> : <button type="button" disabled title="Configure SHOPIFY_CUSTOMER_LOGIN_URL"><span className="google-mark">G</span></button>}
-          {socialLoginUrl ? <a href={socialLoginUrl} aria-label="Continue with Facebook"><span className="facebook-mark">f</span></a> : <button type="button" disabled title="Configure SHOPIFY_CUSTOMER_LOGIN_URL"><span className="facebook-mark">f</span></button>}
+          <form action={signInWithGoogle}><button type="submit" disabled={!googleEnabled} title={googleEnabled ? undefined : "Configure Google OAuth credentials"} aria-label="Continue with Google"><span className="google-mark">G</span></button></form>
+          <form action={signInWithFacebook}><button type="submit" disabled={!facebookEnabled} title={facebookEnabled ? undefined : "Configure Facebook OAuth credentials"} aria-label="Continue with Facebook"><span className="facebook-mark">f</span></button></form>
         </div>
 
         <div className="customer-login__divider"><span>or</span></div>

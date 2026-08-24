@@ -7,11 +7,14 @@ Create a local `.env` file with the server-only QuitHero configuration:
 ```env
 QUITHERO_API_BASE_URL=https://retail-api.quithero.com.au
 QUITHERO_API_KEY=your_quithero_api_key
-AUTH_SESSION_SECRET=use_a_random_value_of_at_least_32_characters
-SHOPIFY_CUSTOMER_LOGIN_URL=https://shopify.com/authentication/your-store-id/login
+AUTH_SECRET=use_a_random_value_of_at_least_32_characters
+AUTH_GOOGLE_ID=your_google_oauth_client_id
+AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
+AUTH_FACEBOOK_ID=your_facebook_app_id
+AUTH_FACEBOOK_SECRET=your_facebook_app_secret
 ```
 
-Do not prefix either variable with `NEXT_PUBLIC_`; the API key must never be included in browser code.
+Do not prefix these variables with `NEXT_PUBLIC_`; API keys and OAuth secrets must never be included in browser code.
 
 The reusable customer synchronization service is in `lib/quithero-customers.ts`. Once the authentication provider has verified a login and returned the authenticated user, its server-side success callback should await the non-strict wrapper before redirecting:
 
@@ -24,7 +27,7 @@ await syncQuitHeroCustomerWithoutBlocking({
 });
 ```
 
-This repository currently has no authentication provider, session implementation, or successful-login callback: `app/account/login/page.tsx` is explicitly a demo page. Add the call above only after the real provider has authenticated the user; do not trust profile data posted directly by a browser.
+Authentication is handled by Auth.js. Register `/api/auth/callback/google` and `/api/auth/callback/facebook` on your public site URL with the corresponding OAuth provider. Successful verified social logins automatically synchronize the customer with QuitHero.
 
 First, run the development server:
 
