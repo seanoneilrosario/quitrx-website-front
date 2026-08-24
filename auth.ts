@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Facebook from "next-auth/providers/facebook";
 import Google from "next-auth/providers/google";
-import { syncQuitHeroCustomer } from "@/lib/quithero-customers";
+import { syncQuitHeroCustomerWithoutBlocking } from "@/lib/quithero-customers";
 import { CUSTOMER_SESSION_COOKIE, verifySignedCustomerSession } from "@/lib/customer-session";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -18,7 +18,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       }
 
       const [firstName, ...lastNameParts] = (user.name ?? "").trim().split(/\s+/);
-      await syncQuitHeroCustomer({
+      await syncQuitHeroCustomerWithoutBlocking({
         email: user.email,
         firstName: firstName || undefined,
         lastName: lastNameParts.join(" ") || undefined,
