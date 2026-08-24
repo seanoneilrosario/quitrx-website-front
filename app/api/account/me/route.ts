@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { clearCustomerSession, getCustomerSession } from "@/lib/customer-session";
+import { getCustomerSession } from "@/lib/customer-session";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero-customers";
 
 export async function GET() {
@@ -11,12 +11,11 @@ export async function GET() {
 
   try {
     const customer = await findQuitHeroCustomerByEmail(email);
-    if (!customer) {
-      if (customerSession) await clearCustomerSession();
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    return NextResponse.json(customer, { headers: { "cache-control": "no-store" } });
-  } catch {
-    return NextResponse.json({ error: "Unable to load customer account." }, { status: 502 });
+    return NextResponse.json(customer ?? { email }, { headers: { "cache-control": "no-store" } });
+  } catch (error) {
+    console.error("QuitHero customer lookup failed.", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+    return NextResponse.json({ email }, { headers: { "cache-control": "no-store" } });
   }
 }

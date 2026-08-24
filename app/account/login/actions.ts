@@ -2,7 +2,7 @@
 
 import { signIn } from "@/auth";
 import { redirect } from "next/navigation";
-import { syncQuitHeroCustomer } from "@/lib/quithero-customers";
+import { syncQuitHeroCustomerWithoutBlocking } from "@/lib/quithero-customers";
 import { setCustomerSession } from "@/lib/customer-session";
 
 export type CustomerAccessState = { error?: string };
@@ -17,9 +17,12 @@ export async function accessCustomerAccount(
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email address." };
 
   try {
-    const customer = await syncQuitHeroCustomer({ email });
+    const customer = await syncQuitHeroCustomerWithoutBlocking({ email });
     await setCustomerSession({ id: customer?.id, email: customer?.email ?? email });
-  } catch {
+  } catch (error) {
+    console.error("Customer session creation failed.", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return { error: "We could not connect to your account. Please try again." };
   }
 
