@@ -51,33 +51,13 @@ export default function AccountDashboard() {
   if (error) return <section className="account-card"><p className="account-load-message">{error}</p></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your account...</p></section>;
 
-  const firstName = customer.firstName ?? "Customer";
+  const firstName = customer.firstName?.trim() || customer.email?.trim() || "Customer";
   const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(" ") || "Customer";
   const addresses = addressLines(customer);
   const hasActiveScriptTag = customer.tags?.some(
     (tag) => tag.trim().toLowerCase() === "scriptactive",
   ) ?? false;
   const scriptIsActive = customer.scriptActive === true || hasActiveScriptTag;
-  const isNewCustomer = !scriptIsActive && (customer.numberOfOrders ?? 0) === 0;
-
-  if (isNewCustomer) {
-    return <>
-      <header className="account-overview__header"><h1>{firstName}</h1></header>
-      <section className="account-assessment-card">
-        <div className="account-assessment-card__heading">
-          <span className="account-assessment-card__icon" aria-hidden="true">
-            <svg viewBox="0 0 48 48"><path d="m17 15 14 8-10 18a4 4 0 0 1-5.5 1.5l-7-4a4 4 0 0 1-1.5-5.5l10-18Z"/><path d="m21 17 5-9 9 5-5 9M29 10l4-7 6 3.5-4 7"/></svg>
-          </span>
-          <h2>Start Online Assessment</h2>
-        </div>
-        <p className="account-assessment-card__copy">Complete your assessment in just 2 minutes to get your free prescription.</p>
-        <Link href="/account/prescriptions" className="account-assessment-card__button">Start Assessment</Link>
-        <p className="account-assessment-card__disclaimer">
-          This assessment is not for nicotine pouch prescriptions. In accordance with the TGA&apos;s advertising requirements for therapeutic vaping goods, we cannot publicly advertise or describe certain treatment options.
-        </p>
-      </section>
-    </>;
-  }
 
   return <>
     <header className="account-overview__header"><h1>{firstName}</h1></header>
