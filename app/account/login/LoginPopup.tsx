@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
-import { accessCustomerAccount, signInWithGoogle, type CustomerAccessState } from "./actions";
+import { accessCustomerAccount, type CustomerAccessState } from "./actions";
 
 const initialState: CustomerAccessState = {};
 
@@ -22,14 +22,14 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
     return () => window.removeEventListener("message", handleAuthSuccess);
   }, [router]);
 
-  const openFacebookPopup = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const openSocialPopup = (event: React.MouseEvent<HTMLAnchorElement>, provider: "google" | "facebook") => {
     const width = 730;
     const height = 760;
     const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2);
     const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2);
     const popup = window.open(
       event.currentTarget.href,
-      "quitrx-facebook-login",
+      `quitrx-${provider}-login`,
       `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
     );
 
@@ -52,9 +52,13 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
         </div>
 
         <div className="customer-login__socials">
-          <form action={signInWithGoogle}><button type="submit" disabled={!googleEnabled} title={googleEnabled ? undefined : "Configure Google OAuth credentials"} aria-label="Continue with Google"><span className="google-mark">G</span></button></form>
+          {googleEnabled ? (
+            <Link href="/api/account/google" onClick={(event) => openSocialPopup(event, "google")} aria-label="Continue with Google"><span className="google-mark">G</span></Link>
+          ) : (
+            <button type="button" disabled title="Configure Google OAuth credentials" aria-label="Continue with Google"><span className="google-mark">G</span></button>
+          )}
           {facebookEnabled ? (
-            <Link href="/api/account/facebook" onClick={openFacebookPopup} aria-label="Continue with Facebook"><span className="facebook-mark">f</span></Link>
+            <Link href="/api/account/facebook" onClick={(event) => openSocialPopup(event, "facebook")} aria-label="Continue with Facebook"><span className="facebook-mark">f</span></Link>
           ) : (
             <button type="button" disabled title="Configure Facebook OAuth credentials" aria-label="Continue with Facebook"><span className="facebook-mark">f</span></button>
           )}

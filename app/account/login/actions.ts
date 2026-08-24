@@ -1,6 +1,5 @@
 "use server";
 
-import { signIn } from "@/auth";
 import { redirect } from "next/navigation";
 import { syncQuitHeroCustomerWithoutBlocking } from "@/lib/quithero-customers";
 import { setCustomerSession } from "@/lib/customer-session";
@@ -27,12 +26,4 @@ export async function accessCustomerAccount(
   }
 
   redirect("/account");
-}
-
-export async function signInWithGoogle() {
-  await signIn("google", { redirectTo: "/account" });
-}
-
-export async function signInWithFacebook() {
-  await signIn("facebook", { redirectTo: "/account" });
 }
