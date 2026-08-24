@@ -29,7 +29,7 @@ function Icon({ name }: { name: string }) {
 export default function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  if (pathname === "/account/login") {
+  if (pathname === "/account/login" || pathname === "/account/auth-popup") {
     return <main className="account-login-page">{children}</main>;
   }
 
