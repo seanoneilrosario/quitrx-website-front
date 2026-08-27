@@ -28,6 +28,22 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     authorized({ auth: session, request }) {
       const isLoginPage = request.nextUrl.pathname === "/account/login";
       if (isLoginPage) return true;
+      if (request.nextUrl.pathname.startsWith("/dashboard")) {
+        if (
+          process.env.NODE_ENV !== "production" &&
+          process.env.QUITHERO_DASHBOARD_DEV_BYPASS === "true"
+        ) {
+          return true;
+        }
+        const staffEmails = (process.env.QUITHERO_STAFF_EMAILS ?? "")
+          .split(",")
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean);
+        return Boolean(
+          session?.user?.email &&
+          staffEmails.includes(session.user.email.toLowerCase()),
+        );
+      }
       const emailSession = verifySignedCustomerSession(request.cookies.get(CUSTOMER_SESSION_COOKIE)?.value);
       return Boolean(session?.user?.email || emailSession?.email);
     },
