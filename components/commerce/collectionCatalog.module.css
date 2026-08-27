@@ -111,7 +111,7 @@
 .priceRange {
   display: grid;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 0;
   color: #397f87;
   font-size: 13px;
 }
@@ -218,7 +218,7 @@
 }
 
 .price {
-  margin-top: 8px;
+  margin-top: 0;
   font-size: 24px;
   font-weight: 700;
   letter-spacing: .04em;
@@ -235,7 +235,7 @@
   background: #50d993;
   color: #035c67;
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: .04em;
   text-align: center;
   text-decoration: none;
@@ -323,7 +323,7 @@
   .filterBackdrop {
     position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: 110;
     display: block;
     visibility: hidden;
     border: 0;
@@ -339,7 +339,7 @@
 
   .filters {
     position: fixed;
-    z-index: 41;
+    z-index: 111;
     top: 0;
     right: 0;
     display: block;
@@ -430,14 +430,14 @@
   .productLink {
     display: grid;
     grid-template-columns: 42% minmax(0, 58%);
-    grid-template-rows: 1fr auto;
-    min-height: 228px;
+    grid-template-rows: auto 1fr;
+    min-height: 190px;
   }
 
   .productImageWrap {
     grid-row: 1 / 3;
     grid-column: 1;
-    min-height: 228px;
+    min-height: 190px;
     aspect-ratio: auto;
     padding: 20px;
   }
@@ -449,22 +449,23 @@
     padding: 20px 22px 8px;
   }
 
-  .brand { font-size: 14px; }
+  .brand { font-size: 15px; }
 
   .productInfo strong {
     min-height: 0;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.35;
   }
 
   .price {
-    margin-top: 12px;
+    margin-top: 0;
     font-size: 22px;
   }
 
   .chooseButton {
     grid-row: 2;
     grid-column: 2;
+    align-self: start;
     margin: 0 20px 14px;
     padding: 0 10px;
     font-size: 15px;

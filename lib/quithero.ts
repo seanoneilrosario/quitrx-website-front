@@ -88,7 +88,6 @@ export async function getQuitHeroCollection(slug: string) {
       brand: {
         name: "All Products",
         slug: "all-products",
-        description: "Browse our complete pharmacy range.",
       },
       products,
     };
