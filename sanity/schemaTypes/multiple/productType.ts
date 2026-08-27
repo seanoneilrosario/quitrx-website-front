@@ -39,8 +39,17 @@ export const productType = defineType({
     }),
     defineField({
       name: 'categories',
+      title: 'Categories',
       type: 'array',
       of: [defineArrayMember({type: 'reference', to: {type: 'category'}})],
+    }),
+    defineField({
+      name: 'collections',
+      title: 'Collections',
+      description: 'Choose every storefront collection this product should appear in.',
+      type: 'array',
+      of: [defineArrayMember({type: 'reference', to: {type: 'productCollection'}})],
+      validation: (Rule) => Rule.unique(),
     }),
     defineField({
       name: 'publishedAt',

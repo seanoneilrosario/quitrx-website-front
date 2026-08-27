@@ -17,6 +17,7 @@ export default function ProductCard({ product }: { product: QuitHeroProduct }) {
         <span className={styles.productImageWrap}>
           {image ? <img src={image} alt={product.name || "Product"} className={styles.productImage} /> : null}
         </span>
+        <span className={styles.chooseButton}>View Product</span>
         <span className={styles.productInfo}>
           {product.brand?.name && <span className={styles.brand}>{product.brand.name}</span>}
           <strong>{product.name}</strong>
@@ -25,9 +26,6 @@ export default function ProductCard({ product }: { product: QuitHeroProduct }) {
             {available ? "In stock" : "Out of stock"}
           </span>
         </span>
-      </Link>
-      <Link href={productUrl} className={styles.chooseButton}>
-        Choose options
       </Link>
     </article>
   );

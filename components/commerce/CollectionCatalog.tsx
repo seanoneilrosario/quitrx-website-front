@@ -32,6 +32,15 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
   const [sort, setSort] = useState<Sort>("featured");
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.map(variantPrice), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
+
+  const clearFilters = () => {
+    setBrands([]);
+    setSizes([]);
+    setColors([]);
+    setMaxPrice(null);
+    setAvailability("all");
+  };
 
   const facets = useMemo(() => ({
     brands: unique(products.map((product) => product.brand?.name)),
@@ -81,7 +90,10 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
   return (
     <div className={styles.catalog}>
       <aside className={styles.filters} aria-label="Product filters">
-        <h2>Filter:</h2>
+        <div className={styles.filtersHeader}>
+          <h2>Filter:</h2>
+          {hasActiveFilters && <button type="button" onClick={clearFilters}>Remove all</button>}
+        </div>
         {facet("Brand", facets.brands, brands, setBrands)}
         {facet("Product Size", facets.sizes, sizes, setSizes)}
         {facet("Color", facets.colors, colors, setColors)}

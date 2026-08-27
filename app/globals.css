@@ -80,7 +80,7 @@ option {
 }
 
 .page-width {
-  max-width: 1560px;
+  max-width: 130rem;
   margin: 0 auto;
   padding: 0 1.5rem
 }
@@ -201,7 +201,7 @@ blockquote {
 
 @media (min-width: 1024px) {
  .main-sections-wrapper {
-    padding-top: 153px;
+    padding-top: 147px;
   }
 }
 
