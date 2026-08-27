@@ -62,15 +62,15 @@
 }
 
 .content {
-  padding: 8px 3px 0;
+  padding: 17px 3px 17px;
   text-align: center;
 }
 
 .content h3 {
   margin: 0;
   color: #fff;
-  font-size: clamp(10px, 1.1vw, 14px);
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.25;
 }
 
@@ -117,6 +117,10 @@
 
   .content {
     padding-top: 6px;
+  }
+
+  .content h3 {
+    font-size: 12px;
   }
 }
 
