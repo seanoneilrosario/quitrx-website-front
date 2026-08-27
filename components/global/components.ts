@@ -149,7 +149,9 @@ export interface COMPONENTS {
   right_description?: string;
   button_text?: string;
   button_link?: string;
+  button_style?: "button" | "link";
   secondary_button_text?: string;
+  secondary_button_style?: "button" | "link";
   secondary_button_link?: string;
   background_image?: string;
   eyebrow_max_width?: number;

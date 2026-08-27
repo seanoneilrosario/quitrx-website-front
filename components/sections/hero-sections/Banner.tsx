@@ -21,8 +21,10 @@ interface BannerProps {
   title_array: PortableTextBlock[];
   button_text?: string;
   button_url?: string;
+  button_style?: "button" | "link";
   secondary_button_text?: string;
   secondary_button_link?: string;
+  secondary_button_style?: "button" | "link";
   hide_separator: boolean;
 }
 
@@ -38,11 +40,19 @@ export function Banner({
   title_array,
   button_text,
   button_url,
+  button_style = "link",
   secondary_button_text,
   secondary_button_link,
+  secondary_button_style = "button",
   hide_separator
 }: BannerProps) {
   console.log(doc_img)
+
+  const handleButtonClick = (url?: string) => {
+    if (url) {
+      window.location.assign(url);
+    }
+  };
 
   const content = (
     <section className="hero-banner page-width">
@@ -109,17 +119,40 @@ export function Banner({
         {(button_text || secondary_button_text) &&
           <div className="banner-links">
             {button_text && (
-              <Link href={button_url || "#"} className="banner-button banner-button--primary">
-                {button_text}
-              </Link>
+              button_style === "link" ? (
+                <Link
+                  href={button_url || "#"}
+                  className="banner-button banner-button--primary"
+                >
+                  {button_text}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="banner-button banner-button--secondary"
+                  onClick={() => handleButtonClick(button_url)}
+                >
+                  {button_text}
+                </button>
+              )
             )}
             {secondary_button_text && (
-              <Link
-                href={secondary_button_link || "#"}
-                className="banner-button banner-button--secondary"
-              >
-                {secondary_button_text}
-              </Link>
+              secondary_button_style === "link" ? (
+                <Link
+                  href={secondary_button_link || "#"}
+                  className="banner-button banner-button--primary"
+                >
+                  {secondary_button_text}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="banner-button banner-button--secondary"
+                  onClick={() => handleButtonClick(secondary_button_link)}
+                >
+                  {secondary_button_text}
+                </button>
+              )
             )}
           </div>
         }

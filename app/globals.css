@@ -1,7 +1,4 @@
 @import "tailwindcss";
-@import "swiper/css";
-@import "swiper/css/navigation";
-@import "swiper/css/pagination";
 @import "../components/navigation/navigation.css";
 @import "../components/sections/hero-sections/hero-sections.css";
 

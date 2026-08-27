@@ -105,6 +105,21 @@ export const banner = defineType({
       type: "string",
     }),
     defineField({
+      name: "button_style",
+      title: "Primary CTA Style",
+      description: "Link uses a filled background. Button uses a transparent background.",
+      type: "string",
+      options: {
+        layout: "radio",
+        list: [
+          { title: "Button", value: "button" },
+          { title: "Link", value: "link" },
+        ],
+      },
+      initialValue: "link",
+      hidden: ({ parent }) => !parent?.button_text,
+    }),
+    defineField({
       name: "button_url",
       title: "Button Url",
       type: "reference",
@@ -115,6 +130,21 @@ export const banner = defineType({
       title: "Secondary Button Text",
       type: "string",
       description: "For example: Login",
+    }),
+    defineField({
+      name: "secondary_button_style",
+      title: "Secondary CTA Style",
+      description: "Link uses a filled background. Button uses a transparent background.",
+      type: "string",
+      options: {
+        layout: "radio",
+        list: [
+          { title: "Button", value: "button" },
+          { title: "Link", value: "link" },
+        ],
+      },
+      initialValue: "button",
+      hidden: ({ parent }) => !parent?.secondary_button_text,
     }),
     defineField({
       name: "secondary_button_link",

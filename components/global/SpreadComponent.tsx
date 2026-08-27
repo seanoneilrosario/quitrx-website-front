@@ -49,8 +49,10 @@ const sectionRenderers: Record<
       title_array={component.title_array || []}
       button_text={component.button_text || ""}
       button_url={component.button_url?.slug || ""}
+      button_style={component.button_style || "link"}
       secondary_button_text={component.secondary_button_text || ""}
       secondary_button_link={component.secondary_button_link || ""}
+      secondary_button_style={component.secondary_button_style || "button"}
       hide_separator={component.hide_separator}
     />
   ),

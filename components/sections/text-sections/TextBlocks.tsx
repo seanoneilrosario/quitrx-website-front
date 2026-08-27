@@ -51,7 +51,7 @@ const TextBlocks = ({
         {description && <PortableText value={description} />}
       </div>
 
-      <div className="comparison-card page-width">
+      <div className="comparison-card ">
         <div className="comparison-card__top">
           {icon && (
             <span className="comparison-card__icon">

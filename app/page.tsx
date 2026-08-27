@@ -8,8 +8,6 @@
   import { sanityFetch } from "@/sanity/lib/live";
   import { HOME_QUERY } from "@/sanity/lib/queries";
 
-  import "./globals.css";
-
   interface HomePageData {
     title?: string;
     meta_description?: string;
