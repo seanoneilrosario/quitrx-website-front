@@ -226,6 +226,10 @@ const sectionRenderers: Record<
       displayMode={component.displayMode}
       paddingTop={component.paddingTop}
       paddingBottom={component.paddingBottom}
+      desktopPaddingTop={component.desktopPaddingTop}
+      desktopPaddingBottom={component.desktopPaddingBottom}
+      mobilePaddingTop={component.mobilePaddingTop}
+      mobilePaddingBottom={component.mobilePaddingBottom}
     />
   ),
 };

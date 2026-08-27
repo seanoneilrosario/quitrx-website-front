@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import styles from "./ProductApiGrid.module.css";
 
@@ -11,6 +11,10 @@ type ProductApiGridProps = {
   productLimit?: number;
   paddingTop?: number;
   paddingBottom?: number;
+  desktopPaddingTop?: number;
+  desktopPaddingBottom?: number;
+  mobilePaddingTop?: number;
+  mobilePaddingBottom?: number;
   displayMode?: "collections" | "products";
 };
 
@@ -71,6 +75,10 @@ export default function ProductApiGrid({
   productLimit = 12,
   paddingTop = 60,
   paddingBottom = 60,
+  desktopPaddingTop,
+  desktopPaddingBottom,
+  mobilePaddingTop = 40,
+  mobilePaddingBottom = 40,
   displayMode = "collections",
 }: ProductApiGridProps) {
   const [products, setProducts] = useState<ApiRecord[]>([]);
@@ -98,8 +106,15 @@ export default function ProductApiGrid({
     return () => controller.abort();
   }, []);
 
+  const sectionStyle = {
+    "--desktop-padding-top": `${desktopPaddingTop ?? paddingTop}px`,
+    "--desktop-padding-bottom": `${desktopPaddingBottom ?? paddingBottom}px`,
+    "--mobile-padding-top": `${mobilePaddingTop}px`,
+    "--mobile-padding-bottom": `${mobilePaddingBottom}px`,
+  } as CSSProperties;
+
   return (
-    <section className={styles.section} style={{ paddingTop, paddingBottom }}>
+    <section className={styles.section} style={sectionStyle}>
       <div className="page-width">
         {heading && <h2 className={styles.heading}>{heading}</h2>}
         {loading && <p className={styles.status}>Loading products…</p>}

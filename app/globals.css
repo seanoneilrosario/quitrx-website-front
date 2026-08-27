@@ -5,20 +5,6 @@
 @import "../components/navigation/navigation.css";
 @import "../components/sections/hero-sections/hero-sections.css";
 
-/* @font-face {
-  font-family: "GothamLight";
-  src:
-    url("https://drcostaspapageorgiou.com/assets/fonts/GothamLight.woff2")
-      format("woff2"),
-    url("https://drcostaspapageorgiou.com/assets/fonts/GothamLight.woff")
-      format("woff"),
-    url("https://drcostaspapageorgiou.com/assets/fonts/GothamLight.ttf")
-      format("truetype");
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-} */
-
 @font-face {
   font-family: 'Quicksand';
   src: url('/fonts/Quicksand-Regular.eot');
@@ -26,6 +12,22 @@
     url('/fonts/Quicksand-Regular.woff2') format('woff2'),
     url('/fonts/Quicksand-Regular.woff') format('woff');
   font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('/fonts/Quicksand-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('/fonts/Quicksand-Bold.ttf') format('truetype');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -69,6 +71,7 @@ body {
   color: var(--foreground);
   font-family: "Quicksand", sans-serif;
   font-weight: normal;
+  letter-spacing: 0.06rem;
 }
 
 button,
@@ -86,7 +89,7 @@ option {
 }
 
 .main-sections-wrapper {
-  padding-top: 138px;
+  padding-top: 133px;
 }
 
 .template-admin .main-sections-wrapper {
@@ -201,7 +204,7 @@ blockquote {
 
 @media (min-width: 1024px) {
  .main-sections-wrapper {
-    padding-top: 147px;
+    padding-top: 195px;
   }
 }
 

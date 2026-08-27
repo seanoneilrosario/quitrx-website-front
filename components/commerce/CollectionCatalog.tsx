@@ -30,6 +30,7 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
   const [colors, setColors] = useState<string[]>([]);
   const [availability, setAvailability] = useState("all");
   const [sort, setSort] = useState<Sort>("featured");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.map(variantPrice), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
@@ -73,14 +74,21 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
   };
 
-  const facet = (label: string, values: string[], selected: string[], setSelected: (values: string[]) => void) => values.length ? (
-    <details className={styles.filterGroup} open>
+  const facet = (
+    label: string,
+    values: string[],
+    selected: string[],
+    setSelected: (values: string[]) => void,
+    count: (value: string) => number,
+    open = false,
+  ) => values.length ? (
+    <details className={styles.filterGroup} {...(open && !filtersOpen ? { open: true } : {})}>
       <summary>{label}</summary>
       <div className={styles.options}>
         {values.map((value) => (
           <label key={value}>
             <input type="checkbox" checked={selected.includes(value)} onChange={() => toggle(value, selected, setSelected)} />
-            <span>{value}</span>
+            <span>{value} ({count(value)})</span>
           </label>
         ))}
       </div>
@@ -89,16 +97,26 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
 
   return (
     <div className={styles.catalog}>
-      <aside className={styles.filters} aria-label="Product filters">
+      <button
+        type="button"
+        className={`${styles.filterBackdrop} ${filtersOpen ? styles.filterBackdropOpen : ""}`}
+        aria-label="Close filters"
+        onClick={() => setFiltersOpen(false)}
+      />
+      <aside className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ""}`} aria-label="Product filters">
+        <div className={styles.drawerHeader}>
+          <div><strong>Filter and sort</strong><span>{products.length} products</span></div>
+          <button type="button" aria-label="Close filters" onClick={() => setFiltersOpen(false)}><span /></button>
+        </div>
         <div className={styles.filtersHeader}>
           <h2>Filter:</h2>
           {hasActiveFilters && <button type="button" onClick={clearFilters}>Remove all</button>}
         </div>
-        {facet("Brand", facets.brands, brands, setBrands)}
-        {facet("Product Size", facets.sizes, sizes, setSizes)}
-        {facet("Color", facets.colors, colors, setColors)}
+        {facet("Brand", facets.brands, brands, setBrands, (brand) => products.filter((product) => product.brand?.name === brand).length, true)}
+        {facet("Product Size", facets.sizes, sizes, setSizes, (size) => products.filter((product) => product.variants?.some((variant) => optionValues(variant, "size") === size)).length)}
+        {facet("Color", facets.colors, colors, setColors, (color) => products.filter((product) => product.variants?.some((variant) => optionValues(variant, "color") === color)).length)}
         {priceCeiling > 0 && (
-          <details className={styles.filterGroup} open>
+          <details className={styles.filterGroup}>
             <summary>Price</summary>
             <label className={styles.priceRange}>
               Up to {new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(maxPrice ?? priceCeiling)}
@@ -106,7 +124,7 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
             </label>
           </details>
         )}
-        <details className={styles.filterGroup} open>
+        <details className={styles.filterGroup}>
           <summary>Availability</summary>
           <div className={styles.options}>
             <label><input type="radio" name="availability" checked={availability === "all"} onChange={() => setAvailability("all")} /> All</label>
@@ -117,6 +135,13 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
       </aside>
 
       <section className={styles.results}>
+        <div className={styles.mobileFilterBar}>
+          <button type="button" onClick={() => setFiltersOpen(true)}>
+            <span className={styles.filterIcon} aria-hidden="true" />
+            Filter and sort
+          </button>
+          <strong>{products.length} products</strong>
+        </div>
         <div className={styles.toolbar}>
           <label>Sort by:
             <select value={sort} onChange={(event) => setSort(event.target.value as Sort)}>

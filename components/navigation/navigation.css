@@ -252,6 +252,7 @@
 .site-header--not-home .site-header__desktop-nav a,
 .site-header--not-home .site-header__contact {
   color: #fff;
+  letter-spacing: 0.06rem;
 }
 
 .nav2 {
@@ -585,10 +586,6 @@
   }
 }
 
-@media (min-width: 600px) {
-
-}
-
 @media (min-width: 1024px) {
   .site-header__desktop-nav {
     display: flex;
@@ -610,8 +607,7 @@
   }
 
   .site-header__bar {
-    padding-left: 5rem;
-    padding-right: 5rem;
+    padding: 43px 50px;
   }
 
     .nav2 {
@@ -685,7 +681,23 @@
       justify-content: end;
       column-gap: 2.5rem;
     }
-  
+
+    .site-header__logo img {
+      margin-left: -35px;
+    }
+    
+    .site-header__inner {
+      padding-right: 45px;
+    }
+
+    .site-header__account {
+      opacity: .7;
+    }
+
+    .mobile_nav_icons .svg-icon-search {
+      margin-left: 45px;
+    }
+    
 }
 
 /* @media (min-width: 1536px) {

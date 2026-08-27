@@ -1,21 +1,26 @@
 .section {
-  background: #086a73;
+  padding-top: var(--desktop-padding-top, 60px);
+  padding-bottom: var(--desktop-padding-bottom, 60px);
+  background: #035c67;
 }
 
 .heading {
   margin: 0 0 24px;
   color: #fff;
-  font-size: clamp(20px, 2vw, 28px);
+  font-family: "Quicksand", sans-serif;
+  font-size: 40px;
   font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -.025em;
   text-align: center;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px 10px;
+  gap: 22px 13px;
   width: 100%;
-  max-width: 1100px;
+  max-width: 130rem;
   margin: 0 auto;
 }
 
@@ -32,7 +37,7 @@
   place-items: center;
   overflow: hidden;
   padding: clamp(12px, 2vw, 28px);
-  border-radius: 14px;
+  border-radius: 24px;
   background: #fff;
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
@@ -92,6 +97,15 @@
 }
 
 @media (max-width: 700px) {
+  .section {
+    padding-top: var(--mobile-padding-top, 40px);
+    padding-bottom: var(--mobile-padding-bottom, 40px);
+  }
+
+  .heading {
+    font-size: 24px;
+  }
+
   .grid {
     gap: 18px 6px;
   }
@@ -114,5 +128,11 @@
 
   .content h3 {
     font-size: 11px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .heading {
+    margin-bottom: 45px;
   }
 }
