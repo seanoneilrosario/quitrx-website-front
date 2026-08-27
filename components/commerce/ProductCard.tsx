@@ -6,9 +6,8 @@ export default function ProductCard({ product }: { product: QuitHeroProduct }) {
   const image = product.images?.find((item) => item.isPrimary)?.url || product.images?.[0]?.url;
   const rawPrice = product.variants?.[0]?.price;
   const price = typeof rawPrice === "number"
-    ? new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(rawPrice)
+    ? `${new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(rawPrice)} AUD`
     : rawPrice;
-  const available = product.variants?.some((variant) => (variant.inventory ?? 1) > 0) ?? true;
   const productUrl = product.id ? `/product/${encodeURIComponent(product.id)}` : `/products/${product.slug}`;
 
   return (
@@ -21,13 +20,8 @@ export default function ProductCard({ product }: { product: QuitHeroProduct }) {
           {product.brand?.name && <span className={styles.brand}>{product.brand.name}</span>}
           <strong>{product.name}</strong>
           {price && <span className={styles.price}>{price}</span>}
-          <span className={available ? styles.inStock : styles.outOfStock}>
-            {available ? "In stock" : "Out of stock"}
-          </span>
         </span>
-      </Link>
-      <Link href={productUrl} className={styles.chooseButton}>
-        Choose options
+        <span className={styles.chooseButton}>Choose options</span>
       </Link>
     </article>
   );

@@ -40,6 +40,10 @@ export type QuitHeroProduct = {
   variants?: QuitHeroVariant[];
 };
 
+type QuitHeroProductsResponse =
+  | QuitHeroProduct[]
+  | { products?: QuitHeroProduct[]; data?: QuitHeroProduct[]; items?: QuitHeroProduct[] };
+
 const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
 
 async function quitHeroFetch<T>(path: string): Promise<T> {
@@ -55,8 +59,16 @@ async function quitHeroFetch<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function getQuitHeroProducts() {
-  return quitHeroFetch<QuitHeroProduct[]>("/products");
+export async function getQuitHeroProducts() {
+  const payload = await quitHeroFetch<QuitHeroProductsResponse>("/products");
+  if (Array.isArray(payload)) return payload;
+
+  const products = payload.products ?? payload.data ?? payload.items;
+  if (!Array.isArray(products)) {
+    throw new Error("QuitHero products response did not contain a product list.");
+  }
+
+  return products;
 }
 
 export async function getQuitHeroProduct(slug: string) {

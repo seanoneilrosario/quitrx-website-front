@@ -32,6 +32,7 @@ import banner_slider from '../components/banner_slider'
 import promotional_banner_slider from '../components/promotional_banner_slider'
 import brand_grid from '../components/brand_grid'
 import product_api_grid from '../components/product_api_grid'
+import { productCollectionType } from './productCollectionType'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -44,6 +45,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     pageType,
     homeType,
     productType,
+    productCollectionType,
     imageDocument,
     // components
     videoBanner,
