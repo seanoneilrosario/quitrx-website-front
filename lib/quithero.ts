@@ -44,7 +44,12 @@ export type QuitHeroProduct = {
 
 type QuitHeroProductsResponse =
   | QuitHeroProduct[]
-  | { products?: QuitHeroProduct[]; data?: QuitHeroProduct[]; items?: QuitHeroProduct[] };
+  | {
+      products?: QuitHeroProduct[];
+      data?: QuitHeroProduct[];
+      items?: QuitHeroProduct[];
+      pagination?: { page?: number; limit?: number; total?: number; totalPages?: number };
+    };
 
 const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
 
@@ -61,8 +66,7 @@ async function quitHeroFetch<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function getQuitHeroProducts() {
-  const payload = await quitHeroFetch<QuitHeroProductsResponse>("/products");
+function productsFrom(payload: QuitHeroProductsResponse) {
   if (Array.isArray(payload)) return payload;
 
   const products = payload.products ?? payload.data ?? payload.items;
@@ -71,6 +75,22 @@ export async function getQuitHeroProducts() {
   }
 
   return products;
+}
+
+export async function getQuitHeroProducts() {
+  const first = await quitHeroFetch<QuitHeroProductsResponse>("/products?page=1&limit=100");
+  const products = productsFrom(first);
+  if (Array.isArray(first)) return products;
+
+  const totalPages = Math.max(1, Number(first.pagination?.totalPages) || 1);
+  if (totalPages === 1) return products;
+
+  const remaining = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      quitHeroFetch<QuitHeroProductsResponse>(`/products?page=${index + 2}&limit=100`),
+    ),
+  );
+  return [products, ...remaining.map(productsFrom)].flat();
 }
 
 export async function getQuitHeroProduct(slug: string) {

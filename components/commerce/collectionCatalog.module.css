@@ -5,6 +5,36 @@
   align-items: start;
 }
 
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  align-items: center;
+  margin-top: 36px;
+}
+
+.pagination button {
+  min-width: 108px;
+  padding: 11px 18px;
+  border: 1px solid #7eb6bd;
+  border-radius: 999px;
+  background: #fff;
+  color: #176976;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  cursor: default;
+  opacity: .45;
+}
+
+.pagination span {
+  color: #527b81;
+  font-weight: 700;
+}
+
 .filtersHeader {
   display: flex;
   align-items: center;

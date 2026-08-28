@@ -6,6 +6,7 @@ import ProductCard from "./ProductCard";
 import styles from "./collectionCatalog.module.css";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
+const PAGE_SIZE = 50;
 
 function variantPrice(product: QuitHeroProduct) {
   const value = product.variants?.[0]?.price;
@@ -31,6 +32,7 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
   const [availability, setAvailability] = useState("all");
   const [sort, setSort] = useState<Sort>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [page, setPage] = useState(1);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.map(variantPrice), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
@@ -69,6 +71,9 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
       return 0;
     });
   }, [availability, brands, colors, maxPrice, products, sizes, sort]);
+  const totalPages = Math.max(1, Math.ceil(visibleProducts.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedProducts = visibleProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
@@ -155,9 +160,14 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
           <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"}</span>
         </div>
         <div className={styles.productGrid}>
-          {visibleProducts.map((product, index) => <ProductCard product={product} key={product.id || product.slug || index} />)}
+          {paginatedProducts.map((product, index) => <ProductCard product={product} key={product.id || product.slug || index} />)}
         </div>
         {!visibleProducts.length && <p className={styles.empty}>No products match these filters.</p>}
+        {totalPages > 1 && <nav className={styles.pagination} aria-label="Product pages">
+          <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <button type="button" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>Next</button>
+        </nav>}
       </section>
     </div>
   );
