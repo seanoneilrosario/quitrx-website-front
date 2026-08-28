@@ -1,21 +1,34 @@
 import "server-only";
 
+import { getToken } from "next-auth/jwt";
+import { headers } from "next/headers";
+
 const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
 
 export type RetailRecord = Record<string, unknown> & { id?: string };
 
-function apiKey() {
-  const value = process.env.QUITHERO_API_KEY;
-  if (!value) throw new Error("QUITHERO_API_KEY is not configured.");
-  return value;
+async function staffAccessToken() {
+  const secret = process.env.AUTH_SECRET ??
+    process.env.AUTH_SESSION_SECRET ??
+    (process.env.NODE_ENV !== "production" ? process.env.QUITHERO_API_KEY : undefined);
+  const token = await getToken({
+    req: { headers: await headers() },
+    secret,
+    secureCookie: process.env.NODE_ENV === "production",
+  });
+  if (token?.isStaff !== true || typeof token.staffAccessToken !== "string") {
+    throw new Error("QuitHero staff session is not configured.");
+  }
+  return token.staffAccessToken;
 }
 
 export async function retailRequest<T = unknown>(path: string, init: RequestInit = {}) {
+  const accessToken = await staffAccessToken();
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       "content-type": "application/json",
-      "x-api-key": apiKey(),
+      authorization: `Bearer ${accessToken}`,
       ...init.headers,
     },
     cache: "no-store",
@@ -46,4 +59,3 @@ export async function safeRetailList(path: string) {
     return { data: [], error: error instanceof Error ? error.message : "Unable to reach QuitHero." };
   }
 }
-
