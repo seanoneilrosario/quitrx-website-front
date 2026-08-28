@@ -93,7 +93,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
       }
 
-      if (!user.email) return false;
+      if (!user.email) return provider === "facebook";
 
       const [firstName, ...lastNameParts] = (user.name ?? "").trim().split(/\s+/);
       const customer = await syncQuitHeroCustomerWithoutBlocking({
@@ -116,8 +116,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (account && ["google", "facebook"].includes(account.provider)) {
         token.provider = account.provider;
         token.providerAccountId = account.providerAccountId;
+        token.needsCustomerEmail = account.provider === "facebook" && !user?.email;
       }
       if (user?.id) token.customerId = user.id;
+      if (user?.email) {
+        token.email = user.email;
+        token.needsCustomerEmail = false;
+      }
       return token;
     },
     session({ session, token }) {
@@ -126,16 +131,22 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           isStaff?: boolean;
           provider?: string;
           providerAccountId?: string;
+          needsCustomerEmail?: boolean;
         };
         sessionUser.isStaff = token.isStaff === true;
         sessionUser.provider = typeof token.provider === "string" ? token.provider : undefined;
         sessionUser.providerAccountId = typeof token.providerAccountId === "string" ? token.providerAccountId : undefined;
+        sessionUser.needsCustomerEmail = token.needsCustomerEmail === true;
       }
       return session;
     },
     authorized({ auth: session, request }) {
       const pathname = request.nextUrl.pathname;
-      if (pathname === "/account/login" || pathname === "/dashboard/login") return true;
+      if (
+        pathname === "/account/login" ||
+        pathname === "/account/auth-popup" ||
+        pathname === "/dashboard/login"
+      ) return true;
       if (request.nextUrl.pathname.startsWith("/dashboard")) {
         if (
           process.env.NODE_ENV !== "production" &&

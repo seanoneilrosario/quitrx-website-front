@@ -5,7 +5,7 @@ import { deleteResource, saveResource } from "../actions";
 import { safeRetailAll, safeRetailList, safeRetailPage, safeRetailRecord, type RetailPagination, type RetailRecord } from "@/lib/quithero-admin";
 import CollectionCreator from "./CollectionCreator";
 import { client } from "@/sanity/lib/client";
-import { productHasTag, type QuitHeroProduct } from "@/lib/quithero";
+import { productMatchesCollectionRules, type CollectionRule, type QuitHeroProduct } from "@/lib/quithero";
 import styles from "./dashboard.module.css";
 
 export const metadata: Metadata = { title: "Staff Dashboard | QuitRX" };
@@ -99,7 +99,7 @@ function ResourcePage({ kind, items, error, path = `/dashboard/products/${kind}`
   return <><Header title={config.title} description={config.description}/><Notice message={error}/><details className={styles.creator}><summary>+ Add {config.title.toLowerCase().replace(/s$/, "")}</summary><form action={saveResource}><input type="hidden" name="_resource" value={config.resource}/><input type="hidden" name="_returnTo" value={path}/><div className={styles.inlineForm}>{config.fields.map(([name, label, type]) => <label key={name}>{label}<input required={["productId","name","sku","price","url","slug"].includes(name)} type={type ?? "text"} step={type === "number" ? "any" : undefined} name={name}/></label>)}</div><button className={styles.primary}>Save</button></form></details><Table heads={config.heads}>{items.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.name ?? item.url)}</strong><small>{text(item.productId)}</small></td><td>{text(item.sku ?? item.slug ?? item.productId)}</td><td>{kind === "variants" ? money(item.price) : text(item.altText ?? item.seoTitle ?? item.id)}</td><td>{text(item.inventory ?? item.sortOrder, "")}</td><td className={styles.actions}><form action={deleteResource}><input type="hidden" name="_resource" value={config.resource}/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>)}</Table></>;
 }
 
-type CollectionAssignment = { quitHeroCollectionId?: string; slug?: string; productIds?: string[]; selectionMode?: "manual" | "dynamic"; dynamicTag?: string };
+type CollectionAssignment = { quitHeroCollectionId?: string; slug?: string; productIds?: string[]; selectionMode?: "manual" | "dynamic"; dynamicTag?: string; ruleMatch?: "all" | "any"; dynamicRules?: CollectionRule[] };
 
 function collectionAssignment(item: RetailRecord, assignments: CollectionAssignment[]) {
   return assignments.find((assignment) =>
@@ -109,7 +109,11 @@ function collectionAssignment(item: RetailRecord, assignments: CollectionAssignm
 
 function collectionProducts(products: RetailRecord[], assignment?: CollectionAssignment) {
   if (assignment?.selectionMode === "dynamic" && assignment.dynamicTag) {
-    return products.filter((product) => productHasTag(product as QuitHeroProduct, assignment.dynamicTag!));
+    const rules = assignment.dynamicRules?.length ? assignment.dynamicRules : [{ field: "tag", operator: "equals", value: assignment.dynamicTag } satisfies CollectionRule];
+    return products.filter((product) => productMatchesCollectionRules(product as QuitHeroProduct, rules, assignment.ruleMatch ?? "all"));
+  }
+  if (assignment?.selectionMode === "dynamic" && assignment.dynamicRules?.length) {
+    return products.filter((product) => productMatchesCollectionRules(product as QuitHeroProduct, assignment.dynamicRules!, assignment.ruleMatch ?? "all"));
   }
   const selected = new Set(assignment?.productIds ?? []);
   return products.filter((product) => typeof product.id === "string" && selected.has(product.id));
@@ -117,7 +121,7 @@ function collectionProducts(products: RetailRecord[], assignment?: CollectionAss
 
 function CollectionsPage({ items, products, assignments, error }: { items: RetailRecord[]; products: RetailRecord[]; assignments: CollectionAssignment[]; error?: string }) {
   const options = products.flatMap((product) => typeof product.id === "string" ? [{ id: product.id, name: text(product.name, "Unnamed product"), slug: text(product.slug, "") }] : []);
-  return <><Header title="Collections" description="Group products into storefront collections."/><Notice message={error}/><CollectionCreator products={options}/><Table heads={["Collection", "Slug", "Type", "Products", "Actions"]}>{items.map((item, index) => { const assignment = collectionAssignment(item, assignments); const count = collectionProducts(products, assignment).length; return <tr key={text(item.id, String(index))}><td><strong>{text(item.name)}</strong><small>{text(item.id)}</small></td><td>{text(item.slug)}</td><td>{assignment?.selectionMode === "dynamic" ? `Tag: ${assignment.dynamicTag}` : "Manual"}</td><td>{count}</td><td className={styles.actions}><Link href={`/dashboard/collections/details?id=${text(item.id)}`}>View</Link><form action={deleteResource}><input type="hidden" name="_resource" value="collections"/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>; })}</Table></>;
+  return <><Header title="Collections" description="Group products into storefront collections."/><Notice message={error}/><CollectionCreator products={options}/><Table heads={["Collection", "Slug", "Type", "Products", "Actions"]}>{items.map((item, index) => { const assignment = collectionAssignment(item, assignments); const count = collectionProducts(products, assignment).length; const ruleCount = assignment?.dynamicRules?.length ?? (assignment?.dynamicTag ? 1 : 0); return <tr key={text(item.id, String(index))}><td><strong>{text(item.name)}</strong><small>{text(item.id)}</small></td><td>{text(item.slug)}</td><td>{assignment?.selectionMode === "dynamic" ? `Dynamic · ${ruleCount} rule${ruleCount === 1 ? "" : "s"}` : "Manual"}</td><td>{count}</td><td className={styles.actions}><Link href={`/dashboard/collections/details?id=${text(item.id)}`}>View</Link><form action={deleteResource}><input type="hidden" name="_resource" value="collections"/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>; })}</Table></>;
 }
 
 function CollectionDetail({ item, products, assignment }: { item?: RetailRecord; products: RetailRecord[]; assignment?: CollectionAssignment }) {
@@ -163,7 +167,7 @@ export default async function DashboardPage({ params, searchParams }: Props) {
     const [collections, products, assignments] = await Promise.all([
       safeRetailList("/collections"),
       safeRetailAll("/products"),
-      client.withConfig({ useCdn: false }).fetch<CollectionAssignment[]>(`*[_type == "productCollection"]{"slug": slug.current, quitHeroCollectionId, productIds, selectionMode, dynamicTag}`).catch(() => []),
+      client.withConfig({ useCdn: false }).fetch<CollectionAssignment[]>(`*[_type == "productCollection"]{"slug": slug.current, quitHeroCollectionId, productIds, selectionMode, dynamicTag, ruleMatch, dynamicRules}`).catch(() => []),
     ]);
     const item = collections.data.find((collection) => collection.id === id);
     content = sub === "details"

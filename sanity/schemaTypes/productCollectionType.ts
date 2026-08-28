@@ -52,6 +52,28 @@ export const productCollectionType = defineType({
       hidden: ({parent}) => parent?.selectionMode !== 'dynamic',
     }),
     defineField({
+      name: 'ruleMatch',
+      title: 'Match conditions',
+      type: 'string',
+      options: {list: [{title: 'All conditions', value: 'all'}, {title: 'Any condition', value: 'any'}]},
+      initialValue: 'all',
+      hidden: ({parent}) => parent?.selectionMode !== 'dynamic',
+    }),
+    defineField({
+      name: 'dynamicRules',
+      title: 'Dynamic collection rules',
+      type: 'array',
+      hidden: ({parent}) => parent?.selectionMode !== 'dynamic',
+      of: [defineArrayMember({
+        type: 'object',
+        fields: [
+          defineField({name: 'field', type: 'string'}),
+          defineField({name: 'operator', type: 'string'}),
+          defineField({name: 'value', type: 'string'}),
+        ],
+      })],
+    }),
+    defineField({
       name: 'image',
       title: 'Collection image',
       type: 'image',

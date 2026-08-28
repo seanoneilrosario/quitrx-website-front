@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { retailRequest } from "@/lib/quithero-admin";
+import type { CollectionRule } from "@/lib/quithero";
 import { client } from "@/sanity/lib/client";
 
 const allowedResources = new Set([
@@ -66,8 +67,28 @@ export async function createCollection(formData: FormData) {
   const slug = String(formData.get("slug") ?? "").trim() || slugify(name);
   if (!name || !slug) throw new Error("Collection name and slug are required.");
   const selectionMode = formData.get("selectionMode") === "dynamic" ? "dynamic" : "manual";
-  const dynamicTag = selectionMode === "dynamic" ? String(formData.get("dynamicTag") ?? "").trim() : undefined;
-  if (selectionMode === "dynamic" && !dynamicTag) throw new Error("A product tag is required for a dynamic collection.");
+  const ruleMatch = formData.get("ruleMatch") === "any" ? "any" : "all";
+  const fields = new Set(["tag", "name", "brand", "productType", "status", "price", "inventory"]);
+  const operators = new Set(["equals", "notEquals", "contains", "notContains", "greaterThan", "lessThan"]);
+  let dynamicRules: CollectionRule[] = [];
+  try {
+    const parsed = JSON.parse(String(formData.get("dynamicRules") ?? "[]")) as unknown;
+    if (Array.isArray(parsed)) {
+      dynamicRules = parsed.flatMap((rule) => {
+        if (!rule || typeof rule !== "object") return [];
+        const value = rule as Record<string, unknown>;
+        const field = String(value.field ?? "");
+        const operator = String(value.operator ?? "");
+        const ruleValue = String(value.value ?? "").trim();
+        return fields.has(field) && operators.has(operator) && ruleValue
+          ? [{ field, operator, value: ruleValue } as CollectionRule]
+          : [];
+      });
+    }
+  } catch {
+    throw new Error("Collection conditions are invalid.");
+  }
+  if (selectionMode === "dynamic" && !dynamicRules.length) throw new Error("At least one valid collection condition is required.");
   const productIds = selectionMode === "manual" ? [...new Set(formData.getAll("productIds").map(String).filter(Boolean))] : [];
 
   const collection = responseRecord(await retailRequest("/collections", {
@@ -93,7 +114,8 @@ export async function createCollection(formData: FormData) {
     quitHeroCollectionId: collectionId,
     productIds,
     selectionMode,
-    dynamicTag,
+    ruleMatch,
+    dynamicRules,
   });
 
   revalidatePath("/dashboard/collections");

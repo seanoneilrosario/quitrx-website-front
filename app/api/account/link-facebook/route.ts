@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
-import { getCustomerSession } from "@/lib/customer-session";
+import { setCustomerSession } from "@/lib/customer-session";
 import {
   findQuitHeroCustomerByEmail,
   linkQuitHeroCustomerOAuth,
@@ -42,15 +42,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "A valid email address is required." }, { status: 400 });
   }
 
-  const customerSession = await getCustomerSession();
-  const verifiedEmail = user.email?.trim().toLowerCase() || customerSession?.email;
-  if (!verifiedEmail || verifiedEmail !== email) {
-    return NextResponse.json(
-      { error: "Verify ownership of this email address before linking it." },
-      { status: 403 },
-    );
-  }
-
   const customer = await findQuitHeroCustomerByEmail(email);
   if (!customer?.id) {
     return NextResponse.json(
@@ -61,6 +52,7 @@ export async function POST(request: Request) {
 
   try {
     await linkQuitHeroCustomerOAuth(customer.id, "facebook", user.providerAccountId);
+    await setCustomerSession({ id: customer.id, email });
     return NextResponse.json({ success: true, customerId: customer.id });
   } catch (error) {
     console.error("Failed to link Facebook account.", {
