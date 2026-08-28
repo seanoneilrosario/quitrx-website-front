@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteResource, saveResource } from "../actions";
-import { safeRetailList, type RetailRecord } from "@/lib/quithero-admin";
+import { safeRetailAll, safeRetailList, safeRetailPage, safeRetailRecord, type RetailPagination, type RetailRecord } from "@/lib/quithero-admin";
 import CollectionCreator from "./CollectionCreator";
 import { client } from "@/sanity/lib/client";
 import styles from "./dashboard.module.css";
@@ -58,21 +58,27 @@ function Table({ heads, children }: { heads: string[]; children: React.ReactNode
   return <div className={styles.tableWrap}><table><thead><tr>{heads.map((head) => <th key={head}>{head}</th>)}</tr></thead><tbody>{children}</tbody></table></div>;
 }
 
-function Dashboard({ products, customers, orders, variants, error }: { products: RetailRecord[]; customers: RetailRecord[]; orders: RetailRecord[]; variants: RetailRecord[]; error?: string }) {
+function Pagination({ pagination, path, query }: { pagination: RetailPagination; path: string; query?: string }) {
+  if (pagination.totalPages <= 1) return null;
+  const href = (page: number) => `${path}?page=${page}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+  return <nav className={styles.pagination} aria-label="Pagination"><span>Showing page {pagination.page} of {pagination.totalPages} · {pagination.total.toLocaleString()} records</span><div>{pagination.page > 1 ? <Link href={href(pagination.page - 1)}>Previous</Link> : <span>Previous</span>}{pagination.page < pagination.totalPages ? <Link href={href(pagination.page + 1)}>Next</Link> : <span>Next</span>}</div></nav>;
+}
+
+function Dashboard({ productTotal, customerTotal, orders, variants, error }: { productTotal: number; customerTotal: number; orders: RetailRecord[]; variants: RetailRecord[]; error?: string }) {
   const revenue = orders.reduce((sum, order) => sum + Number(order.total ?? order.totalPrice ?? 0), 0);
   const stock = variants.reduce((sum, variant) => sum + Number(variant.inventory ?? 0), 0);
   const lowStock = variants.filter((variant) => Number(variant.inventory ?? 0) <= 10).length;
   return <><Header title="Good morning, team" description="Here’s what’s happening across your store today." action={<Link className={styles.primary} href="/dashboard/products/create">+ Add product</Link>}/><Notice message={error}/>
     <section className={styles.metrics}>
-      {[ ["Total sales", money(revenue), "Across loaded orders"], ["Orders", orders.length, "Current API results"], ["Products", products.length, "Product records"], ["Customers", customers.length, "Customer records"], ["Units in stock", stock, `${lowStock} low-stock variants`] ].map(([label, value, note]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}
+      {[ ["Total sales", money(revenue), "Across loaded orders"], ["Orders", orders.length, "Current API results"], ["Products", productTotal, "Product records"], ["Customers", customerTotal, "Customer records"], ["Units in stock", stock, `${lowStock} low-stock variants`] ].map(([label, value, note]) => <article key={label}><span>{label}</span><strong>{value}</strong><small>{note}</small></article>)}
     </section>
     <div className={styles.twoCols}><section className={styles.card}><div className={styles.cardTitle}><div><h2>Recent orders</h2><p>Latest customer purchases</p></div><Link href="/dashboard/orders">View all</Link></div><Table heads={["Order", "Customer", "Total", "Status"]}>{orders.slice(0, 5).map((order, index) => <tr key={text(order.id, String(index))}><td><Link href={`/dashboard/orders/details?id=${text(order.id)}`}>#{text(order.orderNumber ?? order.id, String(index + 1))}</Link></td><td>{text(order.customerName ?? nested(order, "customer")?.email)}</td><td>{money(order.total ?? order.totalPrice)}</td><td><Status value={order.status}/></td></tr>)}</Table></section>
     <section className={styles.card}><div className={styles.cardTitle}><div><h2>Inventory health</h2><p>Variants needing attention</p></div><Link href="/dashboard/inventory">Manage</Link></div><div className={styles.stockList}>{variants.slice(0, 6).map((variant, index) => <div key={text(variant.id, String(index))}><span><strong>{text(variant.name)}</strong><small>{text(variant.sku)}</small></span><b>{text(variant.inventory, "0")} units</b></div>)}</div></section></div></>;
 }
 
-function Products({ items, query, error }: { items: RetailRecord[]; query: string; error?: string }) {
+function Products({ items, query, pagination, error }: { items: RetailRecord[]; query: string; pagination: RetailPagination; error?: string }) {
   const filtered = items.filter((item) => !query || `${text(item.name)} ${text(item.slug)} ${text(item.status)}`.toLowerCase().includes(query.toLowerCase()));
-  return <><Header title="Products" description="Manage products and everything customers see in your store." action={<Link className={styles.primary} href="/dashboard/products/create">+ Create product</Link>}/><Notice message={error}/><div className={styles.toolbar}><Search placeholder="Search products"/><div className={styles.subnav}>{[["Variants","variants"],["Images","images"],["Options","options"],["Tags","tags"]].map(([label, path]) => <Link key={path} href={`/dashboard/products/${path}`}>{label}</Link>)}</div></div><Table heads={["Product", "Brand", "Type", "Status", "Actions"]}>{filtered.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.name)}</strong><small>{text(item.slug)}</small></td><td>{text(nested(item, "brand")?.name ?? item.brandId)}</td><td>{text(nested(item, "productType")?.name ?? item.productTypeId)}</td><td><Status value={item.status}/></td><td className={styles.actions}><Link href={`/dashboard/products/edit?id=${text(item.id)}`}>Edit</Link><form action={deleteResource}><input type="hidden" name="_resource" value="products"/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>)}</Table></>;
+  return <><Header title="Products" description="Manage products and everything customers see in your store." action={<Link className={styles.primary} href="/dashboard/products/create">+ Create product</Link>}/><Notice message={error}/><div className={styles.toolbar}><Search placeholder="Search products"/><div className={styles.subnav}>{[["Variants","variants"],["Images","images"],["Options","options"],["Tags","tags"]].map(([label, path]) => <Link key={path} href={`/dashboard/products/${path}`}>{label}</Link>)}</div></div><Table heads={["Product", "Brand", "Type", "Status", "Actions"]}>{filtered.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.name)}</strong><small>{text(item.slug)}</small></td><td>{text(nested(item, "brand")?.name ?? item.brandId)}</td><td>{text(nested(item, "productType")?.name ?? item.productTypeId)}</td><td><Status value={item.status}/></td><td className={styles.actions}><Link href={`/dashboard/products/edit?id=${text(item.id)}`}>Edit</Link><form action={deleteResource}><input type="hidden" name="_resource" value="products"/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>)}</Table><Pagination pagination={pagination} path="/dashboard/products" query={query}/></>;
 }
 
 function ProductForm({ item }: { item?: RetailRecord }) {
@@ -112,9 +118,9 @@ function CollectionDetail({ item, products, assignment }: { item?: RetailRecord;
   return <><Header title={text(item.name)} description={text(item.description, "Products assigned to this collection.")} action={<div className={styles.actions}><Link className={styles.secondary} href="/dashboard/collections">Back</Link><Link className={styles.primary} href={`/collections/${text(item.slug)}`}>View storefront</Link></div>}/><Table heads={["Product", "Slug", "Brand", "Status", "Action"]}>{assignedProducts.map((product, index) => <tr key={text(product.id, String(index))}><td><strong>{text(product.name)}</strong><small>{text(product.id)}</small></td><td>{text(product.slug)}</td><td>{text(nested(product, "brand")?.name)}</td><td><Status value={product.status}/></td><td><Link href={`/dashboard/products/edit?id=${text(product.id)}`}>Edit product</Link></td></tr>)}</Table>{!assignedProducts.length ? <div className={styles.notice}><strong>No products assigned</strong><span>Create a new collection and select products from the product picker.</span></div> : null}</>;
 }
 
-function Customers({ items, query, error }: { items: RetailRecord[]; query: string; error?: string }) {
+function Customers({ items, query, pagination, error }: { items: RetailRecord[]; query: string; pagination: RetailPagination; error?: string }) {
   const filtered = items.filter((item) => !query || `${text(item.firstName)} ${text(item.lastName)} ${text(item.email)}`.toLowerCase().includes(query.toLowerCase()));
-  return <><Header title="Customers" description="Search customer accounts, purchase history and prescription status."/><Notice message={error}/><div className={styles.toolbar}><Search placeholder="Search name or email"/></div><Table heads={["Customer", "Contact", "Orders", "Total spent", "Status", ""]}>{filtered.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.firstName)} {text(item.lastName, "")}</strong><small>{text(item.id)}</small></td><td>{text(item.email)}<small>{text(item.phone)}</small></td><td>{text(item.numberOfOrders, "0")}</td><td>{money(item.totalSpent)}</td><td><Status value={item.state}/></td><td><Link href={`/dashboard/customers/details?id=${text(item.id)}`}>View</Link></td></tr>)}</Table></>;
+  return <><Header title="Customers" description="Search customer accounts, purchase history and prescription status."/><Notice message={error}/><div className={styles.toolbar}><Search placeholder="Search name or email"/></div><Table heads={["Customer", "Contact", "Orders", "Total spent", "Status", ""]}>{filtered.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.firstName)} {text(item.lastName, "")}</strong><small>{text(item.id)}</small></td><td>{text(item.email)}<small>{text(item.phone)}</small></td><td>{text(item.numberOfOrders, "0")}</td><td>{money(item.totalSpent)}</td><td><Status value={item.state}/></td><td><Link href={`/dashboard/customers/details?id=${text(item.id)}`}>View</Link></td></tr>)}</Table><Pagination pagination={pagination} path="/dashboard/customers" query={query}/></>;
 }
 
 function CustomerDetail({ item, editing }: { item?: RetailRecord; editing?: boolean }) {
@@ -137,18 +143,18 @@ function Inventory({ variants, history, error }: { variants: RetailRecord[]; his
 export default async function DashboardPage({ params, searchParams }: Props) {
   const { section = [] } = await params; const queryParams = await searchParams;
   if (!routes.some((route) => route.join("/") === section.join("/"))) notFound();
-  const [area = "dashboard", sub] = section; const q = typeof queryParams.q === "string" ? queryParams.q : ""; const id = typeof queryParams.id === "string" ? queryParams.id : "";
+  const [area = "dashboard", sub] = section; const q = typeof queryParams.q === "string" ? queryParams.q : ""; const id = typeof queryParams.id === "string" ? queryParams.id : ""; const page = Math.max(1, Number(queryParams.page) || 1);
   const active = area === "dashboard" ? "/dashboard" : `/dashboard/${area}`;
   let content: React.ReactNode;
-  if (area === "dashboard") { const [p,c,o,v] = await Promise.all([safeRetailList("/products"),safeRetailList("/customers"),safeRetailList("/orders"),safeRetailList("/product-variants")]); content = <Dashboard products={p.data} customers={c.data} orders={o.data} variants={v.data} error={p.error ?? c.error ?? o.error ?? v.error}/>; }
-  else if (area === "products" && !sub) { const result = await safeRetailList("/products"); content = <Products items={result.data} query={q} error={result.error}/>; }
+  if (area === "dashboard") { const [p,c,o,v] = await Promise.all([safeRetailPage("/products",1),safeRetailPage("/customers",1),safeRetailList("/orders"),safeRetailList("/product-variants")]); content = <Dashboard productTotal={p.pagination.total} customerTotal={c.pagination.total} orders={o.data} variants={v.data} error={p.error ?? c.error ?? o.error ?? v.error}/>; }
+  else if (area === "products" && !sub) { const result = await safeRetailPage("/products", page); content = <Products items={result.data} query={q} pagination={result.pagination} error={result.error}/>; }
   else if (area === "products" && sub === "create") content = <ProductForm/>;
-  else if (area === "products" && sub === "edit") { const result = await safeRetailList("/products"); content = <ProductForm item={result.data.find((item) => item.id === id)}/>; }
+  else if (area === "products" && sub === "edit") { const result = await safeRetailRecord(`/products/${encodeURIComponent(id)}`); content = <ProductForm item={result.data}/>; }
   else if (area === "products" && resourceConfig[sub]) { const config = resourceConfig[sub]; const result = await safeRetailList(`/${config.resource}`); content = <ResourcePage kind={sub} items={result.data} error={result.error}/>; }
   else if (area === "collections") {
     const [collections, products, assignments] = await Promise.all([
       safeRetailList("/collections"),
-      safeRetailList("/products"),
+      safeRetailAll("/products"),
       client.withConfig({ useCdn: false }).fetch<CollectionAssignment[]>(`*[_type == "productCollection"]{"slug": slug.current, quitHeroCollectionId, productIds}`).catch(() => []),
     ]);
     const item = collections.data.find((collection) => collection.id === id);
@@ -156,8 +162,8 @@ export default async function DashboardPage({ params, searchParams }: Props) {
       ? <CollectionDetail item={item} products={products.data} assignment={item ? collectionAssignment(item, assignments) : undefined}/>
       : <CollectionsPage items={collections.data} products={products.data} assignments={assignments} error={collections.error ?? products.error}/>;
   }
-  else if (area === "customers" && !sub) { const result = await safeRetailList("/customers"); content = <Customers items={result.data} query={q} error={result.error}/>; }
-  else if (area === "customers") { const result = await safeRetailList("/customers"); content = <CustomerDetail item={result.data.find((item) => item.id === id)} editing={sub === "edit"}/>; }
+  else if (area === "customers" && !sub) { const result = await safeRetailPage("/customers", page); content = <Customers items={result.data} query={q} pagination={result.pagination} error={result.error}/>; }
+  else if (area === "customers") { const result = await safeRetailRecord(`/customers/${encodeURIComponent(id)}`); content = <CustomerDetail item={result.data} editing={sub === "edit"}/>; }
   else if (area === "orders") { const result = await safeRetailList("/orders"); content = <Orders items={result.data} query={q} detail={sub === "details" ? result.data.find((item) => item.id === id) : undefined} error={result.error}/>; }
   else { const result = await safeRetailList(sub === "history" ? "/audit-logs" : "/product-variants"); content = <Inventory variants={sub ? [] : result.data} history={sub === "history" ? result.data : undefined} error={result.error}/>; }
   return <div className={styles.shell}><aside><Link className={styles.logo} href="/dashboard"><span>Q</span><strong>QuitRX</strong></Link><nav>{nav.map((item) => <Link className={active === item.href ? styles.active : ""} key={item.href} href={item.href}><i>{item.icon}</i>{item.label}</Link>)}</nav><div className={styles.profile}><span>ST</span><div><strong>Staff account</strong><small>Operations</small></div></div></aside><main><div className={styles.mobileTop}><Link className={styles.logo} href="/dashboard"><span>Q</span><strong>QuitRX</strong></Link><nav>{nav.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}</nav></div>{content}</main></div>;
