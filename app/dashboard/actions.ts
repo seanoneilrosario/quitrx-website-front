@@ -65,6 +65,10 @@ export async function createCollection(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim() || slugify(name);
   if (!name || !slug) throw new Error("Collection name and slug are required.");
+  const selectionMode = formData.get("selectionMode") === "dynamic" ? "dynamic" : "manual";
+  const dynamicTag = selectionMode === "dynamic" ? String(formData.get("dynamicTag") ?? "").trim() : undefined;
+  if (selectionMode === "dynamic" && !dynamicTag) throw new Error("A product tag is required for a dynamic collection.");
+  const productIds = selectionMode === "manual" ? [...new Set(formData.getAll("productIds").map(String).filter(Boolean))] : [];
 
   const collection = responseRecord(await retailRequest("/collections", {
     method: "POST",
@@ -78,7 +82,6 @@ export async function createCollection(formData: FormData) {
     }),
   }));
   const collectionId = typeof collection?.id === "string" ? collection.id : undefined;
-  const productIds = [...new Set(formData.getAll("productIds").map(String).filter(Boolean))];
   const documentId = `quithero-collection-${(collectionId ?? slug).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 
   await client.withConfig({ useCdn: false }).createOrReplace({
@@ -89,6 +92,8 @@ export async function createCollection(formData: FormData) {
     description: String(formData.get("description") ?? "").trim() || undefined,
     quitHeroCollectionId: collectionId,
     productIds,
+    selectionMode,
+    dynamicTag,
   });
 
   revalidatePath("/dashboard/collections");

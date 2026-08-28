@@ -56,6 +56,8 @@ export type QuitHeroAuthenticatedUser = {
   phone?: string | null;
 };
 
+export type QuitHeroOAuthProvider = "facebook" | "google";
+
 type QuitHeroSearchResponse =
   | QuitHeroCustomer[]
   | QuitHeroCustomer
@@ -159,6 +161,39 @@ export async function createQuitHeroCustomer(customer: CreateQuitHeroCustomer) {
   return quitHeroRequest<QuitHeroCustomer>("/customers", {
     method: "POST",
     body: JSON.stringify(customer),
+  });
+}
+
+export async function findQuitHeroCustomerByOAuth(
+  provider: QuitHeroOAuthProvider,
+  providerAccountId: string,
+) {
+  const accountId = providerAccountId.trim();
+  if (!accountId) return undefined;
+
+  try {
+    const response = await quitHeroRequest<QuitHeroSearchResponse>(
+      `/customers/oauth/${encodeURIComponent(provider)}/${encodeURIComponent(accountId)}`,
+    );
+    return extractCustomers(response)[0];
+  } catch (error) {
+    if (error instanceof QuitHeroApiError && error.status === 404) return undefined;
+    throw error;
+  }
+}
+
+export async function linkQuitHeroCustomerOAuth(
+  customerId: string,
+  provider: QuitHeroOAuthProvider,
+  providerAccountId: string,
+) {
+  const id = customerId.trim();
+  const accountId = providerAccountId.trim();
+  if (!id || !accountId) throw new Error("Customer ID and OAuth account ID are required.");
+
+  return quitHeroRequest<QuitHeroCustomer>(`/customers/${encodeURIComponent(id)}/oauth`, {
+    method: "POST",
+    body: JSON.stringify({ provider, providerAccountId: accountId }),
   });
 }
 

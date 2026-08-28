@@ -2,7 +2,12 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Facebook from "next-auth/providers/facebook";
 import Google from "next-auth/providers/google";
-import { syncQuitHeroCustomerWithoutBlocking } from "@/lib/quithero-customers";
+import {
+  findQuitHeroCustomerByOAuth,
+  linkQuitHeroCustomerOAuth,
+  syncQuitHeroCustomerWithoutBlocking,
+  type QuitHeroOAuthProvider,
+} from "@/lib/quithero-customers";
 import { CUSTOMER_SESSION_COOKIE, verifySignedCustomerSession } from "@/lib/customer-session";
 
 type StaffIdentity = {
@@ -64,23 +69,42 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       },
     }),
     Google,
-    Facebook,
+    Facebook({
+      authorization: { params: { scope: "email" } },
+    }),
   ],
   pages: { signIn: "/account/login" },
   session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "staff-credentials") return true;
-      if (!user.email || !account || !["google", "facebook"].includes(account.provider)) {
+      if (!account || !["google", "facebook"].includes(account.provider)) {
         return false;
       }
 
+      const provider = account.provider as QuitHeroOAuthProvider;
+      const providerAccountId = account.providerAccountId;
+      if (providerAccountId) {
+        const linkedCustomer = await findQuitHeroCustomerByOAuth(provider, providerAccountId);
+        if (linkedCustomer?.email) {
+          user.id = linkedCustomer.id ?? user.id;
+          user.email = linkedCustomer.email;
+          return true;
+        }
+      }
+
+      if (!user.email) return false;
+
       const [firstName, ...lastNameParts] = (user.name ?? "").trim().split(/\s+/);
-      await syncQuitHeroCustomerWithoutBlocking({
+      const customer = await syncQuitHeroCustomerWithoutBlocking({
         email: user.email,
         firstName: firstName || undefined,
         lastName: lastNameParts.join(" ") || undefined,
       });
+      if (customer?.id && providerAccountId) {
+        await linkQuitHeroCustomerOAuth(customer.id, provider, providerAccountId);
+        user.id = customer.id;
+      }
       return true;
     },
     jwt({ token, user, account }) {
@@ -89,11 +113,23 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token.staffAccessToken = staff.staffAccessToken;
         token.isStaff = Boolean(staff.staffAccessToken);
       }
+      if (account && ["google", "facebook"].includes(account.provider)) {
+        token.provider = account.provider;
+        token.providerAccountId = account.providerAccountId;
+      }
+      if (user?.id) token.customerId = user.id;
       return token;
     },
     session({ session, token }) {
       if (session.user) {
-        (session.user as typeof session.user & { isStaff?: boolean }).isStaff = token.isStaff === true;
+        const sessionUser = session.user as typeof session.user & {
+          isStaff?: boolean;
+          provider?: string;
+          providerAccountId?: string;
+        };
+        sessionUser.isStaff = token.isStaff === true;
+        sessionUser.provider = typeof token.provider === "string" ? token.provider : undefined;
+        sessionUser.providerAccountId = typeof token.providerAccountId === "string" ? token.providerAccountId : undefined;
       }
       return session;
     },

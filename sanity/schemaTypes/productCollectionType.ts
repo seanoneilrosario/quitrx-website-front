@@ -39,6 +39,19 @@ export const productCollectionType = defineType({
       validation: (Rule) => Rule.unique(),
     }),
     defineField({
+      name: 'selectionMode',
+      title: 'Product selection mode',
+      type: 'string',
+      options: {list: [{title: 'Manual', value: 'manual'}, {title: 'Dynamic by tag', value: 'dynamic'}]},
+      initialValue: 'manual',
+    }),
+    defineField({
+      name: 'dynamicTag',
+      title: 'Dynamic product tag',
+      type: 'string',
+      hidden: ({parent}) => parent?.selectionMode !== 'dynamic',
+    }),
+    defineField({
       name: 'image',
       title: 'Collection image',
       type: 'image',

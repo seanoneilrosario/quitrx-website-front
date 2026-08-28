@@ -19,6 +19,7 @@ function slugify(value: string) {
 export default function CollectionCreator({ products }: { products: ProductOption[] }) {
   const [filter, setFilter] = useState("");
   const [name, setName] = useState("");
+  const [selectionMode, setSelectionMode] = useState<"manual" | "dynamic">("manual");
   const slug = slugify(name);
   const filtered = useMemo(() => {
     const query = filter.trim().toLowerCase();
@@ -37,6 +38,12 @@ export default function CollectionCreator({ products }: { products: ProductOptio
           <label>SEO title<input name="seoTitle" /></label>
           <label>SEO description<input name="seoDescription" /></label>
         </div>
+        <fieldset className={styles.collectionMode}>
+          <legend>How should products be added?</legend>
+          <label><input type="radio" name="selectionMode" value="manual" checked={selectionMode === "manual"} onChange={() => setSelectionMode("manual")}/><span><strong>Manual</strong><small>Select specific products.</small></span></label>
+          <label><input type="radio" name="selectionMode" value="dynamic" checked={selectionMode === "dynamic"} onChange={() => setSelectionMode("dynamic")}/><span><strong>Dynamic</strong><small>Automatically include products matching a tag.</small></span></label>
+        </fieldset>
+        {selectionMode === "dynamic" ? <section className={styles.productPicker}><div><strong>Product tag condition</strong><span>Products with this tag will automatically appear in the collection.</span></div><label>Tag equals<input required name="dynamicTag" placeholder="For example: test"/></label></section> :
         <section className={styles.productPicker}>
           <div><strong>Add products</strong><span>Select one or more products for this collection.</span></div>
           <input aria-label="Filter products" placeholder="Filter products by name or slug" value={filter} onChange={(event) => setFilter(event.target.value)} />
@@ -44,7 +51,7 @@ export default function CollectionCreator({ products }: { products: ProductOptio
             {filtered.map((product) => <label key={product.id}><input type="checkbox" name="productIds" value={product.id}/><span><strong>{product.name}</strong><small>{product.slug}</small></span></label>)}
             {!filtered.length ? <p>No products match this filter.</p> : null}
           </div>
-        </section>
+        </section>}
         <button className={styles.primary}>Save collection</button>
       </form>
     </details>

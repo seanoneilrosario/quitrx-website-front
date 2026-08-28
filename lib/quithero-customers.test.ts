@@ -4,6 +4,8 @@ vi.mock("server-only", () => ({}));
 
 import {
   findQuitHeroCustomerByEmail,
+  findQuitHeroCustomerByOAuth,
+  linkQuitHeroCustomerOAuth,
   syncQuitHeroCustomer,
   syncQuitHeroCustomerWithoutBlocking,
   updateQuitHeroCustomer,
@@ -26,6 +28,31 @@ beforeEach(() => {
 });
 
 describe("QuitHero customer synchronization", () => {
+  it("finds a customer by OAuth provider account", async () => {
+    fetchMock.mockResolvedValueOnce(response({ data: { id: "customer-1", email: "user@example.com" } }));
+
+    const customer = await findQuitHeroCustomerByOAuth("facebook", " facebook/123 ");
+
+    expect(customer?.id).toBe("customer-1");
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://retail-api.test/customers/oauth/facebook/facebook%2F123",
+    );
+  });
+
+  it("links an OAuth account to a customer", async () => {
+    fetchMock.mockResolvedValueOnce(response({ id: "customer/1", email: "user@example.com" }, 201));
+
+    await linkQuitHeroCustomerOAuth(" customer/1 ", "google", " google/456 ");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://retail-api.test/customers/customer%2F1/oauth",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ provider: "google", providerAccountId: "google/456" }),
+      }),
+    );
+  });
+
   it("PATCHes a customer by ID", async () => {
     fetchMock.mockResolvedValueOnce(response({ id: "customer/123", firstName: "Updated" }));
 

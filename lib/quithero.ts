@@ -28,6 +28,9 @@ export type QuitHeroBrand = {
   logo?: string;
 };
 
+export type QuitHeroTag = { name?: string; slug?: string };
+export type QuitHeroProductTag = QuitHeroTag & { tag?: QuitHeroTag };
+
 export type QuitHeroProduct = {
   id?: string;
   name?: string;
@@ -38,6 +41,7 @@ export type QuitHeroProduct = {
   category?: string;
   productType?: string;
   brand?: QuitHeroBrand;
+  tags?: Array<QuitHeroProductTag | string>;
   images?: QuitHeroImage[];
   variants?: QuitHeroVariant[];
 };
@@ -118,19 +122,24 @@ export async function getQuitHeroCollection(slug: string) {
     title?: string;
     description?: string;
     productIds?: string[];
+    selectionMode?: "manual" | "dynamic";
+    dynamicTag?: string;
   } | null>(
-    `*[_type == "productCollection" && slug.current == $slug][0]{title, description, productIds}`,
+    `*[_type == "productCollection" && slug.current == $slug][0]{title, description, productIds, selectionMode, dynamicTag}`,
     { slug },
   );
   if (assignment) {
     const selected = new Set(assignment.productIds ?? []);
+    const assignedProducts = assignment.selectionMode === "dynamic" && assignment.dynamicTag
+      ? products.filter((product) => productHasTag(product, assignment.dynamicTag!))
+      : products.filter((product) => product.id && selected.has(product.id));
     return {
       brand: {
         name: assignment.title ?? slug,
         slug,
         description: assignment.description,
       },
-      products: products.filter((product) => product.id && selected.has(product.id)),
+      products: assignedProducts,
     };
   }
   const collectionProducts = products.filter((product) => product.brand?.slug === slug);
@@ -140,6 +149,16 @@ export async function getQuitHeroCollection(slug: string) {
     brand: collectionProducts[0].brand,
     products: collectionProducts,
   };
+}
+
+export function productHasTag(product: Pick<QuitHeroProduct, "tags">, expectedTag: string) {
+  const expected = expectedTag.trim().toLowerCase();
+  if (!expected) return false;
+  return product.tags?.some((tag) => {
+    if (typeof tag === "string") return tag.trim().toLowerCase() === expected;
+    return [tag.name, tag.slug, tag.tag?.name, tag.tag?.slug]
+      .some((value) => value?.trim().toLowerCase() === expected);
+  }) ?? false;
 }
 
 export function getPrimaryImage(product: QuitHeroProduct) {

@@ -7,7 +7,15 @@ export async function GET() {
   const session = await auth();
   const customerSession = await getCustomerSession();
   const email = session?.user?.email ?? customerSession?.email;
-  if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!email) {
+    return NextResponse.json(
+      {
+        error: "Email address is required to load the customer account.",
+      },
+      { status: 400 }
+    );
+  }
 
   const [oauthFirstName, ...oauthLastNameParts] = (session?.user?.name ?? "").trim().split(/\s+/);
   const identity = {
