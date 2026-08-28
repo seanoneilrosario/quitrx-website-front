@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteResource, saveResource } from "../actions";
 import { safeRetailList, type RetailRecord } from "@/lib/quithero-admin";
+import CollectionCreator from "./CollectionCreator";
+import { client } from "@/sanity/lib/client";
 import styles from "./dashboard.module.css";
 
 export const metadata: Metadata = { title: "Staff Dashboard | QuitRX" };
@@ -10,6 +12,7 @@ export const metadata: Metadata = { title: "Staff Dashboard | QuitRX" };
 const routes = [
   [], ["products"], ["products", "create"], ["products", "edit"], ["products", "variants"],
   ["products", "images"], ["products", "options"], ["products", "tags"], ["products", "collections"],
+  ["collections"], ["collections", "details"],
   ["customers"], ["customers", "details"], ["customers", "edit"],
   ["orders"], ["orders", "details"], ["inventory"], ["inventory", "history"],
 ];
@@ -24,6 +27,7 @@ type Props = {
 const nav = [
   { label: "Dashboard", href: "/dashboard", icon: "⌂" },
   { label: "Products", href: "/dashboard/products", icon: "□" },
+  { label: "Collections", href: "/dashboard/collections", icon: "◇" },
   { label: "Customers", href: "/dashboard/customers", icon: "♙" },
   { label: "Orders", href: "/dashboard/orders", icon: "▤" },
   { label: "Inventory", href: "/dashboard/inventory", icon: "▥" },
@@ -68,7 +72,7 @@ function Dashboard({ products, customers, orders, variants, error }: { products:
 
 function Products({ items, query, error }: { items: RetailRecord[]; query: string; error?: string }) {
   const filtered = items.filter((item) => !query || `${text(item.name)} ${text(item.slug)} ${text(item.status)}`.toLowerCase().includes(query.toLowerCase()));
-  return <><Header title="Products" description="Manage products and everything customers see in your store." action={<Link className={styles.primary} href="/dashboard/products/create">+ Create product</Link>}/><Notice message={error}/><div className={styles.toolbar}><Search placeholder="Search products"/><div className={styles.subnav}>{[["Variants","variants"],["Images","images"],["Options","options"],["Tags","tags"],["Collections","collections"]].map(([label, path]) => <Link key={path} href={`/dashboard/products/${path}`}>{label}</Link>)}</div></div><Table heads={["Product", "Brand", "Type", "Status", "Actions"]}>{filtered.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.name)}</strong><small>{text(item.slug)}</small></td><td>{text(nested(item, "brand")?.name ?? item.brandId)}</td><td>{text(nested(item, "productType")?.name ?? item.productTypeId)}</td><td><Status value={item.status}/></td><td className={styles.actions}><Link href={`/dashboard/products/edit?id=${text(item.id)}`}>Edit</Link><form action={deleteResource}><input type="hidden" name="_resource" value="products"/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>)}</Table></>;
+  return <><Header title="Products" description="Manage products and everything customers see in your store." action={<Link className={styles.primary} href="/dashboard/products/create">+ Create product</Link>}/><Notice message={error}/><div className={styles.toolbar}><Search placeholder="Search products"/><div className={styles.subnav}>{[["Variants","variants"],["Images","images"],["Options","options"],["Tags","tags"]].map(([label, path]) => <Link key={path} href={`/dashboard/products/${path}`}>{label}</Link>)}</div></div><Table heads={["Product", "Brand", "Type", "Status", "Actions"]}>{filtered.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.name)}</strong><small>{text(item.slug)}</small></td><td>{text(nested(item, "brand")?.name ?? item.brandId)}</td><td>{text(nested(item, "productType")?.name ?? item.productTypeId)}</td><td><Status value={item.status}/></td><td className={styles.actions}><Link href={`/dashboard/products/edit?id=${text(item.id)}`}>Edit</Link><form action={deleteResource}><input type="hidden" name="_resource" value="products"/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>)}</Table></>;
 }
 
 function ProductForm({ item }: { item?: RetailRecord }) {
@@ -83,9 +87,29 @@ const resourceConfig: Record<string, { title: string; description: string; resou
   collections: { title: "Collections", description: "Group products into storefront collections.", resource: "collections", heads: ["Collection", "Slug", "SEO title", "", "Actions"], fields: [["name","Collection name"],["slug","Slug"],["description","Description"],["image","Image URL","url"],["seoTitle","SEO title"]] },
 };
 
-function ResourcePage({ kind, items, error }: { kind: string; items: RetailRecord[]; error?: string }) {
+function ResourcePage({ kind, items, error, path = `/dashboard/products/${kind}` }: { kind: string; items: RetailRecord[]; error?: string; path?: string }) {
   const config = resourceConfig[kind];
-  return <><Header title={config.title} description={config.description}/><Notice message={error}/><details className={styles.creator}><summary>+ Add {config.title.toLowerCase().replace(/s$/, "")}</summary><form action={saveResource}><input type="hidden" name="_resource" value={config.resource}/><input type="hidden" name="_returnTo" value={`/dashboard/products/${kind}`}/><div className={styles.inlineForm}>{config.fields.map(([name, label, type]) => <label key={name}>{label}<input required={["productId","name","sku","price","url","slug"].includes(name)} type={type ?? "text"} step={type === "number" ? "any" : undefined} name={name}/></label>)}</div><button className={styles.primary}>Save</button></form></details><Table heads={config.heads}>{items.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.name ?? item.url)}</strong><small>{text(item.productId)}</small></td><td>{text(item.sku ?? item.slug ?? item.productId)}</td><td>{kind === "variants" ? money(item.price) : text(item.altText ?? item.seoTitle ?? item.id)}</td><td>{text(item.inventory ?? item.sortOrder, "")}</td><td className={styles.actions}><form action={deleteResource}><input type="hidden" name="_resource" value={config.resource}/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>)}</Table></>;
+  return <><Header title={config.title} description={config.description}/><Notice message={error}/><details className={styles.creator}><summary>+ Add {config.title.toLowerCase().replace(/s$/, "")}</summary><form action={saveResource}><input type="hidden" name="_resource" value={config.resource}/><input type="hidden" name="_returnTo" value={path}/><div className={styles.inlineForm}>{config.fields.map(([name, label, type]) => <label key={name}>{label}<input required={["productId","name","sku","price","url","slug"].includes(name)} type={type ?? "text"} step={type === "number" ? "any" : undefined} name={name}/></label>)}</div><button className={styles.primary}>Save</button></form></details><Table heads={config.heads}>{items.map((item, index) => <tr key={text(item.id, String(index))}><td><strong>{text(item.name ?? item.url)}</strong><small>{text(item.productId)}</small></td><td>{text(item.sku ?? item.slug ?? item.productId)}</td><td>{kind === "variants" ? money(item.price) : text(item.altText ?? item.seoTitle ?? item.id)}</td><td>{text(item.inventory ?? item.sortOrder, "")}</td><td className={styles.actions}><form action={deleteResource}><input type="hidden" name="_resource" value={config.resource}/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>)}</Table></>;
+}
+
+type CollectionAssignment = { quitHeroCollectionId?: string; slug?: string; productIds?: string[] };
+
+function collectionAssignment(item: RetailRecord, assignments: CollectionAssignment[]) {
+  return assignments.find((assignment) =>
+    (typeof item.id === "string" && assignment.quitHeroCollectionId === item.id) ||
+    (typeof item.slug === "string" && assignment.slug === item.slug));
+}
+
+function CollectionsPage({ items, products, assignments, error }: { items: RetailRecord[]; products: RetailRecord[]; assignments: CollectionAssignment[]; error?: string }) {
+  const options = products.flatMap((product) => typeof product.id === "string" ? [{ id: product.id, name: text(product.name, "Unnamed product"), slug: text(product.slug, "") }] : []);
+  return <><Header title="Collections" description="Group products into storefront collections."/><Notice message={error}/><CollectionCreator products={options}/><Table heads={["Collection", "Slug", "SEO title", "Products", "Actions"]}>{items.map((item, index) => { const count = collectionAssignment(item, assignments)?.productIds?.length ?? 0; return <tr key={text(item.id, String(index))}><td><strong>{text(item.name)}</strong><small>{text(item.id)}</small></td><td>{text(item.slug)}</td><td>{text(item.seoTitle)}</td><td>{count}</td><td className={styles.actions}><Link href={`/dashboard/collections/details?id=${text(item.id)}`}>View</Link><form action={deleteResource}><input type="hidden" name="_resource" value="collections"/><input type="hidden" name="_id" value={text(item.id)}/><button>Delete</button></form></td></tr>; })}</Table></>;
+}
+
+function CollectionDetail({ item, products, assignment }: { item?: RetailRecord; products: RetailRecord[]; assignment?: CollectionAssignment }) {
+  if (!item) return <><Header title="Collection not found" description="Choose a collection from the collection list."/><Link className={styles.primary} href="/dashboard/collections">Back to collections</Link></>;
+  const selected = new Set(assignment?.productIds ?? []);
+  const assignedProducts = products.filter((product) => typeof product.id === "string" && selected.has(product.id));
+  return <><Header title={text(item.name)} description={text(item.description, "Products assigned to this collection.")} action={<div className={styles.actions}><Link className={styles.secondary} href="/dashboard/collections">Back</Link><Link className={styles.primary} href={`/collections/${text(item.slug)}`}>View storefront</Link></div>}/><Table heads={["Product", "Slug", "Brand", "Status", "Action"]}>{assignedProducts.map((product, index) => <tr key={text(product.id, String(index))}><td><strong>{text(product.name)}</strong><small>{text(product.id)}</small></td><td>{text(product.slug)}</td><td>{text(nested(product, "brand")?.name)}</td><td><Status value={product.status}/></td><td><Link href={`/dashboard/products/edit?id=${text(product.id)}`}>Edit product</Link></td></tr>)}</Table>{!assignedProducts.length ? <div className={styles.notice}><strong>No products assigned</strong><span>Create a new collection and select products from the product picker.</span></div> : null}</>;
 }
 
 function Customers({ items, query, error }: { items: RetailRecord[]; query: string; error?: string }) {
@@ -121,6 +145,17 @@ export default async function DashboardPage({ params, searchParams }: Props) {
   else if (area === "products" && sub === "create") content = <ProductForm/>;
   else if (area === "products" && sub === "edit") { const result = await safeRetailList("/products"); content = <ProductForm item={result.data.find((item) => item.id === id)}/>; }
   else if (area === "products" && resourceConfig[sub]) { const config = resourceConfig[sub]; const result = await safeRetailList(`/${config.resource}`); content = <ResourcePage kind={sub} items={result.data} error={result.error}/>; }
+  else if (area === "collections") {
+    const [collections, products, assignments] = await Promise.all([
+      safeRetailList("/collections"),
+      safeRetailList("/products"),
+      client.withConfig({ useCdn: false }).fetch<CollectionAssignment[]>(`*[_type == "productCollection"]{"slug": slug.current, quitHeroCollectionId, productIds}`).catch(() => []),
+    ]);
+    const item = collections.data.find((collection) => collection.id === id);
+    content = sub === "details"
+      ? <CollectionDetail item={item} products={products.data} assignment={item ? collectionAssignment(item, assignments) : undefined}/>
+      : <CollectionsPage items={collections.data} products={products.data} assignments={assignments} error={collections.error ?? products.error}/>;
+  }
   else if (area === "customers" && !sub) { const result = await safeRetailList("/customers"); content = <Customers items={result.data} query={q} error={result.error}/>; }
   else if (area === "customers") { const result = await safeRetailList("/customers"); content = <CustomerDetail item={result.data.find((item) => item.id === id)} editing={sub === "edit"}/>; }
   else if (area === "orders") { const result = await safeRetailList("/orders"); content = <Orders items={result.data} query={q} detail={sub === "details" ? result.data.find((item) => item.id === id) : undefined} error={result.error}/>; }

@@ -1,5 +1,5 @@
 import {TagIcon} from '@sanity/icons'
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const productCollectionType = defineType({
   name: 'productCollection',
@@ -24,6 +24,19 @@ export const productCollectionType = defineType({
       name: 'description',
       type: 'text',
       rows: 3,
+    }),
+    defineField({
+      name: 'quitHeroCollectionId',
+      title: 'QuitHero collection ID',
+      type: 'string',
+      readOnly: true,
+    }),
+    defineField({
+      name: 'productIds',
+      title: 'QuitHero product IDs',
+      type: 'array',
+      of: [defineArrayMember({type: 'string'})],
+      validation: (Rule) => Rule.unique(),
     }),
     defineField({
       name: 'image',

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { client } from "@/sanity/lib/client";
+
 export type QuitHeroImage = {
   url?: string;
   altText?: string;
@@ -90,6 +92,25 @@ export async function getQuitHeroCollection(slug: string) {
         slug: "all-products",
       },
       products,
+    };
+  }
+  const assignment = await client.withConfig({ useCdn: false }).fetch<{
+    title?: string;
+    description?: string;
+    productIds?: string[];
+  } | null>(
+    `*[_type == "productCollection" && slug.current == $slug][0]{title, description, productIds}`,
+    { slug },
+  );
+  if (assignment) {
+    const selected = new Set(assignment.productIds ?? []);
+    return {
+      brand: {
+        name: assignment.title ?? slug,
+        slug,
+        description: assignment.description,
+      },
+      products: products.filter((product) => product.id && selected.has(product.id)),
     };
   }
   const collectionProducts = products.filter((product) => product.brand?.slug === slug);
