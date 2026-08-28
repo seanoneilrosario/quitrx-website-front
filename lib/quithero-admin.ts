@@ -5,7 +5,20 @@ const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quith
 export type RetailRecord = Record<string, unknown> & { id?: string };
 
 function apiKey() {
-  const value = process.env.QUITHERO_API_KEY;
+  let value = process.env.QUITHERO_API_KEY?.trim();
+  if (!value) throw new Error("QUITHERO_API_KEY is not configured.");
+
+  // Vercel values are plain text, while copied .env entries may include the
+  // variable name or escape `$`. Normalize those forms before authenticating.
+  value = value.replace(/^QUITHERO_API_KEY\s*=\s*/, "");
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1);
+  }
+  value = value.replace(/\\\$/g, "$");
+
   if (!value) throw new Error("QUITHERO_API_KEY is not configured.");
   return value;
 }
