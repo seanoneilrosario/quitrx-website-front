@@ -53,12 +53,12 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
 
         <div className="customer-login__socials">
           {googleEnabled ? (
-            <Link href="/api/account/google" onClick={(event) => openSocialPopup(event, "google")} aria-label="Continue with Google"><span className="google-mark">G</span></Link>
+            <a href="/api/account/google" onClick={(event) => openSocialPopup(event, "google")} aria-label="Continue with Google"><span className="google-mark">G</span></a>
           ) : (
             <button type="button" disabled title="Configure Google OAuth credentials" aria-label="Continue with Google"><span className="google-mark">G</span></button>
           )}
           {facebookEnabled ? (
-            <Link href="/api/account/facebook" onClick={(event) => openSocialPopup(event, "facebook")} aria-label="Continue with Facebook"><span className="facebook-mark">f</span></Link>
+            <a href="/api/account/facebook" onClick={(event) => openSocialPopup(event, "facebook")} aria-label="Continue with Facebook"><span className="facebook-mark">f</span></a>
           ) : (
             <button type="button" disabled title="Configure Facebook OAuth credentials" aria-label="Continue with Facebook"><span className="facebook-mark">f</span></button>
           )}
