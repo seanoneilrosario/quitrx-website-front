@@ -29,7 +29,11 @@ export default function AuthPopupCompletePage() {
   useEffect(() => {
     if (needsEmail !== false || !window.opener) return;
 
-    window.opener.postMessage({ type: "quitrx:auth-success" }, window.location.origin);
+    window.opener.postMessage(
+      { type: "quitrx:auth-success" },
+      window.location.origin,
+    );
+
     window.close();
   }, [needsEmail]);
 
@@ -120,10 +124,16 @@ export default function AuthPopupCompletePage() {
   return (
     <main className="customer-login" role="status">
       <section className="customer-login__dialog">
-        <div className="customer-login__brand" aria-label="QuitRx">Quit<span>Rx</span></div>
+        <div className="customer-login__brand" aria-label="QuitRx">
+          Quit<span>Rx</span>
+        </div>
+
         <div className="customer-login__copy">
           <h1>Signed in</h1>
-          <p>Your login was successful. You can close this window or continue to your account.</p>
+          <p>
+            Your login was successful. You can close this window or continue
+            to your account.
+          </p>
         </div>
       </section>
     </main>
