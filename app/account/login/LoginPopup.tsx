@@ -12,26 +12,67 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
   const router = useRouter();
 
   useEffect(() => {
+    console.log("[OAuth Debug] login page mounted", {
+      pathname: window.location.pathname,
+      origin: window.location.origin,
+    });
+
     const handleAuthSuccess = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin || event.data?.type !== "quitrx:auth-success") return;
+      console.log("[OAuth Debug] message received", {
+        origin: event.origin,
+        type: event.data?.type,
+      });
+
+      if (
+        event.origin !== window.location.origin ||
+        event.data?.type !== "quitrx:auth-success"
+      ) {
+        return;
+      }
+
+      console.log("[OAuth Debug] auth success -> /account");
+
       router.replace("/account");
       router.refresh();
     };
 
     window.addEventListener("message", handleAuthSuccess);
-    return () => window.removeEventListener("message", handleAuthSuccess);
+
+    return () =>
+      window.removeEventListener("message", handleAuthSuccess);
   }, [router]);
 
-  const openSocialPopup = (event: React.MouseEvent<HTMLAnchorElement>, provider: "google" | "facebook") => {
+  const openSocialPopup = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    provider: "google" | "facebook",
+  ) => {
+    console.log("[OAuth Debug] clicked", {
+      provider,
+      href: event.currentTarget.href,
+      origin: window.location.origin,
+    });
+
     const width = 730;
     const height = 760;
-    const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2);
-    const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2);
+    const left = Math.max(
+      0,
+      window.screenX + (window.outerWidth - width) / 2,
+    );
+    const top = Math.max(
+      0,
+      window.screenY + (window.outerHeight - height) / 2,
+    );
+
     const popup = window.open(
       event.currentTarget.href,
       `quitrx-${provider}-login`,
       `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
     );
+
+    console.log("[OAuth Debug] popup result", {
+      provider,
+      popupOpened: Boolean(popup),
+    });
 
     if (popup) {
       event.preventDefault();
