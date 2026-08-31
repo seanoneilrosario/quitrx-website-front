@@ -36,6 +36,13 @@ function variantLabel(variant: Variant, index: number) {
   return variant.options?.strength || variant.options?.Strength || variant.size || variant.name || `Option ${index + 1}`;
 }
 
+function relatedVariantLabel(productName: string, variant: Variant, index: number) {
+  const label = variantLabel(variant, index);
+  if (!label.toLowerCase().startsWith(productName.toLowerCase())) return label;
+
+  return label.slice(productName.length).replace(/^\s*[-–—:]\s*/, "") || label;
+}
+
 function formatPrice(value?: number | string) {
   if (typeof value === "number") return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
   return value || "Price on request";
@@ -159,7 +166,7 @@ export default function ProductPurchasePanel({
                   <small>{formatPrice(product.variants[variantIndex]?.price)}</small>
                   {product.variants.length > 0 && (
                     <select value={variantIndex} onChange={(event) => setRelatedVariants((values) => ({ ...values, [product.id]: Number(event.target.value) }))} aria-label={`${product.name} option`}>
-                      {product.variants.map((variant, index) => <option key={variant.id || index} value={index}>{variantLabel(variant, index)}</option>)}
+                      {product.variants.map((variant, index) => <option key={variant.id || index} value={index}>{relatedVariantLabel(product.name, variant, index)}</option>)}
                     </select>
                   )}
                 </span>

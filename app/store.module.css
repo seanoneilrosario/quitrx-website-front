@@ -583,10 +583,10 @@
 
 .relatedProduct > input { width: 17px; height: 17px; }
 .relatedProduct > img { width: 52px; height: 66px; object-fit: contain; }
-.relatedProduct > span { display: grid; justify-items: start; gap: 3px; }
-.relatedProduct strong { color: #287b85; font-size: 15px; text-transform: uppercase; }
+.relatedProduct > span { display: grid; width: 100%; min-width: 0; overflow: hidden !important; justify-items: stretch; gap: 3px; }
+.relatedProduct strong { color: #287b85; font-size: 15px; overflow-wrap: anywhere; text-transform: uppercase; }
 .relatedProduct small { color: #5b9ca3; font-size: 14px; }
-.relatedProduct select { min-width: 96px; height: 30px; }
+.relatedProduct select { display: block; box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; height: 30px; overflow: hidden; text-overflow: ellipsis; }
 
 .cartPage {
   min-height: 70vh;
