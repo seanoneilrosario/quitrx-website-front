@@ -8,6 +8,7 @@
   min-height: 780px;
   background: var(--paper);
   color: var(--ink);
+  height: 100vh;
 }
 
 .account-sidebar {
@@ -27,6 +28,7 @@
   font-weight: 800;
   letter-spacing: -0.06em;
   line-height: 1;
+  text-decoration: none;
 }
 
 .account-brand__mark { color: #fff; }
@@ -167,7 +169,7 @@
   right: 20px;
 }
 .customer-login__close:hover { background: #edf7f4; }
-.customer-login__brand { margin-bottom: 52px; color: #075d67; font-size: 38px; font-weight: 800; letter-spacing: -.07em; }
+.customer-login__brand { display: block; margin-bottom: 52px; color: #075d67; font-size: 38px; font-weight: 800; letter-spacing: -.07em; text-decoration: none; }
 .customer-login__brand span { margin-left: 4px; padding: 2px 7px; border-radius: 9px; background: #66e5bd; font-size: 22px; }
 .customer-login__socials { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
 .customer-login__socials form { display: grid; }

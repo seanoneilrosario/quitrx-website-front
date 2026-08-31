@@ -85,7 +85,7 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
       <Link className="customer-login__backdrop" href="/" aria-label="Close customer login" />
       <section className="customer-login__dialog" role="dialog" aria-modal="true" aria-labelledby="customer-login-title">
         <Link className="customer-login__close" href="/" aria-label="Close customer login"><span aria-hidden="true">&times;</span></Link>
-        <div className="customer-login__brand" aria-label="QuitRx">Quit<span>Rx</span></div>
+        <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">Quit<span>Rx</span></Link>
 
         <div className="customer-login__copy">
           <h1 id="customer-login-title">Sign in</h1>

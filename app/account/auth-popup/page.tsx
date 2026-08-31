@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function AuthPopupCompletePage() {
@@ -76,7 +77,7 @@ export default function AuthPopupCompletePage() {
     return (
       <main className="customer-login" role="status">
         <section className="customer-login__dialog">
-          <div className="customer-login__brand" aria-label="QuitRx">Quit<span>Rx</span></div>
+          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">Quit<span>Rx</span></Link>
           <div className="customer-login__copy">
             <h1>Signing in</h1>
             <p>{error || "Please wait..."}</p>
@@ -90,7 +91,7 @@ export default function AuthPopupCompletePage() {
     return (
       <main className="customer-login" role="dialog" aria-modal="true">
         <section className="customer-login__dialog">
-          <div className="customer-login__brand" aria-label="QuitRx">Quit<span>Rx</span></div>
+          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">Quit<span>Rx</span></Link>
           <div className="customer-login__copy">
             <h1>Almost there</h1>
             <p>Enter your email address once to connect your Facebook account to your QuitRx customer account.</p>
@@ -124,9 +125,9 @@ export default function AuthPopupCompletePage() {
   return (
     <main className="customer-login" role="status">
       <section className="customer-login__dialog">
-        <div className="customer-login__brand" aria-label="QuitRx">
+        <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">
           Quit<span>Rx</span>
-        </div>
+        </Link>
 
         <div className="customer-login__copy">
           <h1>Signed in</h1>

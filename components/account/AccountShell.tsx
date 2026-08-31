@@ -36,10 +36,10 @@ export default function AccountShell({ children }: { children: React.ReactNode }
   return (
     <div className="account-shell">
       <aside className="account-sidebar">
-        <div className="account-brand" aria-label="QuitRx logo">
+        <Link className="account-brand" href="/" aria-label="QuitRx homepage">
           <span className="account-brand__mark">Quit</span>
           <span className="account-brand__rx">Rx</span>
-        </div>
+        </Link>
         <div className="account-sidebar__intro">
           <span className="account-avatar">QR</span>
           <div><strong>My account</strong><span>QuitRX customer</span></div>
