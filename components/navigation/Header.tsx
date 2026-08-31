@@ -30,6 +30,29 @@ type HeaderProps = {
   navigation?: NavigationData | null;
   searchPages?: SearchPage[];
 };
+type CartItem = {
+  key: string;
+  productName: string;
+  image?: string;
+  variantName: string;
+  price?: number | string;
+  quantity: number;
+};
+const CART_KEY = "quitrx-cart";
+
+function readCart(): CartItem[] {
+  try {
+    const cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    return Array.isArray(cart) ? cart : [];
+  } catch {
+    return [];
+  }
+}
+
+function cartMoney(value?: number | string) {
+  const amount = typeof value === "number" ? value : Number(String(value || "").replace(/[^0-9.-]/g, ""));
+  return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(Number.isFinite(amount) ? amount : 0);
+}
 const fallbackMenu: NavigationMenuItem[] = [
   { title: "About", href: "/about" },
 ];
@@ -59,6 +82,8 @@ function getHref(item: NavigationMenuItem) {
 export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
@@ -81,6 +106,19 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     );
   }, [searchPages, searchTerm]);
   useEffect(() => {
+    const updateCart = (event?: Event) => {
+      setCartItems(readCart());
+      if (event instanceof CustomEvent && event.detail?.open) setIsCartOpen(true);
+    };
+    updateCart();
+    window.addEventListener("storage", updateCart);
+    window.addEventListener("quitrx:cart-updated", updateCart);
+    return () => {
+      window.removeEventListener("storage", updateCart);
+      window.removeEventListener("quitrx:cart-updated", updateCart);
+    };
+  }, []);
+  useEffect(() => {
     lastScrollY.current = window.scrollY;
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -100,11 +138,11 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     setSearchTerm("");
   }, [pathname]);
   useEffect(() => {
-    document.body.style.overflow = isOpen || isSearchOpen ? "hidden" : "";
+    document.body.style.overflow = isOpen || isSearchOpen || isCartOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen, isSearchOpen]);
+  }, [isOpen, isSearchOpen, isCartOpen]);
   useEffect(() => {
     if (isSearchOpen) {
       searchInputRef.current?.focus();
@@ -132,6 +170,17 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     return null
   }
   const selectedLogo = !isHome && navigation?.header_logo2 ? navigation.header_logo2 : navigation?.headerLogo
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const cartSubtotal = cartItems.reduce((total, item) => {
+    const amount = typeof item.price === "number" ? item.price : Number(String(item.price || "").replace(/[^0-9.-]/g, ""));
+    return total + (Number.isFinite(amount) ? amount : 0) * item.quantity;
+  }, 0);
+
+  function saveCart(items: CartItem[]) {
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    setCartItems(items);
+    window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items } }));
+  }
   return (
     <Fragment>
       <div className="site-marquee">
@@ -152,12 +201,13 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
           <div className="site-header__inner">
             <div className="mobile_nav_icons">
                <div className="cart-button">
-                <Link className="site-header__cart site-header__mobile" href="/cart">
-                  My Cart
-                </Link>
-                <Link className="site-header__cart site-header__desktop" href="/cart">
+                <button className="site-header__cart site-header__mobile" type="button" onClick={() => setIsCartOpen(true)}>
+                  My Cart {cartCount > 0 && <span className="site-header__cart-count">{cartCount}</span>}
+                </button>
+                <button className="site-header__cart site-header__desktop" type="button" aria-label={`Open cart with ${cartCount} items`} onClick={() => setIsCartOpen(true)}>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" className="icon icon-cart-empty" viewBox="0 0 40 40"><path fill="currentColor" fillRule="evenodd" d="M15.75 11.8h-3.16l-.77 11.6a5 5 0 0 0 4.99 5.34h7.38a5 5 0 0 0 4.99-5.33L28.4 11.8zm0 1h-2.22l-.71 10.67a4 4 0 0 0 3.99 4.27h7.38a4 4 0 0 0 4-4.27l-.72-10.67h-2.22v.63a4.75 4.75 0 1 1-9.5 0zm8.5 0h-7.5v.63a3.75 3.75 0 1 0 7.5 0z"></path></svg>
-                </Link>
+                  {cartCount > 0 && <span className="site-header__cart-count">{cartCount}</span>}
+                </button>
               </div>
               <Link className="site-header__account site-header__desktop" href="/account/login">
                 {/* <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> */}
@@ -322,6 +372,45 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
               })}
             </div>
           </div>
+        </div>
+        <div className={`cart-drawer ${isCartOpen ? "cart-drawer--open" : ""}`} aria-hidden={!isCartOpen}>
+          <button className="cart-drawer__backdrop" type="button" aria-label="Close cart" onClick={() => setIsCartOpen(false)} />
+          <aside className="cart-drawer__panel" role="dialog" aria-modal="true" aria-label="Shopping cart">
+            <div className="cart-drawer__header">
+              <h2>Your cart <span>({cartCount})</span></h2>
+              <button type="button" aria-label="Close cart" onClick={() => setIsCartOpen(false)}>&times;</button>
+            </div>
+            {cartItems.length === 0 ? (
+              <div className="cart-drawer__empty"><p>Your cart is empty.</p><button type="button" onClick={() => setIsCartOpen(false)}>Continue shopping</button></div>
+            ) : (
+              <>
+                <div className="cart-drawer__items">
+                  {cartItems.map((item) => (
+                    <article className="cart-drawer__item" key={item.key}>
+                      <div className="cart-drawer__image">{item.image && <img src={item.image} alt="" />}</div>
+                      <div className="cart-drawer__details">
+                        <strong>{item.productName}</strong>
+                        <span>{item.variantName}</span>
+                        <span>{cartMoney(item.price)}</span>
+                        <div className="cart-drawer__quantity">
+                          <button type="button" aria-label={`Decrease ${item.productName} quantity`} onClick={() => saveCart(item.quantity === 1 ? cartItems.filter((entry) => entry.key !== item.key) : cartItems.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity - 1 } : entry))}>−</button>
+                          <span>{item.quantity}</span>
+                          <button type="button" aria-label={`Increase ${item.productName} quantity`} onClick={() => saveCart(cartItems.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry))}>+</button>
+                        </div>
+                      </div>
+                      <button className="cart-drawer__remove" type="button" onClick={() => saveCart(cartItems.filter((entry) => entry.key !== item.key))}>Remove</button>
+                    </article>
+                  ))}
+                </div>
+                <div className="cart-drawer__footer">
+                  <div><span>Subtotal</span><strong>{cartMoney(cartSubtotal)}</strong></div>
+                  <p>Shipping and payment are confirmed at checkout.</p>
+                  <Link href="/cart" onClick={() => setIsCartOpen(false)}>View cart</Link>
+                  <Link className="cart-drawer__checkout" href="/contact" onClick={() => setIsCartOpen(false)}>Continue to checkout</Link>
+                </div>
+              </>
+            )}
+          </aside>
         </div>
     </Fragment>
   );

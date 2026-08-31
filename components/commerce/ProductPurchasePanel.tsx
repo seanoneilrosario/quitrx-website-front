@@ -52,7 +52,7 @@ function addItemsToCart(items: CartItem[]) {
   });
 
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: cart }));
+  window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items: cart, open: true } }));
 }
 
 export default function ProductPurchasePanel({
