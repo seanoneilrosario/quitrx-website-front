@@ -401,6 +401,8 @@
   margin-top: 6px;
   padding: 0;
   background: #25616d;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
 }
 
 .site-search__results p {
@@ -421,6 +423,19 @@
 
 .site-search__results a:hover {
   background: rgba(255, 255, 255, .16);
+}
+
+.site-search__results .site-search__product {
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.site-search__product img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  background: #fff;
 }
 
 .site-search__results span {

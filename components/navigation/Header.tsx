@@ -43,6 +43,7 @@ type SearchProduct = {
   name: string;
   slug?: string;
   description?: string;
+  image?: string;
 };
 const CART_KEY = "quitrx-cart";
 
@@ -55,6 +56,16 @@ function textValue(record: Record<string, unknown>, keys: string[]) {
     const value = record[key];
     if (typeof value === "string" && value.trim()) return value;
   }
+}
+
+function productImage(product: Record<string, unknown>) {
+  const directImage = textValue(product, ["imageUrl", "image_url", "thumbnail", "image"]);
+  if (directImage) return directImage;
+
+  const images = product.images;
+  if (!Array.isArray(images) || !images.length) return undefined;
+  if (typeof images[0] === "string") return images[0];
+  return textValue(asRecord(images[0]) || {}, ["url", "src", "imageUrl"]);
 }
 
 function parseSearchProducts(payload: unknown): SearchProduct[] {
@@ -73,6 +84,7 @@ function parseSearchProducts(payload: unknown): SearchProduct[] {
       name,
       slug: textValue(product, ["slug"]),
       description: textValue(product, ["shortDescription", "description", "seoDescription"]),
+      image: productImage(product),
     }];
   });
 }
@@ -443,7 +455,6 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                 return (
                   <Link key={page._id} href={href} onClick={() => setIsSearchOpen(false)}>
                     <strong>{page.title || "Untitled page"}</strong>
-                    {page.metaDescription && <span>{page.metaDescription}</span>}
                   </Link>
                 );
               })}
@@ -451,10 +462,11 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                 <Link
                   key={product.id}
                   href={product.slug ? `/products/${product.slug}` : `/product/${encodeURIComponent(product.id)}`}
+                  className="site-search__product"
                   onClick={() => setIsSearchOpen(false)}
                 >
+                  {product.image && <img src={product.image} alt="" />}
                   <strong>{product.name}</strong>
-                  {product.description && <span>{product.description}</span>}
                 </Link>
               ))}
             </div>
