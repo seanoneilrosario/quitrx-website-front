@@ -38,7 +38,44 @@ type CartItem = {
   price?: number | string;
   quantity: number;
 };
+type SearchProduct = {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+};
 const CART_KEY = "quitrx-cart";
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" ? value as Record<string, unknown> : undefined;
+}
+
+function textValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value;
+  }
+}
+
+function parseSearchProducts(payload: unknown): SearchProduct[] {
+  const record = asRecord(payload);
+  const items = Array.isArray(payload) ? payload : record?.products || record?.data || record?.items;
+  if (!Array.isArray(items)) return [];
+
+  return items.flatMap((item) => {
+    const product = asRecord(item);
+    if (!product) return [];
+    const id = textValue(product, ["id", "_id"]);
+    const name = textValue(product, ["name", "title", "productName"]);
+    if (!id || !name) return [];
+    return [{
+      id,
+      name,
+      slug: textValue(product, ["slug"]),
+      description: textValue(product, ["shortDescription", "description", "seoDescription"]),
+    }];
+  });
+}
 
 function readCart(): CartItem[] {
   try {
@@ -85,6 +122,10 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchLoaded, setSearchLoaded] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const lastScrollY = useRef(0);
@@ -97,7 +138,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const isHome = pathname === "/";
   const isAdmin = pathname.startsWith("/admin");
   const isAccountPage = pathname === "/account" || pathname === "/account/login";
-  const searchResults = useMemo(() => {
+  const pageSearchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return [];
 
@@ -105,6 +146,33 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
       `${page.title || ""} ${page.metaDescription || ""}`.toLowerCase().includes(term)
     );
   }, [searchPages, searchTerm]);
+  const productSearchResults = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return [];
+    return searchProducts.filter((product) =>
+      `${product.name} ${product.description || ""}`.toLowerCase().includes(term)
+    );
+  }, [searchProducts, searchTerm]);
+  useEffect(() => {
+    if (!isSearchOpen || searchLoaded || searchLoading) return;
+    const controller = new AbortController();
+    setSearchLoading(true);
+    setSearchError("");
+    fetch("/api/quithero-products", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load products.");
+        setSearchProducts(parseSearchProducts(await response.json()));
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setSearchError("Product search is temporarily unavailable.");
+      })
+      .finally(() => {
+        setSearchLoading(false);
+        setSearchLoaded(true);
+      });
+    return () => controller.abort();
+  }, [isSearchOpen, searchLoaded, searchLoading]);
   useEffect(() => {
     const updateCart = (event?: Event) => {
       setCartItems(readCart());
@@ -360,8 +428,10 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
               <span />
             </button>
             <div className="site-search__results" aria-live="polite">
-              {searchTerm.trim() && searchResults.length === 0 && <p>No pages found.</p>}
-              {searchResults.map((page) => {
+              {searchTerm.trim() && !searchLoading && pageSearchResults.length === 0 && productSearchResults.length === 0 && <p>No results found.</p>}
+              {searchLoading && <p>Loading products…</p>}
+              {searchError && <p>{searchError}</p>}
+              {pageSearchResults.map((page) => {
                 const href = page._type === "home" ? "/" : `/${page.slug}`;
                 return (
                   <Link key={page._id} href={href} onClick={() => setIsSearchOpen(false)}>
@@ -370,6 +440,16 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                   </Link>
                 );
               })}
+              {productSearchResults.map((product) => (
+                <Link
+                  key={product.id}
+                  href={product.slug ? `/products/${product.slug}` : `/product/${encodeURIComponent(product.id)}`}
+                  onClick={() => setIsSearchOpen(false)}
+                >
+                  <strong>{product.name}</strong>
+                  {product.description && <span>{product.description}</span>}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

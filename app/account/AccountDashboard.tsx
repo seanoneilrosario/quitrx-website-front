@@ -51,8 +51,8 @@ export default function AccountDashboard() {
   if (error) return <section className="account-card"><p className="account-load-message">{error}</p></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your account...</p></section>;
 
-  const firstName = customer.firstName?.trim() || customer.email?.trim() || "Customer";
-  const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(" ") || "Customer";
+  const fullName = [customer.firstName?.trim(), customer.lastName?.trim()].filter(Boolean).join(" ");
+  const headerName = fullName || customer.email?.trim() || "Customer";
   const addresses = addressLines(customer);
   const hasActiveScriptTag = customer.tags?.some(
     (tag) => tag.trim().toLowerCase() === "scriptactive",
@@ -60,7 +60,7 @@ export default function AccountDashboard() {
   const scriptIsActive = customer.scriptActive === true || hasActiveScriptTag;
 
   return <>
-    <header className="account-overview__header"><h1>{firstName}</h1></header>
+    <header className="account-overview__header"><h1>{headerName}</h1></header>
     <section className="account-overview__grid">
       <article className="account-panel account-panel--overview">
         <div className="account-panel__heading"><div className="account-panel__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div><h2>Script<br/>Overview</h2></div>
@@ -74,7 +74,7 @@ export default function AccountDashboard() {
       <article className="account-panel account-panel--address">
         <div className="account-panel__heading"><div className="account-panel__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6-5.5 6-11a6 6 0 1 0-12 0c0 5.5 6 11 6 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></div><h2>Your<br/>Address</h2></div>
         <div className="account-panel__content account-address-block">
-          <strong>{fullName}</strong>
+          <strong>{fullName || customer.email?.trim() || "Customer"}</strong>
           {addresses.length ? addresses.map((line) => <span key={line}>{line}</span>) : <span>Address not available</span>}
           <span>{value(customer.email)}</span>
           <span>{value(customer.phone)}</span>
