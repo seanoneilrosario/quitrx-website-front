@@ -3,13 +3,20 @@ import { getQuitHeroCollection, getQuitHeroProducts } from "@/lib/quithero";
 
 export async function GET(request: Request) {
   try {
-    const collectionSlug = new URL(request.url).searchParams.get("collection")?.trim();
-    if (collectionSlug) {
-      const collection = await getQuitHeroCollection(collectionSlug);
-      if (!collection) {
-        return NextResponse.json({ error: "Collection not found." }, { status: 404 });
+    const collectionSlugs = new URL(request.url).searchParams
+      .getAll("collection")
+      .map((slug) => slug.trim())
+      .filter(Boolean);
+    if (collectionSlugs.length) {
+      const collections = await Promise.all(collectionSlugs.map(getQuitHeroCollection));
+      if (collections.some((collection) => !collection)) {
+        return NextResponse.json({ error: "One or more collections were not found." }, { status: 404 });
       }
-      return NextResponse.json(collection.products);
+      const products = collections.flatMap((collection) => collection?.products ?? []);
+      const uniqueProducts = Array.from(
+        new Map(products.map((product) => [product.id ?? product.slug, product])).values(),
+      );
+      return NextResponse.json(uniqueProducts);
     }
     return NextResponse.json(await getQuitHeroProducts());
   } catch {

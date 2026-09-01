@@ -160,6 +160,7 @@ export interface COMPONENTS {
   productLimit?: number;
   displayMode?: "collections" | "products";
   collection?: { title?: string; slug?: string };
+  collections?: Array<{ title?: string; slug?: string }>;
   comparisonIcon?: string;
   audience?: string;
   card_title?: string;
