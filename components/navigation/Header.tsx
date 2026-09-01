@@ -154,25 +154,32 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     );
   }, [searchProducts, searchTerm]);
   useEffect(() => {
-    if (!isSearchOpen || searchLoaded || searchLoading) return;
+    if (!isSearchOpen || searchLoaded) return;
     const controller = new AbortController();
+    let cancelled = false;
     setSearchLoading(true);
     setSearchError("");
     fetch("/api/quithero-products", { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load products.");
-        setSearchProducts(parseSearchProducts(await response.json()));
+        const products = parseSearchProducts(await response.json());
+        if (!cancelled) setSearchProducts(products);
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        setSearchError("Product search is temporarily unavailable.");
+        if (!cancelled) setSearchError("Product search is temporarily unavailable.");
       })
       .finally(() => {
-        setSearchLoading(false);
-        setSearchLoaded(true);
+        if (!cancelled) {
+          setSearchLoading(false);
+          setSearchLoaded(true);
+        }
       });
-    return () => controller.abort();
-  }, [isSearchOpen, searchLoaded, searchLoading]);
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [isSearchOpen, searchLoaded]);
   useEffect(() => {
     const updateCart = (event?: Event) => {
       setCartItems(readCart());
