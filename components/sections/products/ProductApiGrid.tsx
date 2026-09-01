@@ -89,6 +89,7 @@ export default function ProductApiGrid({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const selectedCollections = collections.length ? collections : collection ? [collection] : [];
+  const showingSelectedCollections = selectedCollections.length > 0;
   const selectedCollectionSlugs = selectedCollections
     .flatMap((item) => item.slug ? [item.slug] : []);
   const collectionQuery = selectedCollectionSlugs.length
@@ -127,14 +128,14 @@ export default function ProductApiGrid({
     <section className={styles.section} style={sectionStyle}>
       <div className="page-width">
         {heading && <h2 className={styles.heading}>{heading}</h2>}
-        {loading && <p className={styles.status}>Loading products…</p>}
-        {error && <p className={styles.error}>{error}</p>}
-        {!loading && !error && !products.length && (
+        {!showingSelectedCollections && loading && <p className={styles.status}>Loading products…</p>}
+        {!showingSelectedCollections && error && <p className={styles.error}>{error}</p>}
+        {!showingSelectedCollections && !loading && !error && !products.length && (
           <p className={styles.status}>No products are currently available.</p>
         )}
 
         <div className={styles.grid}>
-          {displayMode === "collections" && selectedCollections.length > 0 &&
+          {showingSelectedCollections &&
             selectedCollections.slice(0, productLimit).map((item) => item.slug && (
               <Link href={`/collections/${item.slug}`} className={styles.card} key={item.slug}>
                 <div className={styles.imageWrap}>
@@ -167,7 +168,7 @@ export default function ProductApiGrid({
               );
             })}
 
-          {displayMode === "products" && products.slice(0, productLimit).map((product, index) => {
+          {displayMode === "products" && !showingSelectedCollections && products.slice(0, productLimit).map((product, index) => {
             const name = getText(product, ["name", "title", "productName"]) || "Product";
             const image = getImage(product);
             const price = getPrice(product);

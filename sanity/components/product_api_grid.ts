@@ -16,8 +16,8 @@ export default defineType({
       options: {
         layout: "radio",
         list: [
-          { title: "Collections", value: "collections" },
-          { title: "Individual Products", value: "products" },
+          { title: "Collection cards", value: "collections" },
+          { title: "All individual products", value: "products" },
         ],
       },
     }),
@@ -30,8 +30,8 @@ export default defineType({
     }),
     defineField({
       name: "collections",
-      title: "Product collections",
-      description: "Choose one or more collections created in the dashboard. Leave empty to show all products.",
+      title: "Collections to display",
+      description: "Each selected collection displays as its own featured-image card and links to its product collection.",
       type: "array",
       of: [{ type: "reference", to: [{ type: "productCollection" }] }],
       validation: (Rule) => Rule.unique(),
