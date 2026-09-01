@@ -708,7 +708,7 @@
     }
 
     .site-header__desktop {
-      display: block;
+      display: flex;
     }
 
     .site-header__mobile {
@@ -756,6 +756,7 @@
 
     .site-header__account {
       opacity: .7;
+      display: flex;
     }
 
     .mobile_nav_icons .svg-icon-search {
