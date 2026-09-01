@@ -1,6 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 
 export type StaffLoginState = { error?: string };
@@ -17,15 +18,16 @@ export async function loginStaff(
     await signIn("staff-credentials", {
       email,
       password,
-      redirectTo: "/dashboard",
+      redirect: false,
     });
-    return {};
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Invalid staff email or password." };
     }
     throw error;
   }
+
+  redirect("/dashboard");
 }
 
 export async function logoutStaff() {
