@@ -16,6 +16,7 @@ type ProductApiGridProps = {
   mobilePaddingTop?: number;
   mobilePaddingBottom?: number;
   displayMode?: "collections" | "products";
+  collection?: { title?: string; slug?: string };
 };
 
 function asRecord(value: unknown): ApiRecord | undefined {
@@ -80,6 +81,7 @@ export default function ProductApiGrid({
   mobilePaddingTop = 40,
   mobilePaddingBottom = 40,
   displayMode = "collections",
+  collection,
 }: ProductApiGridProps) {
   const [products, setProducts] = useState<ApiRecord[]>([]);
   const [error, setError] = useState("");
@@ -88,7 +90,8 @@ export default function ProductApiGrid({
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch("/api/quithero-products", { signal: controller.signal })
+    const collectionQuery = collection?.slug ? `?collection=${encodeURIComponent(collection.slug)}` : "";
+    fetch(`/api/quithero-products${collectionQuery}`, { signal: controller.signal })
       .then(async (response) => {
         const payload: unknown = await response.json();
         if (!response.ok) {
@@ -104,7 +107,7 @@ export default function ProductApiGrid({
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, []);
+  }, [collection?.slug]);
 
   const sectionStyle = {
     "--desktop-padding-top": `${desktopPaddingTop ?? paddingTop}px`,

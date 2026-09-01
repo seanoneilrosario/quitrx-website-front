@@ -14,6 +14,7 @@ const PAGE_COMPONENTS = `
     paddingBottom,
     productLimit,
     displayMode,
+    "collection": collection->{title, "slug": slug.current},
     "comparisonIcon": comparison_icon.asset->url,
     audience,
     card_title,

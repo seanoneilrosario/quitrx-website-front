@@ -226,6 +226,7 @@ const sectionRenderers: Record<
       heading={component.heading}
       productLimit={component.productLimit}
       displayMode={component.displayMode}
+      collection={component.collection}
       paddingTop={component.paddingTop}
       paddingBottom={component.paddingBottom}
       desktopPaddingTop={component.desktopPaddingTop}

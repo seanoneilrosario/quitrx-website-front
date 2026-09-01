@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
-import { getQuitHeroProducts } from "@/lib/quithero";
+import { getQuitHeroCollection, getQuitHeroProducts } from "@/lib/quithero";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const collectionSlug = new URL(request.url).searchParams.get("collection")?.trim();
+    if (collectionSlug) {
+      const collection = await getQuitHeroCollection(collectionSlug);
+      if (!collection) {
+        return NextResponse.json({ error: "Collection not found." }, { status: 404 });
+      }
+      return NextResponse.json(collection.products);
+    }
     return NextResponse.json(await getQuitHeroProducts());
   } catch {
     return NextResponse.json(
