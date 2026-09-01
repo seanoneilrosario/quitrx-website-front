@@ -47,6 +47,7 @@ export function Banner({
   hide_separator
 }: BannerProps) {
   console.log(doc_img)
+  const titleBlocks = Array.isArray(title_array) ? title_array : [];
 
   const handleButtonClick = (url?: string) => {
     if (url) {
@@ -79,7 +80,7 @@ export function Banner({
       )}
 
       <div className="hero-center">
-            {!title_array.length && (
+            {!titleBlocks.length && (
               <motion.h1
                 className="hero-title"
                 initial={{ y: 8, opacity: 0 }}
@@ -90,14 +91,14 @@ export function Banner({
               </motion.h1>
             )}
 
-            {title_array.length > 0 && (
+            {titleBlocks.length > 0 && (
               <motion.div
                 className="hero-title-array"
                 initial={{ y: 8, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.05 }}
               >
-                <PortableText value={title_array} />
+                <PortableText value={titleBlocks} />
               </motion.div>
         )}
         

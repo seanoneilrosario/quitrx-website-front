@@ -88,7 +88,8 @@ export default function ProductApiGrid({
   const [products, setProducts] = useState<ApiRecord[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const selectedCollections = collections.length ? collections : collection ? [collection] : [];
+  const availableCollections = Array.isArray(collections) ? collections : [];
+  const selectedCollections = availableCollections.length ? availableCollections : collection ? [collection] : [];
   const showingSelectedCollections = selectedCollections.length > 0;
   const selectedCollectionSlugs = selectedCollections
     .flatMap((item) => item.slug ? [item.slug] : []);

@@ -94,11 +94,14 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
 
         <div className="customer-login__socials">
           {googleEnabled ? (
+            // OAuth endpoints require a full browser navigation so the popup flow can receive redirects.
+            // eslint-disable-next-line @next/next/no-html-link-for-pages
             <a href="/api/account/google" onClick={(event) => openSocialPopup(event, "google")} aria-label="Continue with Google"><span className="google-mark">G</span></a>
           ) : (
             <button type="button" disabled title="Configure Google OAuth credentials" aria-label="Continue with Google"><span className="google-mark">G</span></button>
           )}
           {facebookEnabled ? (
+            // eslint-disable-next-line @next/next/no-html-link-for-pages
             <a href="/api/account/facebook" onClick={(event) => openSocialPopup(event, "facebook")} aria-label="Continue with Facebook"><span className="facebook-mark">f</span></a>
           ) : (
             <button type="button" disabled title="Configure Facebook OAuth credentials" aria-label="Continue with Facebook"><span className="facebook-mark">f</span></button>

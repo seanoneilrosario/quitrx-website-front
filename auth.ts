@@ -42,13 +42,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   },
 
   callbacks: {
-    async signIn({
-      user,
-      account,
-    }: {
-      user: any;
-      account?: any;
-    }) {
+    async signIn({ user, account }) {
       if (
         !account ||
         !["google", "facebook"].includes(account.provider)
@@ -113,7 +107,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return false;
     },
 
-    async jwt({ token, user, account }: any) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
       }
@@ -121,21 +115,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return token;
     },
 
-    async session({ session, token }: any) {
-      if (session.user) {
-        session.user.id = token.id ?? token.sub;
+    async session({ session, token }) {
+      const userId = token.id ?? token.sub;
+      if (session.user && typeof userId === "string") {
+        session.user.id = userId;
       }
 
       return session;
     },
 
-    authorized({
-      auth: session,
-      request,
-    }: {
-      auth: any;
-      request: any;
-    }) {
+    authorized({ auth: session, request }) {
       const isLoginPage =
         request.nextUrl.pathname === "/account/login";
 

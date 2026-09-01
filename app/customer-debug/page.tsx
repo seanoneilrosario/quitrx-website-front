@@ -1,6 +1,8 @@
 const API_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export default async function CustomerDebugPage() {
+  let result: unknown;
+
   try {
     const res = await fetch(
       `${API_URL}/api/quithero-customers?search=seanrosario119@gmail.com`,
@@ -10,31 +12,20 @@ export default async function CustomerDebugPage() {
     );
 
     if (!res.ok) {
-      return (
-        <main style={{ padding: 32 }}>
-          <h1>Customer debug</h1>
-          <p>Could not load customer data.</p>
-          <pre>{JSON.stringify({ status: res.status, statusText: res.statusText }, null, 2)}</pre>
-        </main>
-      );
+      result = { error: "Could not load customer data.", status: res.status, statusText: res.statusText };
+    } else {
+      result = await res.json();
     }
-
-    const data = await res.json();
-
-    return (
-      <main style={{ padding: 32 }}>
-        <h1>Customer debug</h1>
-        <pre style={{ whiteSpace: "pre-wrap", overflowX: "auto" }}>
-          {JSON.stringify(data, null, 2)}
-        </pre>
-      </main>
-    );
   } catch (error) {
-    return (
-      <main style={{ padding: 32 }}>
-        <h1>Customer debug</h1>
-        <pre>{JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }, null, 2)}</pre>
-      </main>
-    );
+    result = { error: error instanceof Error ? error.message : "Unknown error" };
   }
+
+  return (
+    <main style={{ padding: 32 }}>
+      <h1>Customer debug</h1>
+      <pre style={{ whiteSpace: "pre-wrap", overflowX: "auto" }}>
+        {JSON.stringify(result, null, 2)}
+      </pre>
+    </main>
+  );
 }
