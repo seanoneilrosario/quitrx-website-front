@@ -82,6 +82,12 @@ export const productCollectionType = defineType({
         defineField({name: 'alt', title: 'Alternative text', type: 'string'}),
       ],
     }),
+    defineField({
+      name: 'featuredImageUrl',
+      title: 'Featured image URL',
+      type: 'url',
+      description: 'Used for collections created from the QuitRX dashboard.',
+    }),
   ],
   preview: {
     select: {title: 'title', media: 'image'},

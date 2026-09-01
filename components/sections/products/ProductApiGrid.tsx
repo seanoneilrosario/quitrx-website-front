@@ -16,8 +16,8 @@ type ProductApiGridProps = {
   mobilePaddingTop?: number;
   mobilePaddingBottom?: number;
   displayMode?: "collections" | "products";
-  collection?: { title?: string; slug?: string };
-  collections?: Array<{ title?: string; slug?: string }>;
+  collection?: { title?: string; slug?: string; image?: string };
+  collections?: Array<{ title?: string; slug?: string; image?: string }>;
 };
 
 function asRecord(value: unknown): ApiRecord | undefined {
@@ -88,7 +88,8 @@ export default function ProductApiGrid({
   const [products, setProducts] = useState<ApiRecord[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const selectedCollectionSlugs = (collections.length ? collections : collection ? [collection] : [])
+  const selectedCollections = collections.length ? collections : collection ? [collection] : [];
+  const selectedCollectionSlugs = selectedCollections
     .flatMap((item) => item.slug ? [item.slug] : []);
   const collectionQuery = selectedCollectionSlugs.length
     ? `?${selectedCollectionSlugs.map((slug) => `collection=${encodeURIComponent(slug)}`).join("&")}`
@@ -133,7 +134,17 @@ export default function ProductApiGrid({
         )}
 
         <div className={styles.grid}>
+          {displayMode === "collections" && selectedCollections.length > 0 &&
+            selectedCollections.slice(0, productLimit).map((item) => item.slug && (
+              <Link href={`/collections/${item.slug}`} className={styles.card} key={item.slug}>
+                <div className={styles.imageWrap}>
+                  {item.image ? <img src={item.image} alt={item.title || "Collection"} className={styles.image} /> : <span className={styles.allTile}>{(item.title || "Collection").slice(0, 1)}</span>}
+                </div>
+                <div className={styles.content}><h3>{item.title || "Collection"}</h3></div>
+              </Link>
+            ))}
           {displayMode === "collections" &&
+            selectedCollections.length === 0 &&
             getCollectionEntries(products).slice(0, productLimit).map(([slug, product]) => {
               const brand = asRecord(product.brand) || {};
               const isAll = slug === "all-products";

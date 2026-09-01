@@ -104,6 +104,7 @@ export async function createCollection(formData: FormData) {
   }));
   const collectionId = typeof collection?.id === "string" ? collection.id : undefined;
   const documentId = `quithero-collection-${(collectionId ?? slug).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const featuredImageUrl = String(formData.get("image") ?? "").trim() || undefined;
 
   await client.withConfig({ useCdn: false }).createOrReplace({
     _id: documentId,
@@ -111,6 +112,7 @@ export async function createCollection(formData: FormData) {
     title: name,
     slug: { _type: "slug", current: slug },
     description: String(formData.get("description") ?? "").trim() || undefined,
+    featuredImageUrl,
     quitHeroCollectionId: collectionId,
     productIds,
     selectionMode,

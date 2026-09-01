@@ -35,7 +35,6 @@ export default defineType({
       type: "array",
       of: [{ type: "reference", to: [{ type: "productCollection" }] }],
       validation: (Rule) => Rule.unique(),
-      hidden: ({ parent }) => parent?.displayMode !== "products",
     }),
     defineField({ name: "productLimit", title: "Maximum Products", type: "number", initialValue: 12, validation: (Rule) => Rule.min(1).max(100) }),
     defineField({ name: "desktopPaddingTop", title: "Desktop Padding Top (px)", type: "number", initialValue: 60, validation: (Rule) => Rule.min(0) }),
