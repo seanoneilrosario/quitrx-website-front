@@ -44,6 +44,7 @@ type SearchProduct = {
   slug?: string;
   description?: string;
   image?: string;
+  searchKeywords: string;
 };
 type AccountIdentity = {
   firstName?: string;
@@ -72,6 +73,30 @@ function productImage(product: Record<string, unknown>) {
   return textValue(asRecord(images[0]) || {}, ["url", "src", "imageUrl"]);
 }
 
+function productKeywords(product: Record<string, unknown>) {
+  const values: string[] = [];
+  const addRecordText = (value: unknown) => {
+    const record = asRecord(value);
+    if (record) values.push(textValue(record, ["name", "title", "slug"]) || "");
+  };
+
+  addRecordText(product.brand);
+  if (typeof product.productType === "string") values.push(product.productType);
+  else addRecordText(product.productType);
+
+  if (Array.isArray(product.tags)) {
+    product.tags.forEach((tag) => {
+      if (typeof tag === "string") values.push(tag);
+      else {
+        addRecordText(tag);
+        addRecordText(asRecord(tag)?.tag);
+      }
+    });
+  }
+
+  return values.filter(Boolean).join(" ");
+}
+
 function parseSearchProducts(payload: unknown): SearchProduct[] {
   const record = asRecord(payload);
   const items = Array.isArray(payload) ? payload : record?.products || record?.data || record?.items;
@@ -89,6 +114,7 @@ function parseSearchProducts(payload: unknown): SearchProduct[] {
       slug: textValue(product, ["slug"]),
       description: textValue(product, ["shortDescription", "description", "seoDescription"]),
       image: productImage(product),
+      searchKeywords: productKeywords(product),
     }];
   });
 }
@@ -163,9 +189,17 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const productSearchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return [];
-    return searchProducts.filter((product) =>
-      `${product.name} ${product.description || ""}`.toLowerCase().includes(term)
-    );
+    const terms = term.split(/\s+/);
+    return searchProducts
+      .filter((product) => {
+        const catalogText = `${product.name} ${product.searchKeywords}`.toLowerCase();
+        return terms.every((word) => catalogText.includes(word));
+      })
+      .sort((left, right) => {
+        const leftName = left.name.toLowerCase();
+        const rightName = right.name.toLowerCase();
+        return Number(rightName.includes(term)) - Number(leftName.includes(term));
+      });
   }, [searchProducts, searchTerm]);
   useEffect(() => {
     if (!isSearchOpen || searchLoaded) return;
