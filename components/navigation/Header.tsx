@@ -150,7 +150,8 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const menuItems = navigation?.header_menu?.length
     ? navigation.header_menu
     : fallbackMenu;
-  const accountName = accountIdentity?.firstName?.trim() || accountIdentity?.email?.trim();
+  const accountName = accountIdentity?.firstName?.trim();
+  const isAuthenticated = Boolean(accountIdentity?.email?.trim());
   
   const pathname = usePathname()
   const isHome = pathname === "/";
@@ -319,9 +320,9 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                   {cartCount > 0 && <span className="site-header__cart-count">{cartCount}</span>}
                 </button>
               </div>
-              <Link className="site-header__account site-header__desktop" href={accountName ? "/account" : "/account/login"}>
-                {accountName && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2.5a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5V21"/></svg>}
-                <span>{accountName ? `Hi, ${accountName}` : "Login"}</span>
+              <Link className="site-header__account site-header__desktop" href={isAuthenticated ? "/account" : "/account/login"}>
+                {isAuthenticated && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2.5a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5V21"/></svg>}
+                <span>{isAuthenticated ? accountName ? `Hi, ${accountName}` : "Hi" : "Login"}</span>
               </Link>
               <button
                 className="svg-icon-search"
@@ -428,7 +429,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
               ))}
             </nav>
             <div className="site-nav__footer">
-                <Link className="site-header__account site-header__mobile" href={accountName ? "/account" : "/account/login"} aria-label={accountName ? `Open ${accountName}'s account` : "Log in"}>
+                <Link className="site-header__account site-header__mobile" href={isAuthenticated ? "/account" : "/account/login"} aria-label={isAuthenticated ? accountName ? `Open ${accountName}'s account` : "Open my account" : "Log in"}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 </Link>
             </div>
