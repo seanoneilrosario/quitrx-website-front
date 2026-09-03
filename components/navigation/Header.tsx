@@ -120,13 +120,8 @@ function getHref(item: NavigationMenuItem, isHome: boolean) {
   const base = item.href || item.link || "";
   const anchor = item.anchor ? `#${item.anchor.replace(/^#/, "")}` : "";
 
-  if (base && anchor) {
-    // e.g. "/about" + "#team" -> "/about#team"
-    return `${base}${anchor}`;
-  }
-
   if (anchor) {
-    // Anchor-only navigation targets sections on the homepage.
+    // Header section links always target sections on the homepage.
     return isHome ? anchor : `/${anchor}`;
   }
 

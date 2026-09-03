@@ -203,6 +203,7 @@ export const NAVIGATION = `*[_type == "navigation"][0]{
   header_menu[]{
     title,
     link,
+    anchor,
     "href": coalesce(
       link,
       anchor,
