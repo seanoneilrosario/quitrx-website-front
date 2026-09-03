@@ -107,7 +107,7 @@ export default function AccountDashboard() {
             <p>Get a $49 eScript to use at your local pharmacy.</p>
           </div>
         </div>
-        <Link href="/account/prescriptions" className="account-button account-button--banner">Get eScript</Link>
+        <Link href="/request-script" className="account-button account-button--banner">Get eScript</Link>
       </section>
     )}
   </>;
