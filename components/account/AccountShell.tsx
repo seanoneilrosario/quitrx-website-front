@@ -2,15 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+
+type AccountIdentity = {
+  firstName?: string;
+  username?: string;
+  email?: string;
+};
 
 const navigation = [
-  ["/account", "Account", "home"],
-  [null, "Status", "status"],
-  ["/account/orders", "Shop Products", "bag"],
-  ["/account/prescriptions", "Get eScript ($49)", "script"],
-  ["/account/consultations", "Speak to our pharmacist", "calendar"],
-  ["/account/profile", "Upload Prescription", "user"],
-  ["/account/security", "Contact Us", "lock"],
+  ["/account", "Account Status", "user"],
+  ["/pharmacy", "Shop Products", "bag"],
+  ["/request-script", "Get eScript ($49)", "script"],
+  ["tel:1300115734", "Speak to our pharmacist", "calendar"],
+  ["/upload-prescription", "Upload Prescription", "user"],
+  ["/contact", "Contact Us", "lock"],
 ] as const;
 
 function Icon({ name }: { name: string }) {
@@ -28,6 +34,23 @@ function Icon({ name }: { name: string }) {
 
 export default function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [identity, setIdentity] = useState<AccountIdentity>();
+  const accountName = identity?.firstName?.trim()
+    || identity?.username?.trim()
+    || identity?.email?.split("@")[0]?.trim();
+
+  useEffect(() => {
+    if (pathname === "/account/login" || pathname === "/account/auth-popup") return;
+    const controller = new AbortController();
+    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        if (response.ok) setIdentity(await response.json() as AccountIdentity);
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) setIdentity(undefined);
+      });
+    return () => controller.abort();
+  }, [pathname]);
 
   if (pathname === "/account/login" || pathname === "/account/auth-popup") {
     return <main className="account-login-page">{children}</main>;
@@ -41,8 +64,8 @@ export default function AccountShell({ children }: { children: React.ReactNode }
           <span className="account-brand__rx">Rx</span>
         </Link>
         <div className="account-sidebar__intro">
-          <span className="account-avatar">QR</span>
-          <div><strong>My account</strong><span>QuitRX customer</span></div>
+          <strong>{accountName ? `Welcome, ${accountName}` : "Welcome"}</strong>
+          {identity?.email && <span>{identity.email}</span>}
         </div>
         <nav aria-label="Account navigation">
           {navigation.map(([href, label, icon]) => {

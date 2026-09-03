@@ -45,36 +45,20 @@
 }
 
 .account-sidebar__intro {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 8px 18px;
+  display: grid;
+  gap: 8px;
+  padding: 30px 8px 28px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.account-sidebar__intro div {
-  display: grid;
-  gap: 3px;
+.account-sidebar__intro strong {
+  font-size: 22px;
 }
 
-.account-sidebar__intro div strong {
-  font-size: 20px;
-}
-
-.account-sidebar__intro div span {
-  font-size: 12px;
+.account-sidebar__intro span {
+  font-size: 15px;
   color: #d8ebea;
-}
-
-.account-avatar {
-  display: grid !important;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--mint);
-  color: #06464f !important;
-  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .account-sidebar nav {
