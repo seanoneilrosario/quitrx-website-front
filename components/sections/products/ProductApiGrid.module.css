@@ -61,6 +61,15 @@
   letter-spacing: -.08em;
 }
 
+.missingImageTitle {
+  color: #2f6870;
+  font-size: clamp(18px, 2.5vw, 36px);
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .content {
   padding: 17px 3px 17px;
   text-align: center;

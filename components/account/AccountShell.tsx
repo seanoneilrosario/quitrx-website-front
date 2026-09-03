@@ -45,6 +45,7 @@ function Icon({ name }: { name: string }) {
 export default function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [identity, setIdentity] = useState<AccountIdentity>();
+  const [menuOpen, setMenuOpen] = useState(false);
   const accountName = identity?.firstName?.trim()
     || identity?.username?.trim()
     || identity?.email?.split("@")[0]?.trim();
@@ -67,8 +68,18 @@ export default function AccountShell({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="account-shell">
-      <aside className="account-sidebar">
+    <div className={menuOpen ? "account-shell account-shell--menu-open" : "account-shell"}>
+      <aside className="account-sidebar" id="account-navigation">
+        <button
+          className="account-menu-toggle"
+          type="button"
+          aria-controls="account-navigation"
+          aria-expanded={menuOpen}
+          aria-label={menuOpen ? "Close account menu" : "Open account menu"}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span aria-hidden="true">{menuOpen ? "‹" : "›"}</span>
+        </button>
         <Link className="account-brand" href="/" aria-label="QuitRx homepage">
           <span className="account-brand__mark">Quit</span>
           <span className="account-brand__rx">Rx</span>
@@ -90,7 +101,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
 
             const active = href === "/account" ? pathname === href : pathname.startsWith(href);
             return (
-              <Link key={href} href={href} className={active ? "active" : ""}>
+              <Link key={href} href={href} className={active ? "active" : ""} onClick={() => setMenuOpen(false)}>
                 <Icon name={icon} />
                 <span>{label}</span>
               </Link>
@@ -108,6 +119,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
           </button>
         </form>
       </aside>
+      {menuOpen && <button className="account-menu-backdrop" type="button" aria-label="Close account menu" onClick={() => setMenuOpen(false)} />}
       <main className="account-main">
         {children}
       </main>

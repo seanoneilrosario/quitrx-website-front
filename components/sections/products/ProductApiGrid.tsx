@@ -140,7 +140,7 @@ export default function ProductApiGrid({
             selectedCollections.slice(0, productLimit).map((item) => item.slug && (
               <Link href={`/collections/${item.slug}`} className={styles.card} key={item.slug}>
                 <div className={styles.imageWrap}>
-                  {item.image ? <img src={item.image} alt={item.title || "Collection"} className={styles.image} /> : <span className={styles.allTile}>{(item.title || "Collection").slice(0, 1)}</span>}
+                  {item.image ? <img src={item.image} alt={item.title || "Collection"} className={styles.image} /> : <span className={styles.missingImageTitle}>{item.title || "Collection"}</span>}
                 </div>
                 <div className={styles.content}><h3>{item.title || "Collection"}</h3></div>
               </Link>
