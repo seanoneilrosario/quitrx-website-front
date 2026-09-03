@@ -90,14 +90,37 @@
   box-shadow: inset 3px 0 #6ce7d6;
 }
 
+@media (min-width: 990px) {
+  .account-shell {
+    grid-template-columns: 300px 1fr;
+  }
+
+  .account-sidebar nav a {
+    font-size: 18px;
+  }
+}
+
 .account-sidebar svg {
-  width: 18px;
-  height: 18px;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.account-nav-image-icon {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.account-phone-icon__path {
+  fill: currentColor;
+  stroke: none;
 }
 
 .account-nav-status {

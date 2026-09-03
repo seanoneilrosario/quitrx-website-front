@@ -1,0 +1,16 @@
+.intake-form {
+  width: 100%;
+}
+
+.intake-form__title {
+  margin: 0 0 40px;
+  text-align: center;
+}
+
+.intake-form__iframe {
+  display: block;
+  width: 100%;
+  height: 150px;
+  border: 0;
+  transition: height 0.5s ease;
+}

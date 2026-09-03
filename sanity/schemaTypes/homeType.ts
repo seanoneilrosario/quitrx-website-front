@@ -86,7 +86,8 @@ export const homeType = defineType({
         {type: "banner_slider"},
         {type: "promotional_banner_slider"},
         {type: "brand_grid"},
-        {type: "product_api_grid"}
+        {type: "product_api_grid"},
+        {type: "intakeForm"}
         
       ],
       options: {
@@ -128,7 +129,8 @@ export const homeType = defineType({
               title: "Custom Apps",
               of: [
                 "supportForm",
-                "product_api_grid"
+                "product_api_grid",
+                "intakeForm"
               ],
             },
           ],

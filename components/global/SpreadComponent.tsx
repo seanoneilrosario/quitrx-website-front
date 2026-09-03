@@ -25,6 +25,7 @@ import { urlFor } from "@/sanity/lib/image";
 import PromotionalBannerSlider from "../sections/hero-sections/PromotionalBannerSlider";
 import BrandGrid from "../sections/images/BrandGrid";
 import ProductApiGrid from "../sections/products/ProductApiGrid";
+import IntakeForm from "../sections/customs/IntakeForm";
 
 const sectionRenderers: Record<
   SectionType,
@@ -234,6 +235,13 @@ const sectionRenderers: Record<
       desktopPaddingBottom={component.desktopPaddingBottom}
       mobilePaddingTop={component.mobilePaddingTop}
       mobilePaddingBottom={component.mobilePaddingBottom}
+    />
+  ),
+  intakeForm: (component) => (
+    <IntakeForm
+      title={component.title}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
     />
   ),
 };

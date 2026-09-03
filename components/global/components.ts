@@ -116,6 +116,7 @@ export type SectionType =
   | "promotional_banner_slider"
   | "brand_grid"
   | "product_api_grid"
+  | "intakeForm"
 
 
 

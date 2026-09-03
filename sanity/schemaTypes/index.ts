@@ -32,6 +32,7 @@ import banner_slider from '../components/banner_slider'
 import promotional_banner_slider from '../components/promotional_banner_slider'
 import brand_grid from '../components/brand_grid'
 import product_api_grid from '../components/product_api_grid'
+import { intakeForm } from '../components/intakeForm'
 import { productCollectionType } from './productCollectionType'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
@@ -70,5 +71,6 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     promotional_banner_slider,
     brand_grid,
     product_api_grid,
+    intakeForm,
   ],
 }

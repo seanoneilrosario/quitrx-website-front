@@ -90,7 +90,8 @@ export const pageType = defineType({
         {type: "banner_slider"},
         {type: "promotional_banner_slider"},
         {type: "brand_grid"},
-        {type: "product_api_grid"}
+        {type: "product_api_grid"},
+        {type: "intakeForm"}
       ],
       options: {
         insertMenu: {
@@ -133,7 +134,8 @@ export const pageType = defineType({
               title: "Custom Apps",
               of: [
                 "supportForm",
-                "product_api_grid"
+                "product_api_grid",
+                "intakeForm"
               ],
             },
           ],
