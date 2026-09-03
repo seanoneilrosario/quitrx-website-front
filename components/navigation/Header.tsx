@@ -116,7 +116,7 @@ const BODY_TEMPLATE_CLASSES = [
   "template-page",
   "template-admin",
 ];
-function getHref(item: NavigationMenuItem) {
+function getHref(item: NavigationMenuItem, isHome: boolean) {
   const base = item.href || item.link || "";
   const anchor = item.anchor ? `#${item.anchor.replace(/^#/, "")}` : "";
 
@@ -126,8 +126,8 @@ function getHref(item: NavigationMenuItem) {
   }
 
   if (anchor) {
-    // No page/link set - jump to a section on the current page
-    return anchor;
+    // Anchor-only navigation targets sections on the homepage.
+    return isHome ? anchor : `/${anchor}`;
   }
 
   return base || "#";
@@ -358,8 +358,8 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
               {menuItems.map((item) => {
                   return (
                     <Link
-                      key={`${item.title}-${getHref(item)}`}
-                      href={getHref(item)}
+                      key={`${item.title}-${getHref(item, isHome)}`}
+                      href={getHref(item, isHome)}
                       onClick={() => setIsOpen(false)}
                     >
                       {item.title}
@@ -420,8 +420,8 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
             <nav className="site-nav__menu" aria-label="Primary navigation">
               {menuItems.map((item) => (
                 <Link
-                  key={`${item.title}-${getHref(item)}`}
-                  href={getHref(item)}
+                  key={`${item.title}-${getHref(item, isHome)}`}
+                  href={getHref(item, isHome)}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.title}

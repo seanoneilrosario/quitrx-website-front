@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import StaffLoginForm from "./StaffLoginForm";
@@ -15,7 +16,7 @@ export default async function StaffLoginPage() {
   return (
     <main className={styles.page}>
       <section className={styles.card}>
-        <div className={styles.brand}><span>Q</span><strong>QuitRX</strong></div>
+        <Link className={styles.brand} href="/" aria-label="Go to QuitRX homepage" style={{ color: "inherit", textDecoration: "none" }}><span>Q</span><strong>QuitRX</strong></Link>
         <p className={styles.eyebrow}>Staff portal</p>
         <h1>Welcome back</h1>
         <p className={styles.intro}>Enter your QuitHero staff credentials to access store operations.</p>
@@ -25,4 +26,3 @@ export default async function StaffLoginPage() {
     </main>
   );
 }
-
