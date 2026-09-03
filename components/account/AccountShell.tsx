@@ -98,7 +98,14 @@ export default function AccountShell({ children }: { children: React.ReactNode }
           })}
         </nav>
         <form className="account-signout-form" action="/api/account/logout" method="post">
-          <button type="submit" className="account-signout"><span aria-hidden="true">→</span> Sign Out</button>
+          <button type="submit" className="account-signout">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 16L20 12L15 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M20 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path d="M9 4H5C3.9 4 3 4.9 3 6V18C3 19.1 3.9 20 5 20H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Sign Out
+          </button>
         </form>
       </aside>
       <main className="account-main">
