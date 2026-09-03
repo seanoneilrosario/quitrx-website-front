@@ -33,6 +33,8 @@ import promotional_banner_slider from '../components/promotional_banner_slider'
 import brand_grid from '../components/brand_grid'
 import product_api_grid from '../components/product_api_grid'
 import { intakeForm } from '../components/intakeForm'
+import { uploadPrescription } from '../components/uploadPrescription'
+import { escriptRequest } from '../components/escriptRequest'
 import { productCollectionType } from './productCollectionType'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
@@ -72,5 +74,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     brand_grid,
     product_api_grid,
     intakeForm,
+    uploadPrescription,
+    escriptRequest,
   ],
 }

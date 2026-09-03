@@ -1,30 +1,28 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import "./IntakeForm.css";
+import "./EscriptRequest.css";
 import "./FormBackButton.css";
 import FormBackButton from "./FormBackButton";
 
-const FORM_ID = "n3JR1Lhg5OV91in2ovvhZMReVat5zQRQnwEmd6GYusw";
+const FORM_ID = "kv_pCXTnqL7KtQx2aQj8yauEXxjqzQKzTTwrIKi8i5c";
 const FORM_ORIGIN = "https://forms.quitrx.com.au";
-const FORM_URL = `${FORM_ORIGIN}/quickrx/form/QuitRXIntakeForm/formperma/${FORM_ID}?zf_rszfm=1`;
+const FORM_URL = `${FORM_ORIGIN}/quickrx/form/QuitRXEscriptRequestThisisusedforonlyafterfreepriv/formperma/${FORM_ID}?zf_rszfm=1`;
 
-type IntakeFormProps = {
+type EscriptRequestProps = {
   title?: string;
   paddingTop?: number;
   paddingBottom?: number;
 };
 
-export default function IntakeForm({ title }: IntakeFormProps) {
+export default function EscriptRequest({ title }: EscriptRequestProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const url = new URL(FORM_URL);
     const pageUrl = new URL(window.location.href);
     pageUrl.searchParams.forEach((value, key) => {
-      if (key.toLowerCase().startsWith("utm_") || key.toLowerCase() === "gclid") {
-        url.searchParams.set(key, value);
-      }
+      if (key.toLowerCase().startsWith("utm_") || key.toLowerCase() === "gclid") url.searchParams.set(key, value);
     });
     url.searchParams.set("referrername", window.location.href.slice(0, 1800));
     if (iframeRef.current) iframeRef.current.src = url.toString();
@@ -43,19 +41,11 @@ export default function IntakeForm({ title }: IntakeFormProps) {
     return () => window.removeEventListener("message", resizeForm);
   }, []);
 
-  return (
-    <section className="intake-form">
-      <FormBackButton />
-      <div className="intake-form__inner">
-        {title && <h2 className="intake-form__title">{title}</h2>}
-        <iframe
-          ref={iframeRef}
-          className="intake-form__iframe"
-          src={FORM_URL}
-          title="QuitRX Intake Form"
-          allow="geolocation"
-        />
-      </div>
-    </section>
-  );
+  return <section className="escript-request">
+    <FormBackButton />
+    <div className="escript-request__inner">
+      {title && <h2 className="escript-request__title">{title}</h2>}
+      <iframe ref={iframeRef} className="escript-request__iframe" src={FORM_URL} title="QuitRX eScript Request" allow="geolocation" />
+    </div>
+  </section>;
 }

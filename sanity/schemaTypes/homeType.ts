@@ -87,7 +87,9 @@ export const homeType = defineType({
         {type: "promotional_banner_slider"},
         {type: "brand_grid"},
         {type: "product_api_grid"},
-        {type: "intakeForm"}
+        {type: "intakeForm"},
+        {type: "uploadPrescription"},
+        {type: "escriptRequest"}
         
       ],
       options: {
@@ -130,7 +132,9 @@ export const homeType = defineType({
               of: [
                 "supportForm",
                 "product_api_grid",
-                "intakeForm"
+                "intakeForm",
+                "uploadPrescription",
+                "escriptRequest"
               ],
             },
           ],

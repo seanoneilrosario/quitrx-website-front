@@ -1,0 +1,4 @@
+.escript-request { position: fixed; inset: 0; z-index: 10000; width: 100vw; height: 100svh; overflow: auto; background: #fff; }
+.escript-request__inner { width: 100%; }
+.escript-request__title { margin: 0 0 40px; text-align: center; }
+.escript-request__iframe { display: block; width: 100%; height: 100svh; min-height: 100svh; border: 0; transition: height 0.5s ease; }

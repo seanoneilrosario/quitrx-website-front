@@ -26,6 +26,8 @@ import PromotionalBannerSlider from "../sections/hero-sections/PromotionalBanner
 import BrandGrid from "../sections/images/BrandGrid";
 import ProductApiGrid from "../sections/products/ProductApiGrid";
 import IntakeForm from "../sections/customs/IntakeForm";
+import UploadPrescription from "../sections/customs/UploadPrescription";
+import EscriptRequest from "../sections/customs/EscriptRequest";
 
 const sectionRenderers: Record<
   SectionType,
@@ -243,6 +245,16 @@ const sectionRenderers: Record<
       paddingTop={component.paddingTop}
       paddingBottom={component.paddingBottom}
     />
+  ),
+  uploadPrescription: (component) => (
+    <UploadPrescription
+      title={component.title}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
+    />
+  ),
+  escriptRequest: (component) => (
+    <EscriptRequest title={component.title} paddingTop={component.paddingTop} paddingBottom={component.paddingBottom} />
   ),
 };
 

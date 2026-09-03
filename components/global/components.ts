@@ -117,6 +117,8 @@ export type SectionType =
   | "brand_grid"
   | "product_api_grid"
   | "intakeForm"
+  | "uploadPrescription"
+  | "escriptRequest"
 
 
 

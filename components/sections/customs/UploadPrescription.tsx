@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import "./IntakeForm.css";
+import "./UploadPrescription.css";
 import "./FormBackButton.css";
 import FormBackButton from "./FormBackButton";
 
-const FORM_ID = "n3JR1Lhg5OV91in2ovvhZMReVat5zQRQnwEmd6GYusw";
-const FORM_ORIGIN = "https://forms.quitrx.com.au";
-const FORM_URL = `${FORM_ORIGIN}/quickrx/form/QuitRXIntakeForm/formperma/${FORM_ID}?zf_rszfm=1`;
+const FORM_ID = "tNPCUM7T9J2EfT3pdRP68U6T6HezBgFAcqRmifGD4eg";
+const FORM_ORIGIN = "https://forms.zohopublic.com.au";
+const FORM_URL = `${FORM_ORIGIN}/quickrx/form/QuitRXScriptUpload/formperma/${FORM_ID}?zf_rszfm=1`;
 
-type IntakeFormProps = {
+type UploadPrescriptionProps = {
   title?: string;
   paddingTop?: number;
   paddingBottom?: number;
 };
 
-export default function IntakeForm({ title }: IntakeFormProps) {
+export default function UploadPrescription({ title }: UploadPrescriptionProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -44,16 +44,15 @@ export default function IntakeForm({ title }: IntakeFormProps) {
   }, []);
 
   return (
-    <section className="intake-form">
+    <section className="upload-prescription">
       <FormBackButton />
-      <div className="intake-form__inner">
-        {title && <h2 className="intake-form__title">{title}</h2>}
+      <div className="upload-prescription__inner">
+        {title && <h2 className="upload-prescription__title">{title}</h2>}
         <iframe
           ref={iframeRef}
-          className="intake-form__iframe"
+          className="upload-prescription__iframe"
           src={FORM_URL}
-          title="QuitRX Intake Form"
-          allow="geolocation"
+          title="QuitRX Script Upload"
         />
       </div>
     </section>

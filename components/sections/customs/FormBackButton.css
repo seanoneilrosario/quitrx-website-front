@@ -1,0 +1,37 @@
+.form-back-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #006672;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.form-back-button:hover {
+  background: #fff;
+  transform: translateX(-2px);
+}
+
+.form-back-button:focus-visible {
+  outline: 3px solid #27e5b1;
+  outline-offset: 2px;
+}
+
+@media (max-width: 749px) {
+  .form-back-button {
+    top: 16px;
+    left: 16px;
+    font-size: 18px;
+  }
+}
