@@ -182,6 +182,7 @@ const PAGE_COMPONENTS = `
 `;
 
 const PAGE_METADATA = `
+  _updatedAt,
   _type,
   title,
   "slug": slug.current,

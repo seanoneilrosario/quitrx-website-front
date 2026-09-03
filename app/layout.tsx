@@ -104,12 +104,8 @@ export default async function RootLayout({
             }
           />
 
-          {isEnabled && (
-            <>
-              <SanityLive />
-              <DisableDraftMode />
-            </>
-          )}
+          <SanityLive />
+          {isEnabled && <DisableDraftMode />}
         </ThemeProvider>
       </body>
     </html>
