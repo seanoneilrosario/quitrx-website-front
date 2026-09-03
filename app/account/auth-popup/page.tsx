@@ -28,15 +28,21 @@ export default function AuthPopupCompletePage() {
   }, []);
 
   useEffect(() => {
-    if (needsEmail !== false || !window.opener) return;
+    if (needsEmail !== false) return;
 
-    window.opener.postMessage(
-      { type: "quitrx:auth-success" },
-      window.location.origin,
-    );
+    if (window.opener) {
+      window.opener.postMessage(
+        { type: "quitrx:auth-success" },
+        window.location.origin,
+      );
 
-    window.close();
-  }, [needsEmail]);
+      window.close();
+      return;
+    }
+
+    router.replace("/account");
+    router.refresh();
+  }, [needsEmail, router]);
 
   async function submitEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -122,21 +128,5 @@ export default function AuthPopupCompletePage() {
     );
   }
 
-  return (
-    <main className="customer-login" role="status">
-      <section className="customer-login__dialog">
-        <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">
-          Quit<span>Rx</span>
-        </Link>
-
-        <div className="customer-login__copy">
-          <h1>Signed in</h1>
-          <p>
-            Your login was successful. You can close this window or continue
-            to your account.
-          </p>
-        </div>
-      </section>
-    </main>
-  );
+  return null;
 }

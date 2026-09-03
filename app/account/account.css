@@ -886,8 +886,7 @@
   }
 
   .account-overview__grid,
-  .account-grid.stats,
-  .dashboard-bottom {
+  .account-grid.stats {
     grid-template-columns: 1fr;
   }
 

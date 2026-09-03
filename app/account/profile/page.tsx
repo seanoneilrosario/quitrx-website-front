@@ -1,2 +1,6 @@
 import { PageHeading } from "@/components/account/AccountShell";
-export default function ProfilePage(){return <><PageHeading eyebrow="Personal details" title="Your profile" copy="Keep your contact and delivery information up to date."/><section className="account-card"><form className="account-form"><label>First name<input defaultValue="Alex"/></label><label>Last name<input defaultValue="Morgan"/></label><label>Email<input type="email" defaultValue="alex.morgan@example.com"/></label><label>Mobile<input type="tel" defaultValue="04 1234 5678"/></label><label className="full">Delivery address<input defaultValue="14 Example Street, Melbourne VIC 3000"/></label><div className="full"><button type="button" className="account-button">Save changes</button></div></form></section></>}
+import ProfileForm from "./ProfileForm";
+
+export default function ProfilePage() {
+  return <><PageHeading eyebrow="Personal details" title="Your profile" copy="Keep your contact and delivery information up to date."/><ProfileForm /></>;
+}

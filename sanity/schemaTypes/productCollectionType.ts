@@ -86,7 +86,6 @@ export const productCollectionType = defineType({
       name: 'featuredImageUrl',
       title: 'Featured image URL',
       type: 'url',
-      description: 'Used for collections created from the QuitRX dashboard.',
     }),
   ],
   preview: {
