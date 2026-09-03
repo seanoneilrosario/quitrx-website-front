@@ -196,10 +196,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       const emailSession = verifySignedCustomerSession(
         request.cookies.get(CUSTOMER_SESSION_COOKIE)?.value,
       );
+      const isStaff = Boolean(
+        session?.user &&
+        (session.user as typeof session.user & { isStaff?: boolean }).isStaff,
+      );
 
       return Boolean(
-        session?.user?.id ||
-          session?.user?.email ||
+        (!isStaff && (session?.user?.id || session?.user?.email)) ||
           emailSession?.email,
       );
     },

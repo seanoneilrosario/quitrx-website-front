@@ -6,7 +6,12 @@ import { findQuitHeroCustomerByEmail } from "@/lib/quithero-customers";
 export async function GET() {
   const session = await auth();
   const customerSession = await getCustomerSession();
-  const email = session?.user?.email ?? customerSession?.email;
+  const isStaff = Boolean(
+    session?.user &&
+    (session.user as typeof session.user & { isStaff?: boolean }).isStaff,
+  );
+  const customerAuthUser = isStaff ? undefined : session?.user;
+  const email = customerAuthUser?.email ?? customerSession?.email;
 
   if (!email) {
     return NextResponse.json(
@@ -17,7 +22,7 @@ export async function GET() {
     );
   }
 
-  const [oauthFirstName, ...oauthLastNameParts] = (session?.user?.name ?? "").trim().split(/\s+/);
+  const [oauthFirstName, ...oauthLastNameParts] = (customerAuthUser?.name ?? "").trim().split(/\s+/);
   const identity = {
     email,
     firstName: oauthFirstName || undefined,
