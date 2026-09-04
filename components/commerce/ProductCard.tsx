@@ -8,7 +8,8 @@ export default function ProductCard({ product }: { product: QuitHeroProduct }) {
   const price = typeof rawPrice === "number"
     ? `${new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(rawPrice)} AUD`
     : rawPrice;
-  const productUrl = product.id ? `/product/${encodeURIComponent(product.id)}` : `/products/${product.slug}`;
+  const productHandle = product.handle ?? product.slug;
+  const productUrl = `/product/${encodeURIComponent(productHandle || "")}`;
 
   return (
     <article className={styles.productCard}>

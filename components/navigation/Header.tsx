@@ -42,7 +42,7 @@ type CartItem = {
 type SearchProduct = {
   id: string;
   name: string;
-  slug?: string;
+  handle?: string;
   description?: string;
   image?: string;
   searchKeywords: string;
@@ -108,7 +108,7 @@ function parseSearchProducts(payload: unknown): SearchProduct[] {
     return [{
       id,
       name,
-      slug: textValue(product, ["slug"]),
+      handle: textValue(product, ["handle", "slug"]),
       description: textValue(product, ["shortDescription", "description", "seoDescription"]),
       image: productImage(product),
       searchKeywords: productKeywords(product),
@@ -491,10 +491,10 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                   </Link>
                 );
               })}
-              {productSearchResults.map((product) => (
+              {productSearchResults.filter((product) => product.handle).map((product) => (
                 <Link
                   key={product.id}
-                  href={product.slug ? `/products/${product.slug}` : `/product/${encodeURIComponent(product.id)}`}
+                  href={`/product/${encodeURIComponent(product.handle!)}`}
                   className="site-search__product"
                   onClick={() => setIsSearchOpen(false)}
                 >

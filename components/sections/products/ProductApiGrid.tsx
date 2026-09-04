@@ -175,8 +175,7 @@ export default function ProductApiGrid({
             const price = getPrice(product);
             const id = getText(product, ["id", "_id", "sku"]) || `${name}-${index}`;
 
-            const productId = getText(product, ["id", "_id"]);
-            const slug = getText(product, ["slug"]);
+            const productHandle = getText(product, ["handle", "slug"]);
             const card = (
               <>
                 <div className={styles.imageWrap}>
@@ -189,8 +188,8 @@ export default function ProductApiGrid({
               </>
             );
 
-            return productId || slug ? (
-              <Link href={productId ? `/product/${encodeURIComponent(productId)}` : `/products/${slug}`} className={styles.card} key={id}>{card}</Link>
+            return productHandle ? (
+              <Link href={`/product/${encodeURIComponent(productHandle)}`} className={styles.card} key={id}>{card}</Link>
             ) : (
               <article className={styles.card} key={id}>{card}</article>
             );

@@ -34,6 +34,7 @@ export type QuitHeroProductTag = QuitHeroTag & { tag?: QuitHeroTag };
 export type QuitHeroProduct = {
   id?: string;
   name?: string;
+  handle?: string;
   slug?: string;
   description?: string;
   shortDescription?: string;
@@ -103,9 +104,9 @@ export async function getQuitHeroProducts() {
   return [products, ...remaining.map(productsFrom)].flat();
 }
 
-export async function getQuitHeroProduct(slug: string) {
+export async function getQuitHeroProduct(handle: string) {
   const products = await getQuitHeroProducts();
-  return products.find((product) => product.slug === slug);
+  return products.find((product) => (product.handle ?? product.slug) === handle);
 }
 
 export async function getQuitHeroProductById(id: string) {
