@@ -213,3 +213,7 @@ blockquote {
 .account-page .main-sections-wrapper {
   padding-top: 0 !important;
 }
+
+.checkout-page .main-sections-wrapper {
+  padding-top: 0;
+}

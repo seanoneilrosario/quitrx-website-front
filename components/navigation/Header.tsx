@@ -174,6 +174,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const pathname = usePathname()
   const isHome = pathname === "/";
   const isAdmin = pathname.startsWith("/admin");
+  const isCheckoutPage = pathname === "/checkout";
   const isAccountPage = pathname === "/account" || pathname === "/account/login";
   const pageSearchResults = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -281,12 +282,13 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     }
 
     body.classList.toggle("account-page", isAccountPage);
+    body.classList.toggle("checkout-page", isCheckoutPage);
 
     return () => {
-      body.classList.remove(...BODY_TEMPLATE_CLASSES, "account-page");
+      body.classList.remove(...BODY_TEMPLATE_CLASSES, "account-page", "checkout-page");
     };
-  }, [isAdmin, isHome, isAccountPage]);
-  if (pathname.includes("/admin")) {
+  }, [isAdmin, isHome, isAccountPage, isCheckoutPage]);
+  if (pathname.includes("/admin") || isCheckoutPage) {
     return null
   }
   const selectedLogo = !isHome && navigation?.header_logo2 ? navigation.header_logo2 : navigation?.headerLogo

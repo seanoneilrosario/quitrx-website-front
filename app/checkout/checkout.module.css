@@ -3,6 +3,8 @@
 .formColumn { padding: 52px clamp(30px, 5vw, 84px) 90px; background: #fff; }
 .summaryColumn { border-left: 1px solid #d9e6e2; background: #f3f8f6; }
 .summaryInner { position: sticky; top: 210px; padding: 70px clamp(28px, 4vw, 62px); }
+.logo { display: block; width: max-content; margin-bottom: 36px; color: #075d67; font-size: 38px; font-weight: 800; letter-spacing: -.07em; line-height: 1; text-decoration: none; }
+.logo span { display: inline-block; margin-left: 4px; padding: 3px 7px; border-radius: 9px; background: #66e5bd; font-size: 22px; letter-spacing: -.04em; vertical-align: 4px; }
 .backLink { display: inline-flex; gap: 10px; align-items: center; margin-bottom: 38px; color: #26747c; font-size: 14px; font-weight: 700; text-decoration: none; }
 .backLink span { font-size: 21px; font-weight: 400; }
 .titleRow { display: flex; align-items: end; justify-content: space-between; margin-bottom: 38px; }
@@ -82,6 +84,7 @@
 @media (max-width: 560px) {
   .summaryInner, .formColumn { padding-right: 18px; padding-left: 18px; }
   .summaryColumn { grid-row: 2; }
+  .logo { margin-bottom: 28px; }
   .backLink { margin-bottom: 26px; }
   .titleRow { margin-bottom: 27px; }
   .secureBadge { display: none; }

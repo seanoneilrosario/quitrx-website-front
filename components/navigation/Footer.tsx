@@ -45,7 +45,7 @@ export function Footer({ navigation }: FooterProps) {
   const pathname = usePathname()
   const currentYear = new Date().getFullYear();
 
-  if (pathname.startsWith("/admin") || pathname === "/account") {
+  if (pathname.startsWith("/admin") || pathname === "/account" || pathname === "/checkout") {
     return null
   }
   return (

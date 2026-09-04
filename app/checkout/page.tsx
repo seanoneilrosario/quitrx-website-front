@@ -69,6 +69,9 @@ export default function CheckoutPage() {
     <main className={styles.page}>
       <div className={styles.checkoutShell}>
         <section className={styles.formColumn}>
+          <Link className={styles.logo} href="/" aria-label="QuitRx homepage">
+            Quit<span>Rx</span>
+          </Link>
           <Link className={styles.backLink} href="/cart" aria-label="Return to cart">
             <span aria-hidden="true">←</span> Return to cart
           </Link>
