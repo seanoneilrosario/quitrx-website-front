@@ -538,7 +538,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                   <div><span>Subtotal</span><strong>{cartMoney(cartSubtotal)}</strong></div>
                   <p>Shipping and payment are confirmed at checkout.</p>
                   <Link href="/cart" onClick={() => setIsCartOpen(false)}>View cart</Link>
-                  <Link className="cart-drawer__checkout" href="/contact" onClick={() => setIsCartOpen(false)}>Continue to checkout</Link>
+                  <Link className="cart-drawer__checkout" href="/checkout" onClick={() => setIsCartOpen(false)}>Continue to checkout</Link>
                 </div>
               </>
             )}

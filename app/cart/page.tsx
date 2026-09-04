@@ -84,7 +84,7 @@ export default function CartPage() {
               <span>Subtotal</span>
               <strong>{money(subtotal)}</strong>
               <p>Shipping and payment are confirmed at checkout.</p>
-              <Link href="/contact">Continue to checkout</Link>
+              <Link href="/checkout">Continue to checkout</Link>
             </aside>
           </div>
         )}
