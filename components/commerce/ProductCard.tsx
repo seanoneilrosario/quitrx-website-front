@@ -4,10 +4,19 @@ import styles from "./collectionCatalog.module.css";
 
 export default function ProductCard({ product }: { product: QuitHeroProduct }) {
   const image = product.images?.find((item) => item.isPrimary)?.url || product.images?.[0]?.url;
-  const rawPrice = product.variants?.[0]?.price;
-  const price = typeof rawPrice === "number"
-    ? `${new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(rawPrice)} AUD`
-    : rawPrice;
+  const prices = (product.variants ?? []).flatMap((variant) => {
+    if (variant.price === undefined || variant.price === null || variant.price === "") return [];
+    const value = typeof variant.price === "number" ? variant.price : Number(variant.price.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(value) ? [value] : [];
+  });
+  const formatter = new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" });
+  const minimumPrice = prices.length ? Math.min(...prices) : undefined;
+  const maximumPrice = prices.length ? Math.max(...prices) : undefined;
+  const price = minimumPrice === undefined
+    ? undefined
+    : minimumPrice === maximumPrice
+      ? formatter.format(minimumPrice)
+      : `${formatter.format(minimumPrice)}–${formatter.format(maximumPrice!)}`;
   const productHandle = product.handle ?? product.slug;
   const productUrl = `/product/${encodeURIComponent(productHandle || "")}`;
 
@@ -20,7 +29,7 @@ export default function ProductCard({ product }: { product: QuitHeroProduct }) {
         <span className={styles.productInfo}>
           {product.brand?.name && <span className={styles.brand}>{product.brand.name}</span>}
           <strong>{product.name}</strong>
-          {price && <span className={styles.price}>{price}</span>}
+          {price && <span className={styles.price}>{price} AUD</span>}
         </span>
         <span className={styles.chooseButton}>Choose options</span>
       </Link>

@@ -186,11 +186,17 @@ export function productMatchesCollectionRule(product: QuitHeroProduct, rule: Col
     return rule.operator === "notEquals" || rule.operator === "notContains" ? !matches : matches;
   }
   if (rule.field === "price" || rule.field === "inventory") {
-    const actual = rule.field === "price"
-      ? Number(String(product.variants?.[0]?.price ?? 0).replace(/[^0-9.-]/g, ""))
-      : (product.variants ?? []).reduce((sum, variant) => sum + Number(variant.inventory ?? 0), 0);
     const expected = Number(rule.value);
     if (!Number.isFinite(expected)) return false;
+    if (rule.field === "price") {
+      const prices = getVariantPrices(product);
+      if (!prices.length) return false;
+      if (rule.operator === "greaterThan") return prices.some((price) => price > expected);
+      if (rule.operator === "lessThan") return prices.some((price) => price < expected);
+      if (rule.operator === "notEquals") return prices.every((price) => price !== expected);
+      return prices.some((price) => price === expected);
+    }
+    const actual = (product.variants ?? []).reduce((sum, variant) => sum + Number(variant.inventory ?? 0), 0);
     if (rule.operator === "greaterThan") return actual > expected;
     if (rule.operator === "lessThan") return actual < expected;
     if (rule.operator === "notEquals") return actual !== expected;
@@ -215,10 +221,20 @@ export function getPrimaryImage(product: QuitHeroProduct) {
   return product.images?.find((image) => image.isPrimary)?.url || product.images?.[0]?.url;
 }
 
+export function getVariantPrices(product: Pick<QuitHeroProduct, "variants">) {
+  return (product.variants ?? []).flatMap((variant) => {
+    if (typeof variant.price === "number") return Number.isFinite(variant.price) ? [variant.price] : [];
+    if (!variant.price?.trim()) return [];
+    const price = Number(variant.price.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(price) ? [price] : [];
+  });
+}
+
 export function getProductPrice(product: QuitHeroProduct) {
-  const value = product.variants?.[0]?.price;
-  if (typeof value === "number") {
-    return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
-  }
-  return typeof value === "string" ? value : undefined;
+  const prices = getVariantPrices(product);
+  if (!prices.length) return;
+  const formatter = new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" });
+  const minimum = Math.min(...prices);
+  const maximum = Math.max(...prices);
+  return minimum === maximum ? formatter.format(minimum) : `${formatter.format(minimum)}–${formatter.format(maximum)}`;
 }

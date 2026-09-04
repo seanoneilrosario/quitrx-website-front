@@ -51,12 +51,19 @@ function getImage(product: ApiRecord) {
 
 function getPrice(product: ApiRecord) {
   const variants = product.variants;
-  const firstVariant = Array.isArray(variants) ? asRecord(variants[0]) : undefined;
-  const value = product.price ?? product.retailPrice ?? product.retail_price ?? firstVariant?.price;
-  if (typeof value === "number") {
-    return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
-  }
-  return typeof value === "string" ? value : undefined;
+  if (!Array.isArray(variants)) return;
+  const prices = variants.flatMap((variant) => {
+    const value = asRecord(variant)?.price;
+    if (typeof value !== "number" && typeof value !== "string") return [];
+    if (typeof value === "string" && !value.trim()) return [];
+    const price = typeof value === "number" ? value : Number(value.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(price) ? [price] : [];
+  });
+  if (!prices.length) return;
+  const formatter = new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" });
+  const minimum = Math.min(...prices);
+  const maximum = Math.max(...prices);
+  return minimum === maximum ? formatter.format(minimum) : `${formatter.format(minimum)}–${formatter.format(maximum)}`;
 }
 
 function getCollectionEntries(products: ApiRecord[]): Array<[string, ApiRecord]> {

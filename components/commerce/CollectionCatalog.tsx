@@ -8,11 +8,17 @@ import styles from "./collectionCatalog.module.css";
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 const PAGE_SIZE = 50;
 
-function variantPrice(product: QuitHeroProduct) {
-  const value = product.variants?.[0]?.price;
-  if (typeof value === "number") return value;
-  const parsed = Number.parseFloat(String(value ?? "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
+function variantPrices(product: QuitHeroProduct) {
+  return (product.variants ?? []).flatMap((variant) => {
+    if (variant.price === undefined || variant.price === null || variant.price === "") return [];
+    const parsed = typeof variant.price === "number" ? variant.price : Number(variant.price.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(parsed) ? [parsed] : [];
+  });
+}
+
+function minimumVariantPrice(product: QuitHeroProduct) {
+  const prices = variantPrices(product);
+  return prices.length ? Math.min(...prices) : 0;
 }
 
 function optionValues(variant: QuitHeroVariant, key: "size" | "color") {
@@ -33,7 +39,7 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
   const [sort, setSort] = useState<Sort>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.map(variantPrice), 0)), [products]);
+  const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
 
@@ -59,13 +65,13 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
       return (!brands.length || brands.includes(product.brand?.name || ""))
         && (!sizes.length || sizes.some((size) => variantSizes?.includes(size)))
         && (!colors.length || colors.some((color) => variantColors?.includes(color)))
-        && (maxPrice === null || variantPrice(product) <= maxPrice)
+        && (maxPrice === null || variantPrices(product).some((price) => price <= maxPrice))
         && (availability === "all" || (availability === "in-stock" ? inStock : !inStock));
     });
 
     return filtered.sort((a, b) => {
-      if (sort === "price-asc") return variantPrice(a) - variantPrice(b);
-      if (sort === "price-desc") return variantPrice(b) - variantPrice(a);
+      if (sort === "price-asc") return minimumVariantPrice(a) - minimumVariantPrice(b);
+      if (sort === "price-desc") return minimumVariantPrice(b) - minimumVariantPrice(a);
       if (sort === "name-asc") return (a.name || "").localeCompare(b.name || "");
       if (sort === "name-desc") return (b.name || "").localeCompare(a.name || "");
       return 0;
