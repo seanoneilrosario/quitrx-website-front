@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import Facebook from "next-auth/providers/facebook";
 import Google from "next-auth/providers/google";
 import {
@@ -11,6 +12,14 @@ import {
   verifySignedCustomerSession,
 } from "@/lib/customer-session";
 
+function stringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
 export const { auth, handlers, signIn, signOut } = NextAuth({
   secret:
     process.env.AUTH_SECRET ??
@@ -20,6 +29,44 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       : undefined),
 
   providers: [
+    Credentials({
+      id: "staff-credentials",
+      name: "QuitHero staff",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = stringValue(credentials.email);
+        const password = stringValue(credentials.password);
+        if (!email || !password) return null;
+
+        const apiBase = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
+        const response = await fetch(`${apiBase}/auth/login`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email, password }),
+          cache: "no-store",
+        });
+        if (!response.ok) return null;
+
+        const payload = objectValue(await response.json());
+        const data = objectValue(payload.data);
+        const staff = objectValue(payload.staff ?? payload.user ?? data.staff ?? data.user);
+        const accessToken = stringValue(
+          payload.accessToken ?? payload.access_token ?? payload.token ??
+          data.accessToken ?? data.access_token ?? data.token,
+        );
+        if (!accessToken) return null;
+
+        return {
+          id: stringValue(staff.id) ?? stringValue(payload.id) ?? email,
+          email: stringValue(staff.email) ?? email,
+          name: stringValue(staff.name) ?? stringValue(staff.fullName) ?? email,
+          staffAccessToken: accessToken,
+        };
+      },
+    }),
     Google,
 
     Facebook({
@@ -43,6 +90,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
   callbacks: {
     async signIn({ user, account }) {
+      if (account?.provider === "staff-credentials") return true;
       if (
         !account ||
         !["google", "facebook"].includes(account.provider)
@@ -107,9 +155,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return false;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+      }
+      if (account?.provider === "staff-credentials" && user) {
+        const staff = user as typeof user & { staffAccessToken?: string };
+        token.isStaff = Boolean(staff.staffAccessToken);
       }
 
       return token;
@@ -119,6 +171,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       const userId = token.id ?? token.sub;
       if (session.user && typeof userId === "string") {
         session.user.id = userId;
+        (session.user as typeof session.user & { isStaff?: boolean }).isStaff = token.isStaff === true;
       }
 
       return session;
@@ -126,19 +179,30 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
     authorized({ auth: session, request }) {
       const pathname = request.nextUrl.pathname;
-      const isLoginPage = pathname === "/account/login";
+      const isLoginPage = pathname === "/account/login" || pathname === "/dashboard/login";
 
       if (isLoginPage) {
         return true;
       }
 
+      if (pathname.startsWith("/dashboard")) {
+        const isStaff = Boolean(
+          session?.user &&
+          (session.user as typeof session.user & { isStaff?: boolean }).isStaff,
+        );
+        return isStaff || Response.redirect(new URL("/dashboard/login", request.nextUrl));
+      }
+
       const emailSession = verifySignedCustomerSession(
         request.cookies.get(CUSTOMER_SESSION_COOKIE)?.value,
       );
+      const isStaff = Boolean(
+        session?.user &&
+        (session.user as typeof session.user & { isStaff?: boolean }).isStaff,
+      );
 
       return Boolean(
-        session?.user?.id ||
-          session?.user?.email ||
+        (!isStaff && (session?.user?.id || session?.user?.email)) ||
           emailSession?.email,
       );
     },
