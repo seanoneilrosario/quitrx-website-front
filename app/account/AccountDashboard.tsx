@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 function addressLines(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];
@@ -29,26 +30,12 @@ function formatDate(date?: string) {
 
 export default function AccountDashboard() {
   const router = useRouter();
-  const [customer, setCustomer] = useState<QuitHeroCustomer>();
-  const [error, setError] = useState<string>();
+  const { customer, loading } = useAccountCustomer();
 
   useEffect(() => {
-    const controller = new AbortController();
-    async function loadCustomer() {
-      try {
-        const response = await fetch("/api/account/me", { cache: "no-store", signal: controller.signal });
-        if (response.status === 401) return router.replace("/account/login");
-        if (!response.ok) throw new Error("Customer request failed");
-        setCustomer(await response.json() as QuitHeroCustomer);
-      } catch (requestError) {
-        if ((requestError as Error).name !== "AbortError") setError("Unable to load your account right now.");
-      }
-    }
-    void loadCustomer();
-    return () => controller.abort();
-  }, [router]);
+    if (!loading && !customer) router.replace("/account/login");
+  }, [customer, loading, router]);
 
-  if (error) return <section className="account-card"><p className="account-load-message">{error}</p></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your account...</p></section>;
 
   const fullName = [customer.firstName?.trim(), customer.lastName?.trim()].filter(Boolean).join(" ");
@@ -58,25 +45,6 @@ export default function AccountDashboard() {
     (tag) => tag.trim().toLowerCase() === "scriptactive",
   ) ?? false;
   const scriptIsActive = customer.scriptActive === true || hasActiveScriptTag;
-
-  if (customer.consultPurchase !== true) {
-    return <>
-      <header className="account-overview__header"><h1>{customer.firstName?.trim() || headerName}</h1></header>
-      <section className="account-assessment-card">
-        <div className="account-assessment-card__heading">
-          <span className="account-assessment-card__icon" aria-hidden="true">
-            <svg viewBox="0 0 48 48"><path d="m17 15 14 8-10 18a4 4 0 0 1-5.5 1.5l-7-4a4 4 0 0 1-1.5-5.5l10-18Z"/><path d="m21 17 5-9 9 5-5 9M29 10l4-7 6 3.5-4 7"/></svg>
-          </span>
-          <h2>Start Online Assessment</h2>
-        </div>
-        <p className="account-assessment-card__copy">Complete your assessment in just 2 minutes to get your free prescription.</p>
-        <Link href="/intake-form" className="account-assessment-card__button">Start Assessment</Link>
-        <p className="account-assessment-card__disclaimer">
-          This assessment is not for nicotine pouch prescriptions. In accordance with the TGA&apos;s advertising requirements for therapeutic vaping goods, we cannot publicly advertise or describe certain treatment options.
-        </p>
-      </section>
-    </>;
-  }
 
   return <>
     <header className="account-overview__header"><h1>{headerName}</h1></header>

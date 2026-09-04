@@ -3,13 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-
-type AccountIdentity = {
-  firstName?: string;
-  username?: string;
-  email?: string;
-};
+import { useState } from "react";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 const navigation = [
   ["/account", "Account Status", "user"],
@@ -44,24 +39,10 @@ function Icon({ name }: { name: string }) {
 
 export default function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [identity, setIdentity] = useState<AccountIdentity>();
+  const { customer: identity } = useAccountCustomer();
   const [menuOpen, setMenuOpen] = useState(false);
   const accountName = identity?.firstName?.trim()
-    || identity?.username?.trim()
     || identity?.email?.split("@")[0]?.trim();
-
-  useEffect(() => {
-    if (pathname === "/account/login" || pathname === "/account/auth-popup") return;
-    const controller = new AbortController();
-    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        if (response.ok) setIdentity(await response.json() as AccountIdentity);
-      })
-      .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) setIdentity(undefined);
-      });
-    return () => controller.abort();
-  }, [pathname]);
 
   if (pathname === "/account/login" || pathname === "/account/auth-popup") {
     return <main className="account-login-page">{children}</main>;

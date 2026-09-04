@@ -15,6 +15,7 @@ import { Footer, FooterProps } from "@/components/navigation/Footer";
 
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { HEADER_SEARCH_QUERY, NAVIGATION, SETTINGS } from "@/sanity/lib/queries";
+import { AccountCustomerProvider } from "@/hooks/useAccountCustomer";
 
 import "./globals.css";
 
@@ -89,20 +90,22 @@ export default async function RootLayout({
         <ThemeProvider
           settings={settings as ThemeSettings | undefined}
         >
-          <Header
-            navigation={navigation as NavigationData | null}
-            searchPages={searchPages as SearchPage[]}
-          />
+          <AccountCustomerProvider>
+            <Header
+              navigation={navigation as NavigationData | null}
+              searchPages={searchPages as SearchPage[]}
+            />
 
-          <div className="main-sections-wrapper">
-            {children}
-          </div>
+            <div className="main-sections-wrapper">
+              {children}
+            </div>
 
-          <Footer
-            navigation={
-              navigation as FooterProps["navigation"]
-            }
-          />
+            <Footer
+              navigation={
+                navigation as FooterProps["navigation"]
+              }
+            />
+          </AccountCustomerProvider>
 
           <SanityLive />
           {isEnabled && <DisableDraftMode />}

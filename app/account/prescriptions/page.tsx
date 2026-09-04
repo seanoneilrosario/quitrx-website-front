@@ -1,2 +1,5 @@
-import { PageHeading } from "@/components/account/AccountShell";
-export default function PrescriptionsPage(){return <><PageHeading eyebrow="Treatment" title="Prescriptions" copy="See the status of prescriptions associated with your QuitRX care."/><section className="account-card prescription"><div><span className="status">Active</span><h2>Current treatment prescription</h2><p className="muted">Issued 12 June 2026 · Expires 12 December 2026</p></div><div className="prescription-stats"><div><strong>2</strong><span>Repeats remaining</span></div><div><strong>118 days</strong><span>Until expiry</span></div></div><p className="privacy-note">Medication details will appear here only after secure customer authentication and the clinical-data integration are enabled.</p></section></>}
+import RenewalForm from "@/components/sections/customs/RenewalForm";
+
+export default function PrescriptionsPage() {
+  return <RenewalForm />;
+}

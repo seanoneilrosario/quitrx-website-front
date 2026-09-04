@@ -3,30 +3,22 @@
 import { useEffect, useRef } from "react";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { buildQuitRxFormUrl } from "@/lib/quitRxFormUrls";
-import "./UploadPrescription.css";
+import "./EscriptRequest.css";
 import "./FormBackButton.css";
 import FormBackButton from "./FormBackButton";
 
-const FORM_ID = "tNPCUM7T9J2EfT3pdRP68U6T6HezBgFAcqRmifGD4eg";
+const FORM_ID = "Zc9s8aLGPTVQntvZrepRaqSCsgNugnAh0z_ApC8x2XY";
 
-type UploadPrescriptionProps = {
-  title?: string;
-  paddingTop?: number;
-  paddingBottom?: number;
-};
-
-export default function UploadPrescription({ title }: UploadPrescriptionProps) {
+export default function RenewalForm() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { customer, loading } = useAccountCustomer();
 
   useEffect(() => {
     if (loading) return;
-    const url = buildQuitRxFormUrl("uploadScript", customer);
+    const url = buildQuitRxFormUrl("renewal", customer);
     const pageUrl = new URL(window.location.href);
     pageUrl.searchParams.forEach((value, key) => {
-      if (key.toLowerCase().startsWith("utm_") || key.toLowerCase() === "gclid") {
-        url.searchParams.set(key, value);
-      }
+      if (key.toLowerCase().startsWith("utm_") || key.toLowerCase() === "gclid") url.searchParams.set(key, value);
     });
     url.searchParams.set("referrername", window.location.href.slice(0, 1800));
     if (iframeRef.current) iframeRef.current.src = url.toString();
@@ -48,14 +40,13 @@ export default function UploadPrescription({ title }: UploadPrescriptionProps) {
   }, []);
 
   return (
-    <section className="upload-prescription">
+    <section className="escript-request">
       <FormBackButton />
-      <div className="upload-prescription__inner">
-        {title && <h2 className="upload-prescription__title">{title}</h2>}
+      <div className="escript-request__inner">
         <iframe
           ref={iframeRef}
-          className="upload-prescription__iframe"
-          title="QuitRX Script Upload"
+          className="escript-request__iframe"
+          title="QuitRX Script Renewal"
         />
       </div>
     </section>

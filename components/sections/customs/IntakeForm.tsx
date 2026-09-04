@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { buildQuitRxFormUrl } from "@/lib/quitRxFormUrls";
 import "./IntakeForm.css";
 import "./FormBackButton.css";
 import FormBackButton from "./FormBackButton";
 
 const FORM_ID = "n3JR1Lhg5OV91in2ovvhZMReVat5zQRQnwEmd6GYusw";
-const FORM_ORIGIN = "https://forms.quitrx.com.au";
-const FORM_URL = `${FORM_ORIGIN}/quickrx/form/QuitRXIntakeForm/formperma/${FORM_ID}?zf_rszfm=1`;
 
 type IntakeFormProps = {
   title?: string;
@@ -17,9 +17,11 @@ type IntakeFormProps = {
 
 export default function IntakeForm({ title }: IntakeFormProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { customer, loading } = useAccountCustomer();
 
   useEffect(() => {
-    const url = new URL(FORM_URL);
+    if (loading) return;
+    const url = buildQuitRxFormUrl("intake", customer);
     const pageUrl = new URL(window.location.href);
     pageUrl.searchParams.forEach((value, key) => {
       if (key.toLowerCase().startsWith("utm_") || key.toLowerCase() === "gclid") {
@@ -28,7 +30,9 @@ export default function IntakeForm({ title }: IntakeFormProps) {
     });
     url.searchParams.set("referrername", window.location.href.slice(0, 1800));
     if (iframeRef.current) iframeRef.current.src = url.toString();
+  }, [customer, loading]);
 
+  useEffect(() => {
     function resizeForm(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow || typeof event.data !== "string") return;
       const [formId, height, shouldScroll] = event.data.split("|");
@@ -51,7 +55,6 @@ export default function IntakeForm({ title }: IntakeFormProps) {
         <iframe
           ref={iframeRef}
           className="intake-form__iframe"
-          src={FORM_URL}
           title="QuitRX Intake Form"
           allow="geolocation"
         />

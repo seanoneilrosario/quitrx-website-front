@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 function addressValue(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];
@@ -11,24 +12,14 @@ function addressValue(customer: QuitHeroCustomer) {
 
 export default function ProfileForm() {
   const router = useRouter();
-  const [customer, setCustomer] = useState<QuitHeroCustomer>();
+  const { customer, loading, setCustomer } = useAccountCustomer();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        if (response.status === 401) return router.replace("/account/login");
-        if (!response.ok) throw new Error();
-        setCustomer(await response.json() as QuitHeroCustomer);
-      })
-      .catch((requestError: unknown) => {
-        if (!(requestError instanceof DOMException && requestError.name === "AbortError")) setError("Unable to load your profile.");
-      });
-    return () => controller.abort();
-  }, [router]);
+    if (!loading && !customer) router.replace("/account/login");
+  }, [customer, loading, router]);
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,7 +46,6 @@ export default function ProfileForm() {
     }
   }
 
-  if (error && !customer) return <section className="account-card"><p className="account-load-message">{error}</p></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your profile...</p></section>;
 
   return <section className="account-card">

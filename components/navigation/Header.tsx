@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 type NavigationMenuItem = {
   title?: string | null;
   href?: string | null;
@@ -45,10 +46,6 @@ type SearchProduct = {
   description?: string;
   image?: string;
   searchKeywords: string;
-};
-type AccountIdentity = {
-  firstName?: string;
-  email?: string;
 };
 const CART_KEY = "quitrx-cart";
 
@@ -158,7 +155,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [accountIdentity, setAccountIdentity] = useState<AccountIdentity>();
+  const { customer: accountIdentity } = useAccountCustomer();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -228,23 +225,6 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
       controller.abort();
     };
   }, [isSearchOpen, searchLoaded]);
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) {
-          setAccountIdentity(undefined);
-          return;
-        }
-        setAccountIdentity(await response.json() as AccountIdentity);
-      })
-      .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          setAccountIdentity(undefined);
-        }
-      });
-    return () => controller.abort();
-  }, [pathname]);
   useEffect(() => {
     const updateCart = (event?: Event) => {
       setCartItems(readCart());

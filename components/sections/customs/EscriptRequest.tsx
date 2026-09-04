@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { buildQuitRxFormUrl } from "@/lib/quitRxFormUrls";
 import "./EscriptRequest.css";
 import "./FormBackButton.css";
 import FormBackButton from "./FormBackButton";
 
 const FORM_ID = "kv_pCXTnqL7KtQx2aQj8yauEXxjqzQKzTTwrIKi8i5c";
-const FORM_ORIGIN = "https://forms.quitrx.com.au";
-const FORM_URL = `${FORM_ORIGIN}/quickrx/form/QuitRXEscriptRequestThisisusedforonlyafterfreepriv/formperma/${FORM_ID}?zf_rszfm=1`;
 
 type EscriptRequestProps = {
   title?: string;
@@ -17,16 +17,20 @@ type EscriptRequestProps = {
 
 export default function EscriptRequest({ title }: EscriptRequestProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { customer, loading } = useAccountCustomer();
 
   useEffect(() => {
-    const url = new URL(FORM_URL);
+    if (loading) return;
+    const url = buildQuitRxFormUrl("escriptRequest", customer);
     const pageUrl = new URL(window.location.href);
     pageUrl.searchParams.forEach((value, key) => {
       if (key.toLowerCase().startsWith("utm_") || key.toLowerCase() === "gclid") url.searchParams.set(key, value);
     });
     url.searchParams.set("referrername", window.location.href.slice(0, 1800));
     if (iframeRef.current) iframeRef.current.src = url.toString();
+  }, [customer, loading]);
 
+  useEffect(() => {
     function resizeForm(event: MessageEvent) {
       if (event.source !== iframeRef.current?.contentWindow || typeof event.data !== "string") return;
       const [formId, height, shouldScroll] = event.data.split("|");
@@ -45,7 +49,7 @@ export default function EscriptRequest({ title }: EscriptRequestProps) {
     <FormBackButton />
     <div className="escript-request__inner">
       {title && <h2 className="escript-request__title">{title}</h2>}
-      <iframe ref={iframeRef} className="escript-request__iframe" src={FORM_URL} title="QuitRX eScript Request" allow="geolocation" />
+      <iframe ref={iframeRef} className="escript-request__iframe" title="QuitRX eScript Request" allow="geolocation" />
     </div>
   </section>;
 }
