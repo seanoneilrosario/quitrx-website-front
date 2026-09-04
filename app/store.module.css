@@ -471,6 +471,12 @@
   cursor: pointer;
 }
 
+.addToCart:disabled,
+.stickyButton:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
 .disabledPurchase {
   pointer-events: none;
   opacity: .55;

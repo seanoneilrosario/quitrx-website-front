@@ -177,7 +177,7 @@ export default function ProductPurchasePanel({
       )}
 
       <button type="button" className={styles.addToCart} disabled={!available} onClick={addToCart}>
-        {added ? "Added to cart" : available ? "Add to cart" : "Out of stock"}
+        {added ? "Added to cart" : available ? "Add to cart" : "Sold out"}
       </button>
 
       <div className={styles.stickyPurchaseBar}>
@@ -196,7 +196,7 @@ export default function ProductPurchasePanel({
           <button type="button" aria-label="Increase quantity" onClick={() => setQuantity((value) => value + 1)}>+</button>
         </div>
         <strong className={styles.stickyPrice}>{price}</strong>
-        <button type="button" className={styles.stickyButton} disabled={!available} onClick={addToCart}>{added ? "Added" : available ? "Add to Cart" : "Out of stock"}</button>
+        <button type="button" className={styles.stickyButton} disabled={!available} onClick={addToCart}>{added ? "Added" : available ? "Add to Cart" : "Sold out"}</button>
       </div>
     </>
   );
