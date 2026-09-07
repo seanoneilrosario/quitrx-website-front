@@ -596,9 +596,6 @@
 .relatedProduct select { display: block; box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; height: 30px; overflow: hidden; text-overflow: ellipsis; }
 
 .bundleProduct { grid-template-columns: 62px minmax(0, 1fr); }
-.bundleSlots { gap: 10px; }
-.bundleSlot { display: grid; min-width: 0; gap: 5px; }
-.bundleSlot strong { font-size: 13px; }
 
 .cartPage {
   min-height: 70vh;
