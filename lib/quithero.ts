@@ -115,8 +115,8 @@ export async function getQuitHeroProductById(id: string) {
 }
 
 export async function getQuitHeroCollection(slug: string) {
-  const products = await getQuitHeroProducts();
   if (slug === "all-products") {
+    const products = await getQuitHeroProducts();
     return {
       brand: {
         name: "All Products",
@@ -125,18 +125,21 @@ export async function getQuitHeroCollection(slug: string) {
       products,
     };
   }
-  const assignment = await client.withConfig({ useCdn: false }).fetch<{
-    title?: string;
-    description?: string;
-    productIds?: string[];
-    selectionMode?: "manual" | "dynamic";
-    dynamicTag?: string;
-    ruleMatch?: "all" | "any";
-    dynamicRules?: CollectionRule[];
-  } | null>(
-    `*[_type == "productCollection" && slug.current == $slug][0]{title, description, productIds, selectionMode, dynamicTag, ruleMatch, dynamicRules}`,
-    { slug },
-  );
+  const [products, assignment] = await Promise.all([
+    getQuitHeroProducts(),
+    client.withConfig({ useCdn: false }).fetch<{
+      title?: string;
+      description?: string;
+      productIds?: string[];
+      selectionMode?: "manual" | "dynamic";
+      dynamicTag?: string;
+      ruleMatch?: "all" | "any";
+      dynamicRules?: CollectionRule[];
+    } | null>(
+      `*[_type == "productCollection" && slug.current == $slug][0]{title, description, productIds, selectionMode, dynamicTag, ruleMatch, dynamicRules}`,
+      { slug },
+    ),
+  ]);
   if (assignment) {
     const selected = new Set(assignment.productIds ?? []);
     const rules = assignment.dynamicRules?.length ? assignment.dynamicRules : assignment.dynamicTag ? [{ field: "tag", operator: "equals", value: assignment.dynamicTag } satisfies CollectionRule] : [];

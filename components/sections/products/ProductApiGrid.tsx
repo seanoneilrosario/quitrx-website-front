@@ -105,6 +105,7 @@ export default function ProductApiGrid({
     : "";
 
   useEffect(() => {
+    if (showingSelectedCollections) return;
     const controller = new AbortController();
 
     fetch(`/api/quithero-products${collectionQuery}`, { signal: controller.signal })
@@ -123,7 +124,7 @@ export default function ProductApiGrid({
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [collectionQuery]);
+  }, [collectionQuery, showingSelectedCollections]);
 
   const sectionStyle = {
     "--desktop-padding-top": `${desktopPaddingTop ?? paddingTop}px`,
