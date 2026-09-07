@@ -19,6 +19,14 @@ type RelatedProduct = {
   variants: Variant[];
 };
 
+type BundleComponent = {
+  productId: string;
+  productName: string;
+  image?: string;
+  variant: Variant;
+  quantity: number;
+};
+
 type CartItem = {
   key: string;
   productId: string;
@@ -67,12 +75,14 @@ export default function ProductPurchasePanel({
   productName,
   image,
   variants,
+  bundles,
   relatedProducts,
 }: {
   productId: string;
   productName: string;
   image?: string;
   variants: Variant[];
+  bundles: Record<string, BundleComponent[]>;
   relatedProducts: RelatedProduct[];
 }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -81,6 +91,8 @@ export default function ProductPurchasePanel({
   const [relatedVariants, setRelatedVariants] = useState<Record<string, number>>({});
   const [added, setAdded] = useState(false);
   const selected = variants[selectedIndex];
+  const bundleComponents = selected?.id ? bundles[selected.id] || [] : [];
+  const hasBundle = bundleComponents.length > 0;
   const inventory = selected?.inventory;
   const available = inventory === undefined || inventory > 0;
   const price = formatPrice(selected?.price);
@@ -152,7 +164,22 @@ export default function ProductPurchasePanel({
       </p>
       <span className={styles.stockBar} aria-hidden="true"><span /></span>
 
-      {relatedProducts.length > 0 && (
+      {hasBundle && (
+        <section className={styles.relatedProducts} aria-labelledby="bundle-includes-heading">
+          <h2 id="bundle-includes-heading">Bundle includes</h2>
+          {bundleComponents.map((component, index) => (
+            <div className={`${styles.relatedProduct} ${styles.bundleProduct}`} key={`${component.variant.id || component.productId}-${index}`}>
+              {component.image && <img src={component.image} alt="" />}
+              <span>
+                <strong>{component.productName}</strong>
+                <small>{component.quantity} × {relatedVariantLabel(component.productName, component.variant, index)}</small>
+              </span>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {!hasBundle && relatedProducts.length > 0 && (
         <section className={styles.relatedProducts} aria-labelledby="frequently-bought-heading">
           <h2 id="frequently-bought-heading">Frequently Bought Together</h2>
           {relatedProducts.map((product) => {

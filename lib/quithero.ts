@@ -1,6 +1,7 @@
 import "server-only";
 
 import { client } from "@/sanity/lib/client";
+import { bundleComponentsFrom } from "./quithero-bundle";
 
 export type QuitHeroImage = {
   url?: string;
@@ -112,6 +113,13 @@ export async function getQuitHeroProduct(handle: string) {
 export async function getQuitHeroProductById(id: string) {
   const products = await getQuitHeroProducts();
   return products.find((product) => product.id === id);
+}
+
+export async function getQuitHeroBundle(productId: string, variantId: string) {
+  const payload = await quitHeroFetch<unknown>(
+    `/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/bundle`,
+  );
+  return bundleComponentsFrom(payload);
 }
 
 export async function getQuitHeroCollection(slug: string) {

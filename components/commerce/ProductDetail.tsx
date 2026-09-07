@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { QuitHeroProduct } from "@/lib/quithero";
-import { getPrimaryImage, getQuitHeroProducts } from "@/lib/quithero";
+import { getPrimaryImage, getQuitHeroBundle, getQuitHeroProducts } from "@/lib/quithero";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import styles from "@/app/store.module.css";
@@ -9,6 +9,32 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
   const image = getPrimaryImage(product);
   const description = (product.description || product.shortDescription || "").replace(/<[^>]*>/g, "");
   const products = await getQuitHeroProducts().catch(() => []);
+  const variants = product.variants || [];
+  const bundleResults = product.id
+    ? await Promise.all(variants.map(async (variant) => ({
+        variantId: variant.id,
+        components: variant.id ? await getQuitHeroBundle(product.id!, variant.id).catch(() => []) : [],
+      })))
+    : [];
+  const variantProducts = new Map(
+    products.flatMap((item) => (item.variants || []).flatMap((variant) =>
+      variant.id ? [[variant.id, { product: item, variant }] as const] : [],
+    )),
+  );
+  const bundles = Object.fromEntries(bundleResults.flatMap(({ variantId, components }) => {
+    if (!variantId || !components.length) return [];
+    return [[variantId, components.flatMap((component) => {
+      const match = variantProducts.get(component.componentVariantId);
+      if (!match) return [];
+      return [{
+        productId: match.product.id || match.product.slug || match.product.name || "product",
+        productName: match.product.name || "Product",
+        image: getPrimaryImage(match.product),
+        variant: match.variant,
+        quantity: component.quantity,
+      }];
+    })]];
+  }));
   const relatedProducts = products
     .filter((item) => item.id !== product.id && item.brand?.slug === product.brand?.slug)
     .slice(0, 3)
@@ -35,7 +61,8 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
             productId={product.id || product.slug || product.name || "product"}
             productName={product.name || "Product"}
             image={image}
-            variants={product.variants || []}
+            variants={variants}
+            bundles={bundles}
             relatedProducts={relatedProducts}
           />
 
