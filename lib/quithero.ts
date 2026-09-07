@@ -46,6 +46,19 @@ export type QuitHeroProduct = {
   tags?: Array<QuitHeroProductTag | string>;
   images?: QuitHeroImage[];
   variants?: QuitHeroVariant[];
+  collectionId?: string;
+  collectionIds?: string[];
+  collections?: Array<string | { id?: string; slug?: string }>;
+};
+
+export type QuitHeroCollection = {
+  id?: string;
+  name?: string;
+  slug?: string;
+  description?: string;
+  image?: string;
+  products?: Array<QuitHeroProduct | string>;
+  productIds?: string[];
 };
 
 export type CollectionRule = {
@@ -62,6 +75,10 @@ type QuitHeroProductsResponse =
       items?: QuitHeroProduct[];
       pagination?: { page?: number; limit?: number; total?: number; totalPages?: number };
     };
+
+type QuitHeroCollectionsResponse =
+  | QuitHeroCollection[]
+  | { collections?: QuitHeroCollection[]; data?: QuitHeroCollection[]; items?: QuitHeroCollection[] };
 
 const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
 
@@ -87,6 +104,19 @@ function productsFrom(payload: QuitHeroProductsResponse) {
   }
 
   return products;
+}
+
+function collectionsFrom(payload: QuitHeroCollectionsResponse) {
+  if (Array.isArray(payload)) return payload;
+  const collections = payload.collections ?? payload.data ?? payload.items;
+  if (!Array.isArray(collections)) {
+    throw new Error("QuitHero collections response did not contain a collection list.");
+  }
+  return collections;
+}
+
+export async function getQuitHeroCollections() {
+  return collectionsFrom(await quitHeroFetch<QuitHeroCollectionsResponse>("/collections"));
 }
 
 export async function getQuitHeroProducts() {
@@ -133,8 +163,9 @@ export async function getQuitHeroCollection(slug: string) {
       products,
     };
   }
-  const [products, assignment] = await Promise.all([
+  const [products, apiCollections, assignment] = await Promise.all([
     getQuitHeroProducts(),
+    getQuitHeroCollections().catch(() => []),
     client.withConfig({ useCdn: false }).fetch<{
       title?: string;
       description?: string;
@@ -148,6 +179,38 @@ export async function getQuitHeroCollection(slug: string) {
       { slug },
     ),
   ]);
+  const apiCollection = apiCollections.find((collection) => collection.slug === slug);
+  if (apiCollection) {
+    const embeddedProducts = (apiCollection.products ?? []).filter(
+      (product): product is QuitHeroProduct => typeof product === "object" && product !== null,
+    );
+    const assignedIds = new Set([
+      ...(apiCollection.productIds ?? []),
+      ...(apiCollection.products ?? []).filter((product): product is string => typeof product === "string"),
+    ]);
+    const assignedProducts = embeddedProducts.length
+      ? embeddedProducts
+      : products.filter((product) => {
+          if (product.id && assignedIds.has(product.id)) return true;
+          if (apiCollection.id && product.collectionId === apiCollection.id) return true;
+          if (apiCollection.id && product.collectionIds?.includes(apiCollection.id)) return true;
+          return product.collections?.some((collection) =>
+            typeof collection === "string"
+              ? collection === apiCollection.id || collection === slug
+              : collection.id === apiCollection.id || collection.slug === slug,
+          );
+        });
+    return {
+      brand: {
+        id: apiCollection.id,
+        name: apiCollection.name ?? slug,
+        slug,
+        description: apiCollection.description,
+        logo: apiCollection.image,
+      },
+      products: assignedProducts,
+    };
+  }
   if (assignment) {
     const selected = new Set(assignment.productIds ?? []);
     const rules = assignment.dynamicRules?.length ? assignment.dynamicRules : assignment.dynamicTag ? [{ field: "tag", operator: "equals", value: assignment.dynamicTag } satisfies CollectionRule] : [];

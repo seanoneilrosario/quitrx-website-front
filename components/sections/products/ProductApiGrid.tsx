@@ -32,6 +32,13 @@ function getProducts(payload: unknown): ApiRecord[] {
   return Array.isArray(collection) ? (collection.filter(asRecord) as ApiRecord[]) : [];
 }
 
+function getCollections(payload: unknown): ApiRecord[] {
+  if (Array.isArray(payload)) return payload.filter(asRecord) as ApiRecord[];
+  const record = asRecord(payload);
+  const collections = record?.collections || record?.data || record?.items;
+  return Array.isArray(collections) ? (collections.filter(asRecord) as ApiRecord[]) : [];
+}
+
 function getText(product: ApiRecord, keys: string[]) {
   for (const key of keys) {
     const value = product[key];
@@ -93,6 +100,7 @@ export default function ProductApiGrid({
   collections = [],
 }: ProductApiGridProps) {
   const [products, setProducts] = useState<ApiRecord[]>([]);
+  const [apiCollections, setApiCollections] = useState<ApiRecord[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const availableCollections = Array.isArray(collections) ? collections : [];
@@ -108,14 +116,16 @@ export default function ProductApiGrid({
     if (showingSelectedCollections) return;
     const controller = new AbortController();
 
-    fetch(`/api/quithero-products${collectionQuery}`, { signal: controller.signal })
+    const url = displayMode === "collections" ? "/api/quithero-collections" : `/api/quithero-products${collectionQuery}`;
+    fetch(url, { signal: controller.signal })
       .then(async (response) => {
         const payload: unknown = await response.json();
         if (!response.ok) {
           const message = getText(asRecord(payload) || {}, ["error"]);
           throw new Error(message || "Unable to load products.");
         }
-        setProducts(getProducts(payload));
+        if (displayMode === "collections") setApiCollections(getCollections(payload));
+        else setProducts(getProducts(payload));
       })
       .catch((requestError: unknown) => {
         if (requestError instanceof DOMException && requestError.name === "AbortError") return;
@@ -124,7 +134,7 @@ export default function ProductApiGrid({
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [collectionQuery, showingSelectedCollections]);
+  }, [collectionQuery, displayMode, showingSelectedCollections]);
 
   const sectionStyle = {
     "--desktop-padding-top": `${desktopPaddingTop ?? paddingTop}px`,
@@ -139,8 +149,9 @@ export default function ProductApiGrid({
         {heading && <h2 className={styles.heading}>{heading}</h2>}
         {!showingSelectedCollections && loading && <p className={styles.status}>Loading products…</p>}
         {!showingSelectedCollections && error && <p className={styles.error}>{error}</p>}
-        {!showingSelectedCollections && !loading && !error && !products.length && (
-          <p className={styles.status}>No products are currently available.</p>
+        {!showingSelectedCollections && !loading && !error &&
+          (displayMode === "collections" ? !apiCollections.length : !products.length) && (
+          <p className={styles.status}>No {displayMode} are currently available.</p>
         )}
 
         <div className={styles.grid}>
@@ -155,12 +166,16 @@ export default function ProductApiGrid({
             ))}
           {displayMode === "collections" &&
             selectedCollections.length === 0 &&
-            getCollectionEntries(products).slice(0, productLimit).map(([slug, product]) => {
+            (apiCollections.length
+              ? apiCollections.map((item) => [getText(item, ["slug"]) || "", item] as [string, ApiRecord])
+              : getCollectionEntries(products)
+            ).filter(([slug]) => slug).slice(0, productLimit).map(([slug, product]) => {
               const brand = asRecord(product.brand) || {};
               const isAll = slug === "all-products";
-              const name = isAll ? "All Products" : getText(brand, ["name"]) || "Collection";
-              const image = isAll ?  undefined : getText(brand, ["logo"]) || getImage(product);
-              const count = isAll ? products.length : products.filter(
+              const name = isAll ? "All Products" : getText(product, ["name", "title"]) || getText(brand, ["name"]) || "Collection";
+              const image = isAll ? undefined : getText(product, ["image"]) || getText(brand, ["logo"]) || getImage(product);
+              const embeddedProducts = product.products;
+              const count = Array.isArray(embeddedProducts) ? embeddedProducts.length : isAll ? products.length : products.filter(
                 (item) => getText(asRecord(item.brand) || {}, ["slug"]) === slug,
               ).length;
 
