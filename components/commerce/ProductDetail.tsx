@@ -31,6 +31,7 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
         productName: match.product.name || "Product",
         image: getPrimaryImage(match.product),
         variant: match.variant,
+        variants: match.product.variants || [],
         quantity: component.quantity,
       }];
     })]];

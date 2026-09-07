@@ -243,7 +243,8 @@
 }
 
 .productImageWrap {
-  position: relative;
+  position: sticky;
+  top: 210px;
   min-height: min(72vh, 750px);
   padding: clamp(40px, 5vw, 80px);
   border-color: #e0e9ed;
@@ -634,7 +635,7 @@
 @media (max-width: 989px) {
   .productDetail { grid-template-columns: 1fr; }
   .productContent { padding-top: 0; }
-  .productImageWrap { min-height: auto; }
+  .productImageWrap { position: relative; top: auto; min-height: auto; }
   .stickyPurchaseBar { grid-template-columns: 1fr auto auto; gap: 12px; }
   .stickyPurchaseBar select,
   .stickyQuantity { display: none; }
