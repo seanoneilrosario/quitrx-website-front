@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { QuitHeroProduct } from "@/lib/quithero";
-import { getPrimaryImage, getQuitHeroProducts, productHasTag } from "@/lib/quithero";
+import { getPrimaryImage, getQuitHeroBundleVariant, getQuitHeroProducts, productHasTag } from "@/lib/quithero";
 import { bundleDropdownsFrom } from "@/lib/quithero-bundle";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
@@ -12,19 +12,22 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
   const isBundle = productHasTag(product, "bundle");
   const products = await getQuitHeroProducts().catch(() => []);
   const variants = product.variants || [];
+  const bundleVariant = isBundle && product.id && variants[0]?.id
+    ? await getQuitHeroBundleVariant(product.id, variants[0].id).catch(() => variants[0])
+    : variants[0];
   const variantLookup = new Map(products.flatMap((item) => (item.variants || []).flatMap((variant) =>
     variant.id ? [[variant.id, { product: item, variant }] as const] : [],
   )));
-  const bundleDropdowns = bundleDropdownsFrom(variants[0]).map((dropdown) => ({
+  const bundleDropdowns = bundleDropdownsFrom(bundleVariant).map((dropdown) => ({
     name: dropdown.name,
-    options: dropdown.options.map(({ componentVariantId }) => {
+    options: dropdown.options.map(({ componentVariantId, componentVariant }) => {
       const match = variantLookup.get(componentVariantId);
       return {
         componentVariantId,
-        productId: match?.product.id || componentVariantId,
-        productName: match?.product.name || "Bundle item",
-        variantName: match?.variant.name || "Default",
-        available: Boolean(match) && (match?.variant.inventory === undefined || match.variant.inventory > 0),
+        productId: componentVariant?.product?.id || componentVariant?.productId || match?.product.id || componentVariantId,
+        productName: componentVariant?.product?.name || match?.product.name || "Bundle item",
+        variantName: componentVariant?.name || match?.variant.name || "Default",
+        available: (componentVariant?.inventory ?? match?.variant.inventory ?? 0) > 0,
       };
     }),
   }));

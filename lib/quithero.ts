@@ -149,10 +149,14 @@ export async function getQuitHeroProductById(id: string) {
 }
 
 export async function getQuitHeroBundle(productId: string, variantId: string) {
-  const payload = await quitHeroFetch<unknown>(
+  const payload = await getQuitHeroBundleVariant(productId, variantId);
+  return bundleComponentsFrom(payload);
+}
+
+export async function getQuitHeroBundleVariant(productId: string, variantId: string) {
+  return quitHeroFetch<QuitHeroVariant>(
     `/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/bundle`,
   );
-  return bundleComponentsFrom(payload);
 }
 
 export async function patchQuitHeroBundle(

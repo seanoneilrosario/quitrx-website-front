@@ -5,10 +5,16 @@ describe("bundleDropdownsFrom", () => {
   it("normalizes the current variant bundle dropdown structure", () => {
     expect(bundleDropdownsFrom({ bundleDropdowns: [{
       name: "Choose a flavour",
-      options: [{ componentVariantId: "mint" }, { componentVariantId: "berry" }],
+      options: [
+        { componentVariantId: "mint", componentVariant: { name: "Mint", inventory: 4 } },
+        { componentVariantId: "berry" },
+      ],
     }] })).toEqual([{
       name: "Choose a flavour",
-      options: [{ componentVariantId: "mint" }, { componentVariantId: "berry" }],
+      options: [
+        { componentVariantId: "mint", componentVariant: { name: "Mint", inventory: 4 } },
+        { componentVariantId: "berry" },
+      ],
     }]);
   });
 

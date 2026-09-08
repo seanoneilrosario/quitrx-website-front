@@ -22,7 +22,16 @@ export type QuitHeroBundleSlot = {
 
 export type QuitHeroBundleDropdown = {
   name: string;
-  options: Array<{ componentVariantId: string }>;
+  options: Array<{
+    componentVariantId: string;
+    componentVariant?: {
+      id?: string;
+      name?: string;
+      inventory?: number;
+      productId?: string;
+      product?: { id?: string; name?: string };
+    };
+  }>;
 };
 
 export type BundleAwareVariant = {
@@ -42,7 +51,10 @@ export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] 
     const name = String(dropdown.name ?? "").trim();
     const options = recordsFrom(dropdown.options).flatMap((option) => {
       const componentVariantId = String(option.componentVariantId ?? "").trim();
-      return componentVariantId ? [{ componentVariantId }] : [];
+      const componentVariant = option.componentVariant && typeof option.componentVariant === "object"
+        ? option.componentVariant as QuitHeroBundleDropdown["options"][number]["componentVariant"]
+        : undefined;
+      return componentVariantId ? [{ componentVariantId, ...(componentVariant ? { componentVariant } : {}) }] : [];
     });
     return name && options.length ? [{ name, options }] : [];
   });
