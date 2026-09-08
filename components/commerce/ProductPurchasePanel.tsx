@@ -236,15 +236,16 @@ export default function ProductPurchasePanel({
 
       {isBundle && bundleComponents.length > 0 && (
         <section className={styles.bundleProducts} aria-label="Bundle includes">
-          <h2>Bundle includes</h2>
-          <ul>
-            {bundleComponents.map((component, index) => (
-              <li key={`${component.variantId}-${index}`}>
-                <span>{component.productName}{component.variantName !== "Default" ? ` — ${component.variantName}` : ""}</span>
-                <strong>× {component.quantity}</strong>
-              </li>
-            ))}
-          </ul>
+          {bundleComponents.flatMap((component, componentIndex) =>
+            Array.from({ length: component.quantity }, (_, unitIndex) => (
+              <div className={styles.bundleComponent} key={`${component.variantId}-${componentIndex}-${unitIndex}`}>
+                <span>{component.productName} - {unitIndex + 1}</span>
+                <div className={styles.bundleComponentValue} aria-readonly="true">
+                  {component.variantName}
+                </div>
+              </div>
+            )),
+          )}
         </section>
       )}
 

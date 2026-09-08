@@ -597,7 +597,7 @@
 
 .bundleProducts {
   display: grid;
-  gap: 10px;
+  gap: 17px;
   margin: 0 0 24px;
 }
 
@@ -607,8 +607,7 @@
   margin-bottom: 18px;
 }
 
-.bundlePicker > span,
-.bundleProducts h2 {
+.bundlePicker > span {
   margin: 0;
   color: #34858e;
   font-size: 14px;
@@ -638,27 +637,36 @@
   outline-offset: 1px;
 }
 
-.bundleProducts ul {
+.bundleComponent {
   display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: 7px;
 }
 
-.bundleProducts li {
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  padding: 11px 12px;
-  border: 1px solid #cfd8dc;
+.bundleComponent > span {
+  color: #78a2ad;
+  font-size: clamp(18px, 1.55vw, 24px);
+  font-weight: 300;
+  letter-spacing: .035em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.bundleComponentValue {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  padding: 12px 11px;
+  overflow: hidden;
+  border: 1px solid #333;
   background: #fff;
-  color: #287b85;
-  font-size: 14px;
-}
-
-.bundleProducts li strong {
-  flex: 0 0 auto;
+  color: #272727;
+  font-size: clamp(16px, 1.3vw, 20px);
+  font-weight: 300;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .cartPage {
