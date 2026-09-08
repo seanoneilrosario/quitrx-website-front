@@ -107,12 +107,12 @@ export default function ProductPurchasePanel({
   isBundle: boolean;
   relatedProducts: RelatedProduct[];
 }) {
-  const [selectedIndex, setSelectedIndex] = useState(isBundle ? -1 : 0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [relatedSelections, setRelatedSelections] = useState<Record<string, boolean>>({});
   const [relatedVariants, setRelatedVariants] = useState<Record<string, number>>({});
   const [bundleComponents, setBundleComponents] = useState<BundleComponent[]>([]);
-  const [bundleLoading, setBundleLoading] = useState(false);
+  const [bundleLoading, setBundleLoading] = useState(isBundle && Boolean(variants[0]?.id));
   const [bundleError, setBundleError] = useState("");
   const [added, setAdded] = useState(false);
   const selected = variants[selectedIndex];
@@ -221,17 +221,7 @@ export default function ProductPurchasePanel({
       <p className={styles.detailPrice}>{price}{price !== "Price on request" && " AUD"}</p>
       <p className={styles.shippingNote}>Shipping calculated at checkout</p>
 
-      {isBundle ? (
-        <label className={styles.bundlePicker}>
-          <span>Choose your bundle</span>
-          <select value={selectedIndex} onChange={(event) => selectParentVariant(Number(event.target.value))}>
-            <option value={-1} disabled>Select a bundle</option>
-            {variants.map((variant, index) => (
-              <option key={variant.id || index} value={index}>{variant.name || `Group ${index + 1}`}</option>
-            ))}
-          </select>
-        </label>
-      ) : variants.length > 1 && (
+      {!isBundle && variants.length > 1 && (
         <fieldset className={styles.variantPicker}>
           <legend>Choose your strength</legend>
           <div className={styles.variantOptions}>
