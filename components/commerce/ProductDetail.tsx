@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { getPrimaryImage, getQuitHeroBundle, getQuitHeroProducts } from "@/lib/quithero";
+import { bundleComponentsAreAvailable, bundleComponentsFrom } from "@/lib/quithero-bundle";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import styles from "@/app/store.module.css";
@@ -13,7 +14,9 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
   const bundleResults = product.id
     ? await Promise.all(variants.map(async (variant) => ({
         variantId: variant.id,
-        components: variant.id ? await getQuitHeroBundle(product.id!, variant.id).catch(() => []) : [],
+        components: Array.isArray(variant.bundleComponents)
+          ? bundleComponentsFrom(variant)
+          : variant.id ? await getQuitHeroBundle(product.id!, variant.id).catch(() => []) : [],
       })))
     : [];
   const variantProducts = new Map(
@@ -30,7 +33,7 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
         productId: match.product.id || match.product.slug || match.product.name || "product",
         productName: match.product.name || "Product",
         image: getPrimaryImage(match.product),
-        variant: match.variant,
+        variant: { ...match.variant, ...component.componentVariant },
         quantity: component.quantity,
       }];
     }).reduce((groups, component) => {
@@ -55,6 +58,13 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
       variants: Array<{ variant: QuitHeroVariant; quantity: number }>;
     }>());
     return [[variantId, Array.from(groupedComponents.values())]];
+  }));
+  const bundleAvailability = Object.fromEntries(bundleResults.flatMap(({ variantId, components }) => {
+    if (!variantId || !components.length) return [];
+    return [[variantId, bundleComponentsAreAvailable(components.map((component) => ({
+      ...component,
+      componentVariant: component.componentVariant ?? variantProducts.get(component.componentVariantId)?.variant,
+    })))]];
   }));
   const relatedProducts = products
     .filter((item) => item.id !== product.id && item.brand?.slug === product.brand?.slug)
@@ -84,6 +94,7 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
             image={image}
             variants={variants}
             bundles={bundles}
+            bundleAvailability={bundleAvailability}
             relatedProducts={relatedProducts}
           />
 

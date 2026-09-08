@@ -19,6 +19,7 @@ export type QuitHeroVariant = {
   size?: string;
   color?: string;
   options?: Record<string, string>;
+  bundleComponents?: unknown;
 };
 
 export type QuitHeroBrand = {
@@ -88,7 +89,7 @@ async function quitHeroFetch<T>(path: string): Promise<T> {
 
   const response = await fetch(`${API_BASE}${path}`, {
     headers: { "x-api-key": apiKey },
-    next: { revalidate: 300 },
+    cache: "no-store",
   });
 
   if (!response.ok) throw new Error(`QuitHero request failed with ${response.status}.`);

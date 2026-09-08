@@ -85,6 +85,7 @@ export default function ProductPurchasePanel({
   image,
   variants,
   bundles,
+  bundleAvailability,
   relatedProducts,
 }: {
   productId: string;
@@ -92,6 +93,7 @@ export default function ProductPurchasePanel({
   image?: string;
   variants: Variant[];
   bundles: Record<string, BundleComponent[]>;
+  bundleAvailability: Record<string, boolean>;
   relatedProducts: RelatedProduct[];
 }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -104,7 +106,9 @@ export default function ProductPurchasePanel({
   const bundleComponents = selected?.id ? bundles[selected.id] || [] : [];
   const hasBundle = bundleComponents.length > 0;
   const inventory = selected?.inventory;
-  const available = inventory === undefined || inventory > 0;
+  const available = selected?.id && hasBundle
+    ? bundleAvailability[selected.id] === true
+    : inventory === undefined || inventory > 0;
   const price = formatPrice(selected?.price);
 
   function addToCart() {

@@ -1,7 +1,16 @@
 export type QuitHeroBundleComponent = {
   componentVariantId: string;
+  componentVariant?: {
+    id?: string;
+    inventory?: number;
+  };
   position: number;
   quantity: number;
+};
+
+export type BundleAwareVariant = {
+  inventory?: number;
+  bundleComponents?: unknown;
 };
 
 export function bundleComponentsFrom(payload: unknown): QuitHeroBundleComponent[] {
@@ -32,8 +41,23 @@ export function bundleComponentsFrom(payload: unknown): QuitHeroBundleComponent[
     const quantity = Number(component.quantity);
     return [{
       componentVariantId,
+      ...(nestedVariant ? { componentVariant: nestedVariant as QuitHeroBundleComponent["componentVariant"] } : {}),
       position: Number.isFinite(position) ? position : index,
       quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
     }];
   }).sort((left, right) => left.position - right.position);
+}
+
+export function bundleComponentsAreAvailable(components: QuitHeroBundleComponent[]) {
+  return components.length > 0 && components.every(({ componentVariant, quantity }) =>
+    Number(componentVariant?.inventory ?? 0) >= quantity,
+  );
+}
+
+export function variantIsAvailable(variant?: BundleAwareVariant) {
+  if (!variant) return false;
+  const components = bundleComponentsFrom(variant);
+  return components.length
+    ? bundleComponentsAreAvailable(components)
+    : variant.inventory === undefined || variant.inventory > 0;
 }

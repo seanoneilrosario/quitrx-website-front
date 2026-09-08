@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
+import { variantIsAvailable } from "@/lib/quithero-bundle";
 import ProductCard from "./ProductCard";
 import styles from "./collectionCatalog.module.css";
 
@@ -59,7 +60,7 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
 
   const visibleProducts = useMemo(() => {
     const filtered = products.filter((product) => {
-      const inStock = product.variants?.some((variant) => (variant.inventory ?? 1) > 0) ?? true;
+      const inStock = product.variants?.some(variantIsAvailable) ?? true;
       const variantSizes = product.variants?.map((variant) => optionValues(variant, "size"));
       const variantColors = product.variants?.map((variant) => optionValues(variant, "color"));
       return (!brands.length || brands.includes(product.brand?.name || ""))
