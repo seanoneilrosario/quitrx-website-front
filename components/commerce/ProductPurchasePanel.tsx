@@ -60,6 +60,10 @@ function relatedVariantLabel(productName: string, variant: Variant, index: numbe
   return label.slice(productName.length).replace(/^\s*[-–—:]\s*/, "") || label;
 }
 
+function bundleVariantLabel(variant: Variant, index: number) {
+  return variant.name || variantLabel(variant, index);
+}
+
 function formatPrice(value?: number | string) {
   if (typeof value === "number") return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
   return value || "Price on request";
@@ -105,11 +109,13 @@ export default function ProductPurchasePanel({
   const selected = variants[selectedIndex];
   const bundleComponents = selected?.id ? bundles[selected.id] || [] : [];
   const hasBundle = Boolean(selected?.id && Object.hasOwn(bundleAvailability, selected.id));
-  const bundleSelectionsAreValid = !hasBundle || (bundleComponents.length > 0 && bundleComponents.every((component) => {
-    const selectionKey = `${selected?.id}:${component.key}`;
-    const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
-    return Boolean(component.variants[bundleVariants[selectionKey] ?? defaultIndex]?.id);
-  }));
+  const bundleSelectionsAreValid = !hasBundle || (bundleComponents.length > 0 && bundleComponents.every((component) =>
+    Array.from({ length: component.quantity }, (_, unitIndex) => {
+      const selectionKey = `${selected?.id}:${component.key}:${unitIndex}`;
+      const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
+      return Boolean(component.variants[bundleVariants[selectionKey] ?? defaultIndex]?.id);
+    }).every(Boolean),
+  ));
   const inventory = selected?.inventory;
   const available = selected?.id && hasBundle
     ? bundleAvailability[selected.id] === true && bundleSelectionsAreValid
@@ -120,8 +126,9 @@ export default function ProductPurchasePanel({
     if (!available) return;
 
     const mainVariantName = selected ? variantLabel(selected, selectedIndex) : "Default";
-    const selectedBundleComponents = bundleComponents.map((component) => {
-      const selectionKey = `${selected?.id || "bundle"}:${component.key}`;
+    const selectedBundleComponents = bundleComponents.flatMap((component) =>
+      Array.from({ length: component.quantity }, (_, unitIndex) => {
+      const selectionKey = `${selected?.id || "bundle"}:${component.key}:${unitIndex}`;
       const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
       const variantIndex = bundleVariants[selectionKey] ?? defaultIndex;
       const variant = component.variants[variantIndex];
@@ -130,10 +137,10 @@ export default function ProductPurchasePanel({
         productId: component.productId,
         productName: component.productName,
         variantId: variant.id,
-        variantName: relatedVariantLabel(component.productName, variant, variantIndex),
-        quantity: component.quantity,
+        variantName: bundleVariantLabel(variant, variantIndex),
+        quantity: 1,
       };
-    });
+    }));
     const combinedBundleComponents = Array.from(selectedBundleComponents.reduce((combined, component) => {
       const componentKey = `${component.productId}:${component.variantId || component.variantName}`;
       const existing = combined.get(componentKey);
@@ -207,37 +214,29 @@ export default function ProductPurchasePanel({
       <span className={styles.stockBar} aria-hidden="true"><span /></span>
 
       {hasBundle && (
-        <section className={styles.relatedProducts} aria-labelledby="bundle-includes-heading">
-          <h2 id="bundle-includes-heading">Bundle includes</h2>
-          {bundleComponents.map((component) => {
-            const selectionKey = `${selected?.id || "bundle"}:${component.key}`;
+        <section className={styles.bundleProducts} aria-label="Bundle includes">
+          {bundleComponents.flatMap((component) => Array.from({ length: component.quantity }, (_, unitIndex) => {
+            const selectionKey = `${selected?.id || "bundle"}:${component.key}:${unitIndex}`;
             const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
             const variantIndex = bundleVariants[selectionKey] ?? defaultIndex;
-            const selectedChildVariant = component.variants[variantIndex];
             return (
-            <div className={`${styles.relatedProduct} ${styles.bundleProduct}`} key={selectionKey}>
-              {component.image && <img src={component.image} alt="" />}
-              <span className={styles.bundleProductInfo}>
-                <strong>{component.productName}</strong>
-                {selectedChildVariant && <small>{relatedVariantLabel(component.productName, selectedChildVariant, variantIndex)}</small>}
-              </span>
-                {component.variants.length > 1 ? (
-                  <select
-                    value={variantIndex}
-                    onChange={(event) => setBundleVariants((values) => ({ ...values, [selectionKey]: Number(event.target.value) }))}
-                    aria-label={`${component.productName} bundle option`}
-                  >
-                    {component.variants.map((variant, variantOptionIndex) => (
-                      <option key={variant.id || variantOptionIndex} value={variantOptionIndex}>
-                        {relatedVariantLabel(component.productName, variant, variantOptionIndex)}
-                      </option>
-                    ))}
-                  </select>
-                ) : !selectedChildVariant ? (
-                  <small>Unavailable</small>
-                ) : null}
-            </div>
-          );})}
+              <label className={styles.bundleProduct} key={selectionKey}>
+                <span>{component.productName} - {unitIndex + 1}</span>
+                <select
+                  value={variantIndex}
+                  disabled={component.variants.length <= 1}
+                  onChange={(event) => setBundleVariants((values) => ({ ...values, [selectionKey]: Number(event.target.value) }))}
+                  aria-label={`${component.productName} ${unitIndex + 1} bundle option`}
+                >
+                  {component.variants.map((variant, variantOptionIndex) => (
+                    <option key={variant.id || variantOptionIndex} value={variantOptionIndex}>
+                      {bundleVariantLabel(variant, variantOptionIndex)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            );
+          }))}
         </section>
       )}
 
