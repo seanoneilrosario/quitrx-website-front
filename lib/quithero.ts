@@ -2,6 +2,7 @@ import "server-only";
 
 import { client } from "@/sanity/lib/client";
 import { bundleComponentsFrom } from "./quithero-bundle";
+import type { QuitHeroBundleDropdown } from "./quithero-bundle";
 
 export type QuitHeroImage = {
   url?: string;
@@ -20,6 +21,7 @@ export type QuitHeroVariant = {
   color?: string;
   options?: Record<string, string>;
   bundleComponents?: unknown;
+  bundleDropdowns?: QuitHeroBundleDropdown[];
 };
 
 export type QuitHeroBrand = {

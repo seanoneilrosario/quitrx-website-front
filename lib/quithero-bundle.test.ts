@@ -1,5 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { bundleComponentsFrom, bundleSlotsFrom, variantIsAvailable } from "./quithero-bundle";
+import { bundleComponentsFrom, bundleDropdownsFrom, bundleSlotsFrom, variantIsAvailable } from "./quithero-bundle";
+
+describe("bundleDropdownsFrom", () => {
+  it("normalizes the current variant bundle dropdown structure", () => {
+    expect(bundleDropdownsFrom({ bundleDropdowns: [{
+      name: "Choose a flavour",
+      options: [{ componentVariantId: "mint" }, { componentVariantId: "berry" }],
+    }] })).toEqual([{
+      name: "Choose a flavour",
+      options: [{ componentVariantId: "mint" }, { componentVariantId: "berry" }],
+    }]);
+  });
+
+  it("ignores malformed dropdowns and options", () => {
+    expect(bundleDropdownsFrom({ bundleDropdowns: [
+      { name: "", options: [{ componentVariantId: "mint" }] },
+      { name: "Device", options: [{ componentVariantId: "" }, {}] },
+    ] })).toEqual([]);
+  });
+
+  it("treats a configured dropdown bundle independently of parent inventory", () => {
+    expect(variantIsAvailable({
+      inventory: 0,
+      bundleDropdowns: [{ name: "Device", options: [{ componentVariantId: "device" }] }],
+    })).toBe(true);
+  });
+});
 
 describe("bundleSlotsFrom", () => {
   it("normalizes dashboard slots and their allowed child variants", () => {

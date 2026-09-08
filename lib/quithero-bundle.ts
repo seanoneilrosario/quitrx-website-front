@@ -20,10 +20,33 @@ export type QuitHeroBundleSlot = {
   allowProductVariants?: boolean;
 };
 
+export type QuitHeroBundleDropdown = {
+  name: string;
+  options: Array<{ componentVariantId: string }>;
+};
+
 export type BundleAwareVariant = {
   inventory?: number;
   bundleComponents?: unknown;
+  bundleDropdowns?: unknown;
 };
+
+export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] {
+  if (!payload || typeof payload !== "object") return [];
+  const dropdowns = (payload as Record<string, unknown>).bundleDropdowns;
+  if (!Array.isArray(dropdowns)) return [];
+
+  return dropdowns.flatMap((value) => {
+    if (!value || typeof value !== "object") return [];
+    const dropdown = value as Record<string, unknown>;
+    const name = String(dropdown.name ?? "").trim();
+    const options = recordsFrom(dropdown.options).flatMap((option) => {
+      const componentVariantId = String(option.componentVariantId ?? "").trim();
+      return componentVariantId ? [{ componentVariantId }] : [];
+    });
+    return name && options.length ? [{ name, options }] : [];
+  });
+}
 
 export function bundleComponentsFrom(payload: unknown): QuitHeroBundleComponent[] {
   if (!payload || typeof payload !== "object") return [];
@@ -142,6 +165,8 @@ export function bundleComponentsAreAvailable(components: QuitHeroBundleComponent
 
 export function variantIsAvailable(variant?: BundleAwareVariant) {
   if (!variant) return false;
+  const dropdowns = bundleDropdownsFrom(variant);
+  if (dropdowns.length) return dropdowns.every((dropdown) => dropdown.options.length > 0);
   const components = bundleComponentsFrom(variant);
   return components.length
     ? bundleComponentsAreAvailable(components)

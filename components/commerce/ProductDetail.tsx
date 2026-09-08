@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { QuitHeroProduct } from "@/lib/quithero";
 import { getPrimaryImage, getQuitHeroProducts, productHasTag } from "@/lib/quithero";
+import { bundleDropdownsFrom } from "@/lib/quithero-bundle";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import styles from "@/app/store.module.css";
@@ -9,8 +10,24 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
   const image = getPrimaryImage(product);
   const description = (product.description || product.shortDescription || "").replace(/<[^>]*>/g, "");
   const isBundle = productHasTag(product, "bundle");
-  const products = isBundle ? [] : await getQuitHeroProducts().catch(() => []);
+  const products = await getQuitHeroProducts().catch(() => []);
   const variants = product.variants || [];
+  const variantLookup = new Map(products.flatMap((item) => (item.variants || []).flatMap((variant) =>
+    variant.id ? [[variant.id, { product: item, variant }] as const] : [],
+  )));
+  const bundleDropdowns = bundleDropdownsFrom(variants[0]).map((dropdown) => ({
+    name: dropdown.name,
+    options: dropdown.options.map(({ componentVariantId }) => {
+      const match = variantLookup.get(componentVariantId);
+      return {
+        componentVariantId,
+        productId: match?.product.id || componentVariantId,
+        productName: match?.product.name || "Bundle item",
+        variantName: match?.variant.name || "Default",
+        available: Boolean(match) && (match?.variant.inventory === undefined || match.variant.inventory > 0),
+      };
+    }),
+  }));
   const relatedProducts = products
     .filter((item) => item.id !== product.id && item.brand?.slug === product.brand?.slug)
     .slice(0, 3)
@@ -39,6 +56,7 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
             image={image}
             variants={variants}
             isBundle={isBundle}
+            bundleDropdowns={bundleDropdowns}
             relatedProducts={relatedProducts}
           />
 

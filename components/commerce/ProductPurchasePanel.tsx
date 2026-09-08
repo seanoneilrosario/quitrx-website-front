@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import styles from "@/app/store.module.css";
 
 type Variant = {
@@ -19,16 +19,10 @@ type RelatedProduct = {
   variants: Variant[];
 };
 
-type BundleComponent = {
-  id: string;
-  variantId: string;
-  productId: string;
-  productName: string;
-  variantName: string;
-  quantity: number;
-  available: boolean;
-  choices?: Array<{
-    variantId: string;
+type BundleDropdown = {
+  name: string;
+  options: Array<{
+    componentVariantId: string;
     productId: string;
     productName: string;
     variantName: string;
@@ -101,26 +95,15 @@ async function syncBundleComponents(item: CartItem) {
     quantity: component.quantity ?? 1,
   }));
 
-  console.log("Bundle components:", item.bundleComponents);
-  console.log("Bundle payload:", bundlePayload);
-  console.log("Bundle component count:", bundlePayload.length);
-
-  try {
-    const response = await fetch(
-      `/api/quithero-bundle/${encodeURIComponent(item.productId)}/${encodeURIComponent(item.variantId)}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bundlePayload),
-      },
-    );
-    if (!response.ok) {
-      const apiResponse = await response.text();
-      console.error("Bundle PATCH failed:", response.status, apiResponse);
-    }
-  } catch (error) {
-    console.error("Bundle PATCH failed before receiving a response:", error);
-  }
+  const response = await fetch(
+    `/api/quithero-bundle/${encodeURIComponent(item.productId)}/${encodeURIComponent(item.variantId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bundlePayload),
+    },
+  );
+  if (!response.ok) throw new Error("Unable to add this bundle to the cart.");
 }
 
 export default function ProductPurchasePanel({
@@ -129,6 +112,7 @@ export default function ProductPurchasePanel({
   image,
   variants,
   isBundle,
+  bundleDropdowns,
   relatedProducts,
 }: {
   productId: string;
@@ -136,75 +120,52 @@ export default function ProductPurchasePanel({
   image?: string;
   variants: Variant[];
   isBundle: boolean;
+  bundleDropdowns: BundleDropdown[];
   relatedProducts: RelatedProduct[];
 }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [relatedSelections, setRelatedSelections] = useState<Record<string, boolean>>({});
   const [relatedVariants, setRelatedVariants] = useState<Record<string, number>>({});
-  const [bundleComponents, setBundleComponents] = useState<BundleComponent[]>([]);
-  const [bundleLoading, setBundleLoading] = useState(isBundle && Boolean(variants[0]?.id));
+  const [bundleSelections, setBundleSelections] = useState(() => bundleDropdowns.map((dropdown) =>
+    dropdown.options.find((option) => option.available)?.componentVariantId || "",
+  ));
+  const [bundleLoading, setBundleLoading] = useState(false);
   const [bundleError, setBundleError] = useState("");
   const [added, setAdded] = useState(false);
   const selected = variants[selectedIndex];
   const inventory = selected?.inventory;
-  const bundleIsAvailable = bundleComponents.length > 0 && bundleComponents.every((component) => component.available);
+  const selectedBundleOptions = bundleDropdowns.map((dropdown, index) =>
+    dropdown.options.find((option) => option.componentVariantId === bundleSelections[index]),
+  );
+  const bundleIsAvailable = selectedBundleOptions.length > 0
+    && selectedBundleOptions.every((option) => option?.available);
   const available = isBundle
     ? Boolean(selected?.id) && !bundleLoading && !bundleError && bundleIsAvailable
     : inventory === undefined || inventory > 0;
   const price = formatPrice((selected || variants[0])?.price);
 
-  useEffect(() => {
-    if (!isBundle || !selected?.id) return;
-
-    const controller = new AbortController();
-    fetch(`/api/quithero-bundle/${encodeURIComponent(productId)}/${encodeURIComponent(selected.id)}`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Unable to load this bundle.");
-        return response.json() as Promise<BundleComponent[]>;
-      })
-      .then(setBundleComponents)
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setBundleError("Unable to load this bundle. Please choose it again.");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setBundleLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [isBundle, productId, selected?.id]);
-
   function selectParentVariant(index: number) {
-    if (isBundle) {
-      setBundleComponents([]);
-      setBundleError("");
-      setBundleLoading(true);
-    }
     setSelectedIndex(index);
   }
 
-  function selectBundleComponent(componentIndex: number, variantId: string) {
-    setBundleComponents((components) => components.map((component, index) => {
-      if (index !== componentIndex) return component;
-      const choice = component.choices?.find((option) => option.variantId === variantId);
-      return choice ? { ...component, ...choice, quantity: 1 } : component;
-    }));
+  function selectBundleComponent(dropdownIndex: number, variantId: string) {
+    setBundleSelections((selections) => selections.map((selection, index) =>
+      index === dropdownIndex ? variantId : selection,
+    ));
   }
 
-  function addToCart() {
+  async function addToCart() {
     if (!available) return;
 
     const mainVariantName = selected ? variantLabel(selected, selectedIndex) : "Default";
-    const selectedBundleComponents = bundleComponents.map((component) => ({
-      productId: component.productId,
-      productName: component.productName,
-      variantId: component.variantId,
-      variantName: component.variantName,
-      quantity: component.quantity,
-    }));
+    const selectedBundleComponents = selectedBundleOptions.flatMap((option) => option ? [{
+      productId: option.productId,
+      productName: option.productName,
+      variantId: option.componentVariantId,
+      variantName: option.variantName,
+      quantity: 1,
+    }] : []);
     const configurationKey = selectedBundleComponents.map((component) => component.variantId || component.variantName).join(",");
     const items: CartItem[] = [{
       key: `${productId}:${selected?.id || mainVariantName}${configurationKey ? `:${configurationKey}` : ""}`,
@@ -235,8 +196,19 @@ export default function ProductPurchasePanel({
       });
     });
 
+    if (isBundle) {
+      setBundleLoading(true);
+      setBundleError("");
+      try {
+        await syncBundleComponents(items[0]);
+      } catch {
+        setBundleError("Unable to add this bundle to the cart. Please try again.");
+        setBundleLoading(false);
+        return;
+      }
+      setBundleLoading(false);
+    }
     addItemsToCart(items);
-    void syncBundleComponents(items[0]);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2200);
   }
@@ -271,18 +243,20 @@ export default function ProductPurchasePanel({
       </p>
       <span className={styles.stockBar} aria-hidden="true"><span /></span>
 
-      {isBundle && bundleComponents.length > 0 && (
+      {isBundle && bundleDropdowns.length > 0 && (
         <section className={styles.bundleProducts} aria-label="Bundle includes">
-          {bundleComponents.map((component, componentIndex) => (
-            <label className={styles.bundleComponent} key={component.id || `${component.variantId}-${componentIndex}`}>
-              <span>Selection {componentIndex + 1}</span>
+          {bundleDropdowns.map((dropdown, dropdownIndex) => (
+            <label className={styles.bundleComponent} key={`${dropdown.name}-${dropdownIndex}`}>
+              <span>{dropdown.name}</span>
               <select
                 className={styles.bundleComponentValue}
-                value={component.variantId}
-                onChange={(event) => selectBundleComponent(componentIndex, event.target.value)}
+                value={bundleSelections[dropdownIndex]}
+                required
+                onChange={(event) => selectBundleComponent(dropdownIndex, event.target.value)}
               >
-                {(component.choices || [component]).map((choice) => (
-                  <option key={choice.variantId} value={choice.variantId} disabled={!choice.available}>
+                <option value="" disabled>Select an option</option>
+                {dropdown.options.map((choice) => (
+                  <option key={choice.componentVariantId} value={choice.componentVariantId} disabled={!choice.available}>
                     {bundleChoiceLabel(choice.productName, choice.variantName)}
                   </option>
                 ))}
