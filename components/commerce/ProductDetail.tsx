@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { QuitHeroProduct } from "@/lib/quithero";
-import { getPrimaryImage, getQuitHeroBundle, getQuitHeroProducts } from "@/lib/quithero";
-import { bundleSlotsFrom } from "@/lib/quithero-bundle";
+import { getPrimaryImage, getQuitHeroProducts, productHasTag } from "@/lib/quithero";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import styles from "@/app/store.module.css";
@@ -9,57 +8,9 @@ import styles from "@/app/store.module.css";
 export default async function ProductDetail({ product }: { product: QuitHeroProduct }) {
   const image = getPrimaryImage(product);
   const description = (product.description || product.shortDescription || "").replace(/<[^>]*>/g, "");
-  const products = await getQuitHeroProducts().catch(() => []);
+  const isBundle = productHasTag(product, "bundle");
+  const products = isBundle ? [] : await getQuitHeroProducts().catch(() => []);
   const variants = product.variants || [];
-  const bundleResults = product.id
-    ? await Promise.all(variants.map(async (variant) => ({
-        variantId: variant.id,
-        slots: variant.bundleComponents !== undefined
-          ? bundleSlotsFrom(variant)
-          : variant.id ? await getQuitHeroBundle(product.id!, variant.id).catch(() => []) : [],
-      })))
-    : [];
-  const variantProducts = new Map(
-    products.flatMap((item) => (item.variants || []).flatMap((variant) =>
-      variant.id ? [[variant.id, { product: item, variant }] as const] : [],
-    )),
-  );
-  const bundles = Object.fromEntries(bundleResults.flatMap(({ variantId, slots }) => {
-    if (!variantId || !slots.length) return [];
-    const bundleSlots = slots.map((slot, slotIndex) => ({
-      key: slot.id || `${slot.position}:${slotIndex}`,
-      label: slot.label,
-      defaultVariantId: slot.defaultVariantId,
-      quantity: slot.quantity,
-      options: (slot.allowProductVariants
-        ? (() => {
-            const defaultMatch = slot.defaultVariantId ? variantProducts.get(slot.defaultVariantId) : undefined;
-            return defaultMatch?.product.variants?.flatMap((variant) => variant.id ? [variant.id] : []) || slot.allowedVariantIds;
-          })()
-        : slot.allowedVariantIds).flatMap((allowedVariantId) => {
-        const match = variantProducts.get(allowedVariantId);
-        if (!match || !match.variant.id || (match.variant.inventory !== undefined && match.variant.inventory < slot.quantity)) return [];
-        return [{
-          productId: match.product.id || match.product.slug || match.product.name || "product",
-          productName: match.product.name || "Product",
-          variant: match.variant,
-        }];
-      }),
-    }));
-    return [[variantId, bundleSlots]];
-  }));
-  const bundleAvailability = Object.fromEntries(bundleResults.flatMap(({ variantId, slots }) => {
-    if (!variantId || !slots.length) return [];
-    return [[variantId, slots.every((slot) => (slot.allowProductVariants
-      ? (() => {
-          const defaultMatch = slot.defaultVariantId ? variantProducts.get(slot.defaultVariantId) : undefined;
-          return defaultMatch?.product.variants?.flatMap((variant) => variant.id ? [variant.id] : []) || slot.allowedVariantIds;
-        })()
-      : slot.allowedVariantIds).some((variantId) => {
-      const match = variantProducts.get(variantId);
-      return Boolean(match?.variant.id) && (match?.variant.inventory === undefined || match.variant.inventory >= slot.quantity);
-    }))]];
-  }));
   const relatedProducts = products
     .filter((item) => item.id !== product.id && item.brand?.slug === product.brand?.slug)
     .slice(0, 3)
@@ -87,8 +38,7 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
             productName={product.name || "Product"}
             image={image}
             variants={variants}
-            bundles={bundles}
-            bundleAvailability={bundleAvailability}
+            isBundle={isBundle}
             relatedProducts={relatedProducts}
           />
 

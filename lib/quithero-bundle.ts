@@ -2,7 +2,9 @@ export type QuitHeroBundleComponent = {
   componentVariantId: string;
   componentVariant?: {
     id?: string;
+    name?: string;
     inventory?: number;
+    product?: { id?: string; name?: string };
   };
   position: number;
   quantity: number;

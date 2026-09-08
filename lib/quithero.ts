@@ -1,7 +1,7 @@
 import "server-only";
 
 import { client } from "@/sanity/lib/client";
-import { bundleSlotsFrom } from "./quithero-bundle";
+import { bundleComponentsFrom } from "./quithero-bundle";
 
 export type QuitHeroImage = {
   url?: string;
@@ -150,7 +150,7 @@ export async function getQuitHeroBundle(productId: string, variantId: string) {
   const payload = await quitHeroFetch<unknown>(
     `/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/bundle`,
   );
-  return bundleSlotsFrom(payload);
+  return bundleComponentsFrom(payload);
 }
 
 export async function getQuitHeroCollection(slug: string) {
