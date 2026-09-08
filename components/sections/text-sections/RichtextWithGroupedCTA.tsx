@@ -42,11 +42,6 @@ const RichtextWithGroupedCTA = ({
   const [hideButtons, setHideButtons] = useState(false);
   const [slugTitle, setSlugTitle] = useState("");
 
-  const [exiting, setExiting] = useState<{
-    group: number;
-    button: number;
-  } | null>(null);
-
   const pathname = usePathname();
 
   const wide = useWindowWide();
@@ -69,21 +64,8 @@ const RichtextWithGroupedCTA = ({
       return;
     }
 
-    if (
-      activeGroup !== null &&
-      activeButton !== null
-    ) {
-      setExiting({
-        group: activeGroup,
-        button: activeButton,
-      });
-    }
-
-    setTimeout(() => {
-      setActiveGroup(groupIndex);
-      setActiveButton(buttonIndex);
-      setExiting(null);
-    }, 700);
+    setActiveGroup(groupIndex);
+    setActiveButton(buttonIndex);
   };
 
 
@@ -269,12 +251,6 @@ const RichtextWithGroupedCTA = ({
                         activeButton ===
                           buttonIndex;
 
-                      const isExit =
-                        exiting?.group ===
-                          groupIndex &&
-                        exiting?.button ===
-                          buttonIndex;
-
                       return (
                         <div
                           key={`${groupIndex}-${buttonIndex}`}
@@ -282,11 +258,6 @@ const RichtextWithGroupedCTA = ({
                             ${
                               isActive
                                 ? "active"
-                                : ""
-                            }
-                            ${
-                              isExit
-                                ? "exit"
                                 : ""
                             }
                           `}
