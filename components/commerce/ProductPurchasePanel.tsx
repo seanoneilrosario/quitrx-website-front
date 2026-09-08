@@ -48,7 +48,7 @@ type CartItem = {
   bundleComponents?: Array<{
     productId: string;
     productName: string;
-    variantId?: string;
+    variantId: string;
     variantName: string;
     quantity: number;
   }>;
@@ -90,6 +90,37 @@ function addItemsToCart(items: CartItem[]) {
 
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items: cart, open: true } }));
+}
+
+async function syncBundleComponents(item: CartItem) {
+  if (!item.variantId || !item.bundleComponents?.length) return;
+
+  const bundlePayload = item.bundleComponents.map((component, index) => ({
+    componentVariantId: component.variantId,
+    position: index,
+    quantity: component.quantity ?? 1,
+  }));
+
+  console.log("Bundle components:", item.bundleComponents);
+  console.log("Bundle payload:", bundlePayload);
+  console.log("Bundle component count:", bundlePayload.length);
+
+  try {
+    const response = await fetch(
+      `/api/quithero-bundle/${encodeURIComponent(item.productId)}/${encodeURIComponent(item.variantId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bundlePayload),
+      },
+    );
+    if (!response.ok) {
+      const apiResponse = await response.text();
+      console.error("Bundle PATCH failed:", response.status, apiResponse);
+    }
+  } catch (error) {
+    console.error("Bundle PATCH failed before receiving a response:", error);
+  }
 }
 
 export default function ProductPurchasePanel({
@@ -174,13 +205,6 @@ export default function ProductPurchasePanel({
       variantName: component.variantName,
       quantity: component.quantity,
     }));
-    const combinedBundleComponents = Array.from(selectedBundleComponents.reduce((combined, component) => {
-      const componentKey = `${component.productId}:${component.variantId || component.variantName}`;
-      const existing = combined.get(componentKey);
-      if (existing) existing.quantity += component.quantity;
-      else combined.set(componentKey, component);
-      return combined;
-    }, new Map<string, NonNullable<CartItem["bundleComponents"]>[number]>()).values());
     const configurationKey = selectedBundleComponents.map((component) => component.variantId || component.variantName).join(",");
     const items: CartItem[] = [{
       key: `${productId}:${selected?.id || mainVariantName}${configurationKey ? `:${configurationKey}` : ""}`,
@@ -191,7 +215,7 @@ export default function ProductPurchasePanel({
       variantName: mainVariantName,
       price: selected?.price,
       quantity,
-      ...(combinedBundleComponents.length ? { bundleComponents: combinedBundleComponents } : {}),
+      ...(selectedBundleComponents.length ? { bundleComponents: selectedBundleComponents } : {}),
     }];
 
     relatedProducts.forEach((product) => {
@@ -212,6 +236,7 @@ export default function ProductPurchasePanel({
     });
 
     addItemsToCart(items);
+    void syncBundleComponents(items[0]);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2200);
   }
