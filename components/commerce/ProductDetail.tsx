@@ -1,7 +1,7 @@
 import Link from "next/link";
-import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
+import type { QuitHeroProduct } from "@/lib/quithero";
 import { getPrimaryImage, getQuitHeroBundle, getQuitHeroProducts } from "@/lib/quithero";
-import { bundleComponentsAreAvailable, bundleComponentsFrom } from "@/lib/quithero-bundle";
+import { bundleComponentsFrom } from "@/lib/quithero-bundle";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import styles from "@/app/store.module.css";
@@ -26,45 +26,33 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
   );
   const bundles = Object.fromEntries(bundleResults.flatMap(({ variantId, components }) => {
     if (!variantId || !components.length) return [];
-    const groupedComponents = components.flatMap((component) => {
+    const bundleComponents = components.flatMap((component, componentIndex) => {
       const match = variantProducts.get(component.componentVariantId);
       if (!match) return [];
+      const productId = match.product.id || match.product.slug || match.product.name || "product";
+      const variants = (match.product.variants || [])
+        .filter((variant) => variant.id && (variant.inventory === undefined || variant.inventory >= component.quantity));
       return [{
-        productId: match.product.id || match.product.slug || match.product.name || "product",
+        key: `${component.position}:${productId}:${componentIndex}`,
+        productId,
         productName: match.product.name || "Product",
         image: getPrimaryImage(match.product),
-        variant: { ...match.variant, ...component.componentVariant },
+        defaultVariantId: component.componentVariantId,
         quantity: component.quantity,
+        variants,
       }];
-    }).reduce((groups, component) => {
-      const existing = groups.get(component.productId);
-      if (existing) {
-        const configuredVariant = existing.variants.find(({ variant }) => variant.id === component.variant.id);
-        if (configuredVariant) configuredVariant.quantity += component.quantity;
-        else existing.variants.push({ variant: component.variant, quantity: component.quantity });
-      } else {
-        groups.set(component.productId, {
-          productId: component.productId,
-          productName: component.productName,
-          image: component.image,
-          variants: [{ variant: component.variant, quantity: component.quantity }],
-        });
-      }
-      return groups;
-    }, new Map<string, {
-      productId: string;
-      productName: string;
-      image?: string;
-      variants: Array<{ variant: QuitHeroVariant; quantity: number }>;
-    }>());
-    return [[variantId, Array.from(groupedComponents.values())]];
+    });
+    return [[variantId, bundleComponents]];
   }));
   const bundleAvailability = Object.fromEntries(bundleResults.flatMap(({ variantId, components }) => {
     if (!variantId || !components.length) return [];
-    return [[variantId, bundleComponentsAreAvailable(components.map((component) => ({
-      ...component,
-      componentVariant: component.componentVariant ?? variantProducts.get(component.componentVariantId)?.variant,
-    })))]];
+    const componentsHaveAvailableVariants = components.every((component) => {
+      const match = variantProducts.get(component.componentVariantId);
+      return match?.product.variants?.some((variant) =>
+        Boolean(variant.id) && (variant.inventory === undefined || variant.inventory >= component.quantity),
+      ) === true;
+    });
+    return [[variantId, componentsHaveAvailableVariants]];
   }));
   const relatedProducts = products
     .filter((item) => item.id !== product.id && item.brand?.slug === product.brand?.slug)

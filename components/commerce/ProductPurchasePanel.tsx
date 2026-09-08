@@ -20,13 +20,13 @@ type RelatedProduct = {
 };
 
 type BundleComponent = {
+  key: string;
   productId: string;
   productName: string;
   image?: string;
-  variants: Array<{
-    variant: Variant;
-    quantity: number;
-  }>;
+  defaultVariantId: string;
+  quantity: number;
+  variants: Variant[];
 };
 
 type CartItem = {
@@ -104,10 +104,15 @@ export default function ProductPurchasePanel({
   const [added, setAdded] = useState(false);
   const selected = variants[selectedIndex];
   const bundleComponents = selected?.id ? bundles[selected.id] || [] : [];
-  const hasBundle = bundleComponents.length > 0;
+  const hasBundle = Boolean(selected?.id && Object.hasOwn(bundleAvailability, selected.id));
+  const bundleSelectionsAreValid = !hasBundle || (bundleComponents.length > 0 && bundleComponents.every((component) => {
+    const selectionKey = `${selected?.id}:${component.key}`;
+    const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
+    return Boolean(component.variants[bundleVariants[selectionKey] ?? defaultIndex]?.id);
+  }));
   const inventory = selected?.inventory;
   const available = selected?.id && hasBundle
-    ? bundleAvailability[selected.id] === true
+    ? bundleAvailability[selected.id] === true && bundleSelectionsAreValid
     : inventory === undefined || inventory > 0;
   const price = formatPrice(selected?.price);
 
@@ -115,18 +120,18 @@ export default function ProductPurchasePanel({
     if (!available) return;
 
     const mainVariantName = selected ? variantLabel(selected, selectedIndex) : "Default";
-    const selectedBundleComponents = bundleComponents.map((component, componentIndex) => {
-      const selectionKey = `${selected?.id || "bundle"}:${component.productId}:${componentIndex}`;
-      const variantIndex = bundleVariants[selectionKey] ?? 0;
-      const configuredVariant = component.variants[variantIndex] || component.variants[0];
-      const variant = configuredVariant.variant;
+    const selectedBundleComponents = bundleComponents.map((component) => {
+      const selectionKey = `${selected?.id || "bundle"}:${component.key}`;
+      const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
+      const variantIndex = bundleVariants[selectionKey] ?? defaultIndex;
+      const variant = component.variants[variantIndex];
 
       return {
         productId: component.productId,
         productName: component.productName,
         variantId: variant.id,
         variantName: relatedVariantLabel(component.productName, variant, variantIndex),
-        quantity: configuredVariant.quantity,
+        quantity: component.quantity,
       };
     });
     const combinedBundleComponents = Array.from(selectedBundleComponents.reduce((combined, component) => {
@@ -204,32 +209,35 @@ export default function ProductPurchasePanel({
       {hasBundle && (
         <section className={styles.relatedProducts} aria-labelledby="bundle-includes-heading">
           <h2 id="bundle-includes-heading">Bundle includes</h2>
-          {bundleComponents.map((component, componentIndex) => (
-            <div className={`${styles.relatedProduct} ${styles.bundleProduct}`} key={`${selected?.id || "bundle"}:${component.productId}:${componentIndex}`}>
+          {bundleComponents.map((component) => {
+            const selectionKey = `${selected?.id || "bundle"}:${component.key}`;
+            const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
+            const variantIndex = bundleVariants[selectionKey] ?? defaultIndex;
+            const selectedChildVariant = component.variants[variantIndex];
+            return (
+            <div className={`${styles.relatedProduct} ${styles.bundleProduct}`} key={selectionKey}>
               {component.image && <img src={component.image} alt="" />}
-              <span>
+              <span className={styles.bundleProductInfo}>
                 <strong>{component.productName}</strong>
-                {component.variants.length > 0 ? (
+                {selectedChildVariant && <small>{relatedVariantLabel(component.productName, selectedChildVariant, variantIndex)}</small>}
+              </span>
+                {component.variants.length > 1 ? (
                   <select
-                    value={bundleVariants[`${selected?.id || "bundle"}:${component.productId}:${componentIndex}`] ?? 0}
-                    onChange={(event) => {
-                      const selectionKey = `${selected?.id || "bundle"}:${component.productId}:${componentIndex}`;
-                      setBundleVariants((values) => ({ ...values, [selectionKey]: Number(event.target.value) }));
-                    }}
+                    value={variantIndex}
+                    onChange={(event) => setBundleVariants((values) => ({ ...values, [selectionKey]: Number(event.target.value) }))}
                     aria-label={`${component.productName} bundle option`}
                   >
-                    {component.variants.map(({ variant }, variantOptionIndex) => (
+                    {component.variants.map((variant, variantOptionIndex) => (
                       <option key={variant.id || variantOptionIndex} value={variantOptionIndex}>
                         {relatedVariantLabel(component.productName, variant, variantOptionIndex)}
                       </option>
                     ))}
                   </select>
-                ) : (
+                ) : !selectedChildVariant ? (
                   <small>Unavailable</small>
-                )}
-              </span>
+                ) : null}
             </div>
-          ))}
+          );})}
         </section>
       )}
 
