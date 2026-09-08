@@ -14,18 +14,32 @@ export async function GET(
       variant.id ? [[variant.id, { product, variant }] as const] : [],
     )));
 
-    return Response.json(components.map((component) => {
+    const bundleComponents = components.flatMap((component, componentIndex) => {
       const match = variants.get(component.componentVariantId);
-      return {
+      const productId = match?.product.id || component.componentVariant?.product?.id || component.componentVariantId;
+      const productName = match?.product.name || component.componentVariant?.product?.name || "Bundle item";
+      const choices = (match?.product.variants || []).flatMap((variant) => variant.id ? [{
+        variantId: variant.id,
+        productId,
+        productName,
+        variantName: variant.name || "Default",
+        available: variant.inventory === undefined || variant.inventory > 0,
+      }] : []);
+
+      return Array.from({ length: component.quantity }, (_, unitIndex) => ({
+        id: `${component.position}-${componentIndex}-${unitIndex}`,
         variantId: component.componentVariantId,
-        productId: match?.product.id || component.componentVariant?.product?.id || component.componentVariantId,
-        productName: match?.product.name || component.componentVariant?.product?.name || "Bundle item",
+        productId,
+        productName,
         variantName: match?.variant.name || component.componentVariant?.name || "Default",
-        quantity: component.quantity,
+        quantity: 1,
         available: (match?.variant.inventory ?? component.componentVariant?.inventory) === undefined
-          || Number(match?.variant.inventory ?? component.componentVariant?.inventory) >= component.quantity,
-      };
-    }));
+          || Number(match?.variant.inventory ?? component.componentVariant?.inventory) > unitIndex,
+        choices: choices.length ? choices : undefined,
+      }));
+    });
+
+    return Response.json(bundleComponents);
   } catch {
     return Response.json({ error: "Unable to load this bundle." }, { status: 502 });
   }

@@ -669,6 +669,16 @@
   white-space: nowrap;
 }
 
+select.bundleComponentValue {
+  height: 50px;
+  padding: 0 42px 0 11px;
+}
+
+select.bundleComponentValue:focus {
+  outline: 4px solid #176976;
+  outline-offset: 1px;
+}
+
 .cartPage {
   min-height: 70vh;
   padding: 55px 0 100px;
