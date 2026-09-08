@@ -1,5 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { bundleComponentsFrom, variantIsAvailable } from "./quithero-bundle";
+import { bundleComponentsFrom, bundleSlotsFrom, variantIsAvailable } from "./quithero-bundle";
+
+describe("bundleSlotsFrom", () => {
+  it("normalizes dashboard slots and their allowed child variants", () => {
+    expect(bundleSlotsFrom({ bundle: { slots: [{
+      id: "slot-1",
+      name: "Pods - 1",
+      allowedVariants: [{ id: "menthol-0" }, { variantId: "mint-10" }],
+      defaultVariantId: "mint-10",
+    }] } })).toEqual([{
+      id: "slot-1",
+      label: "Pods - 1",
+      position: 0,
+      quantity: 1,
+      defaultVariantId: "mint-10",
+      allowedVariantIds: ["menthol-0", "mint-10"],
+    }]);
+  });
+
+  it("expands legacy component quantities into independent slots", () => {
+    const slots = bundleSlotsFrom({ components: [{ componentVariantId: "pod", position: 1, quantity: 2 }] });
+    expect(slots).toHaveLength(2);
+    expect(slots.every((slot) => slot.allowProductVariants)).toBe(true);
+  });
+});
 
 describe("bundleComponentsFrom", () => {
   it("normalizes and sorts bundle components", () => {

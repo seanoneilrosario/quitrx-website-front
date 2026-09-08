@@ -19,14 +19,12 @@ type RelatedProduct = {
   variants: Variant[];
 };
 
-type BundleComponent = {
+type BundleSlot = {
   key: string;
-  productId: string;
-  productName: string;
-  image?: string;
-  defaultVariantId: string;
+  label?: string;
+  defaultVariantId?: string;
   quantity: number;
-  variants: Variant[];
+  options: Array<{ productId: string; productName: string; variant: Variant }>;
 };
 
 type CartItem = {
@@ -96,7 +94,7 @@ export default function ProductPurchasePanel({
   productName: string;
   image?: string;
   variants: Variant[];
-  bundles: Record<string, BundleComponent[]>;
+  bundles: Record<string, BundleSlot[]>;
   bundleAvailability: Record<string, boolean>;
   relatedProducts: RelatedProduct[];
 }) {
@@ -104,43 +102,51 @@ export default function ProductPurchasePanel({
   const [quantity, setQuantity] = useState(1);
   const [relatedSelections, setRelatedSelections] = useState<Record<string, boolean>>({});
   const [relatedVariants, setRelatedVariants] = useState<Record<string, number>>({});
-  const [bundleVariants, setBundleVariants] = useState<Record<string, number>>({});
+  const [bundleVariants, setBundleVariants] = useState<Record<string, string>>({});
   const [added, setAdded] = useState(false);
   const selected = variants[selectedIndex];
-  const bundleComponents = selected?.id ? bundles[selected.id] || [] : [];
+  const bundleSlots = selected?.id ? bundles[selected.id] || [] : [];
   const hasBundle = Boolean(selected?.id && Object.hasOwn(bundleAvailability, selected.id));
-  const bundleSelectionsAreValid = !hasBundle || (bundleComponents.length > 0 && bundleComponents.every((component) =>
-    Array.from({ length: component.quantity }, (_, unitIndex) => {
-      const selectionKey = `${selected?.id}:${component.key}:${unitIndex}`;
-      const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
-      return Boolean(component.variants[bundleVariants[selectionKey] ?? defaultIndex]?.id);
-    }).every(Boolean),
+  const selectedBundleVariantId = (slot: BundleSlot) => bundleVariants[slot.key]
+    ?? (slot.defaultVariantId && slot.options.some((option) => option.variant.id === slot.defaultVariantId) ? slot.defaultVariantId : undefined)
+    ?? (slot.options.length === 1 ? slot.options[0].variant.id : undefined);
+  const bundleSelectionsAreValid = !hasBundle || (bundleSlots.length > 0 && bundleSlots.every((slot) =>
+    slot.options.some((option) => option.variant.id === selectedBundleVariantId(slot)),
   ));
   const inventory = selected?.inventory;
+  const bundleIsAvailable = Boolean(selected?.id && bundleAvailability[selected.id] === true);
   const available = selected?.id && hasBundle
-    ? bundleAvailability[selected.id] === true && bundleSelectionsAreValid
+    ? bundleIsAvailable && bundleSelectionsAreValid
     : inventory === undefined || inventory > 0;
   const price = formatPrice(selected?.price);
+
+  function selectParentVariant(index: number) {
+    const nextVariant = variants[index];
+    const nextSlots = nextVariant?.id ? bundles[nextVariant.id] || [] : [];
+    setSelectedIndex(index);
+    setBundleVariants(Object.fromEntries(nextSlots.flatMap((slot) => {
+      const initial = slot.defaultVariantId && slot.options.some((option) => option.variant.id === slot.defaultVariantId)
+        ? slot.defaultVariantId
+        : slot.options.length === 1 ? slot.options[0].variant.id : undefined;
+      return initial ? [[slot.key, initial]] : [];
+    })));
+  }
 
   function addToCart() {
     if (!available) return;
 
     const mainVariantName = selected ? variantLabel(selected, selectedIndex) : "Default";
-    const selectedBundleComponents = bundleComponents.flatMap((component) =>
-      Array.from({ length: component.quantity }, (_, unitIndex) => {
-      const selectionKey = `${selected?.id || "bundle"}:${component.key}:${unitIndex}`;
-      const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
-      const variantIndex = bundleVariants[selectionKey] ?? defaultIndex;
-      const variant = component.variants[variantIndex];
-
+    const selectedBundleComponents = bundleSlots.flatMap((slot) => {
+      const option = slot.options.find((candidate) => candidate.variant.id === selectedBundleVariantId(slot));
+      if (!option) return [];
       return {
-        productId: component.productId,
-        productName: component.productName,
-        variantId: variant.id,
-        variantName: bundleVariantLabel(variant, variantIndex),
-        quantity: 1,
+        productId: option.productId,
+        productName: option.productName,
+        variantId: option.variant.id,
+        variantName: bundleVariantLabel(option.variant, slot.options.indexOf(option)),
+        quantity: slot.quantity,
       };
-    }));
+    });
     const combinedBundleComponents = Array.from(selectedBundleComponents.reduce((combined, component) => {
       const componentKey = `${component.productId}:${component.variantId || component.variantName}`;
       const existing = combined.get(componentKey);
@@ -193,7 +199,7 @@ export default function ProductPurchasePanel({
           <legend>Choose your strength</legend>
           <div className={styles.variantOptions}>
             {variants.map((variant, index) => (
-              <button key={variant.id || `${variantLabel(variant, index)}-${index}`} type="button" className={selectedIndex === index ? styles.variantActive : ""} onClick={() => setSelectedIndex(index)}>
+              <button key={variant.id || `${variantLabel(variant, index)}-${index}`} type="button" className={selectedIndex === index ? styles.variantActive : ""} onClick={() => selectParentVariant(index)}>
                 {variantLabel(variant, index)}
               </button>
             ))}
@@ -208,35 +214,35 @@ export default function ProductPurchasePanel({
         <button type="button" aria-label="Increase quantity" onClick={() => setQuantity((value) => value + 1)}>+</button>
       </div>
 
-      <p className={available ? styles.stockStatus : styles.outOfStock}>
-        {available ? (inventory ? <>Low stock! Only <strong>{inventory}</strong> units left!</> : "In stock") : "Out of stock"}
+      <p className={(hasBundle ? bundleIsAvailable : available) ? styles.stockStatus : styles.outOfStock}>
+        {(hasBundle ? bundleIsAvailable : available) ? (inventory ? <>Low stock! Only <strong>{inventory}</strong> units left!</> : "In stock") : "Out of stock"}
       </p>
       <span className={styles.stockBar} aria-hidden="true"><span /></span>
 
       {hasBundle && (
         <section className={styles.bundleProducts} aria-label="Bundle includes">
-          {bundleComponents.flatMap((component) => Array.from({ length: component.quantity }, (_, unitIndex) => {
-            const selectionKey = `${selected?.id || "bundle"}:${component.key}:${unitIndex}`;
-            const defaultIndex = Math.max(0, component.variants.findIndex((variant) => variant.id === component.defaultVariantId));
-            const variantIndex = bundleVariants[selectionKey] ?? defaultIndex;
+          {bundleSlots.map((slot, slotIndex) => {
+            const value = selectedBundleVariantId(slot) || "";
+            const fallbackProductName = slot.options[0]?.productName || "Bundle Item";
             return (
-              <label className={styles.bundleProduct} key={selectionKey}>
-                <span>{component.productName} - {unitIndex + 1}</span>
+              <label className={styles.bundleProduct} key={slot.key}>
+                <span>{slot.label || `${fallbackProductName} - ${slotIndex + 1}`}</span>
                 <select
-                  value={variantIndex}
-                  disabled={component.variants.length <= 1}
-                  onChange={(event) => setBundleVariants((values) => ({ ...values, [selectionKey]: Number(event.target.value) }))}
-                  aria-label={`${component.productName} ${unitIndex + 1} bundle option`}
+                  value={value}
+                  disabled={slot.options.length <= 1}
+                  onChange={(event) => setBundleVariants((values) => ({ ...values, [slot.key]: event.target.value }))}
+                  aria-label={`${slot.label || `Bundle item ${slotIndex + 1}`} option`}
                 >
-                  {component.variants.map((variant, variantOptionIndex) => (
-                    <option key={variant.id || variantOptionIndex} value={variantOptionIndex}>
-                      {bundleVariantLabel(variant, variantOptionIndex)}
+                  {!value && <option value="">Please select an option</option>}
+                  {slot.options.map((option, variantOptionIndex) => (
+                    <option key={option.variant.id || variantOptionIndex} value={option.variant.id}>
+                      {bundleVariantLabel(option.variant, variantOptionIndex)}
                     </option>
                   ))}
                 </select>
               </label>
             );
-          }))}
+          })}
         </section>
       )}
 
@@ -265,7 +271,7 @@ export default function ProductPurchasePanel({
       )}
 
       <button type="button" className={styles.addToCart} disabled={!available} onClick={addToCart}>
-        {added ? "Added to cart" : available ? "Add to cart" : "Sold out"}
+        {added ? "Added to cart" : hasBundle && bundleIsAvailable && !bundleSelectionsAreValid ? "Select bundle options" : available ? "Add to cart" : "Sold out"}
       </button>
 
       <div className={styles.stickyPurchaseBar}>
@@ -274,7 +280,7 @@ export default function ProductPurchasePanel({
           <strong>{productName}</strong>
         </div>
         {variants.length > 1 && (
-          <select value={selectedIndex} onChange={(event) => setSelectedIndex(Number(event.target.value))} aria-label="Product option">
+          <select value={selectedIndex} onChange={(event) => selectParentVariant(Number(event.target.value))} aria-label="Product option">
             {variants.map((variant, index) => <option key={variant.id || index} value={index}>{variantLabel(variant, index)}</option>)}
           </select>
         )}
@@ -284,7 +290,7 @@ export default function ProductPurchasePanel({
           <button type="button" aria-label="Increase quantity" onClick={() => setQuantity((value) => value + 1)}>+</button>
         </div>
         <strong className={styles.stickyPrice}>{price}</strong>
-        <button type="button" className={styles.stickyButton} disabled={!available} onClick={addToCart}>{added ? "Added" : available ? "Add to Cart" : "Sold out"}</button>
+        <button type="button" className={styles.stickyButton} disabled={!available} onClick={addToCart}>{added ? "Added" : hasBundle && bundleIsAvailable && !bundleSelectionsAreValid ? "Select options" : available ? "Add to Cart" : "Sold out"}</button>
       </div>
     </>
   );

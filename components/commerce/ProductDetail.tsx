@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { QuitHeroProduct } from "@/lib/quithero";
 import { getPrimaryImage, getQuitHeroBundle, getQuitHeroProducts } from "@/lib/quithero";
-import { bundleComponentsFrom } from "@/lib/quithero-bundle";
+import { bundleSlotsFrom } from "@/lib/quithero-bundle";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import styles from "@/app/store.module.css";
@@ -14,8 +14,8 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
   const bundleResults = product.id
     ? await Promise.all(variants.map(async (variant) => ({
         variantId: variant.id,
-        components: Array.isArray(variant.bundleComponents)
-          ? bundleComponentsFrom(variant)
+        slots: variant.bundleComponents !== undefined
+          ? bundleSlotsFrom(variant)
           : variant.id ? await getQuitHeroBundle(product.id!, variant.id).catch(() => []) : [],
       })))
     : [];
@@ -24,35 +24,41 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
       variant.id ? [[variant.id, { product: item, variant }] as const] : [],
     )),
   );
-  const bundles = Object.fromEntries(bundleResults.flatMap(({ variantId, components }) => {
-    if (!variantId || !components.length) return [];
-    const bundleComponents = components.flatMap((component, componentIndex) => {
-      const match = variantProducts.get(component.componentVariantId);
-      if (!match) return [];
-      const productId = match.product.id || match.product.slug || match.product.name || "product";
-      const variants = (match.product.variants || [])
-        .filter((variant) => variant.id && (variant.inventory === undefined || variant.inventory >= component.quantity));
-      return [{
-        key: `${component.position}:${productId}:${componentIndex}`,
-        productId,
-        productName: match.product.name || "Product",
-        image: getPrimaryImage(match.product),
-        defaultVariantId: component.componentVariantId,
-        quantity: component.quantity,
-        variants,
-      }];
-    });
-    return [[variantId, bundleComponents]];
+  const bundles = Object.fromEntries(bundleResults.flatMap(({ variantId, slots }) => {
+    if (!variantId || !slots.length) return [];
+    const bundleSlots = slots.map((slot, slotIndex) => ({
+      key: slot.id || `${slot.position}:${slotIndex}`,
+      label: slot.label,
+      defaultVariantId: slot.defaultVariantId,
+      quantity: slot.quantity,
+      options: (slot.allowProductVariants
+        ? (() => {
+            const defaultMatch = slot.defaultVariantId ? variantProducts.get(slot.defaultVariantId) : undefined;
+            return defaultMatch?.product.variants?.flatMap((variant) => variant.id ? [variant.id] : []) || slot.allowedVariantIds;
+          })()
+        : slot.allowedVariantIds).flatMap((allowedVariantId) => {
+        const match = variantProducts.get(allowedVariantId);
+        if (!match || !match.variant.id || (match.variant.inventory !== undefined && match.variant.inventory < slot.quantity)) return [];
+        return [{
+          productId: match.product.id || match.product.slug || match.product.name || "product",
+          productName: match.product.name || "Product",
+          variant: match.variant,
+        }];
+      }),
+    }));
+    return [[variantId, bundleSlots]];
   }));
-  const bundleAvailability = Object.fromEntries(bundleResults.flatMap(({ variantId, components }) => {
-    if (!variantId || !components.length) return [];
-    const componentsHaveAvailableVariants = components.every((component) => {
-      const match = variantProducts.get(component.componentVariantId);
-      return match?.product.variants?.some((variant) =>
-        Boolean(variant.id) && (variant.inventory === undefined || variant.inventory >= component.quantity),
-      ) === true;
-    });
-    return [[variantId, componentsHaveAvailableVariants]];
+  const bundleAvailability = Object.fromEntries(bundleResults.flatMap(({ variantId, slots }) => {
+    if (!variantId || !slots.length) return [];
+    return [[variantId, slots.every((slot) => (slot.allowProductVariants
+      ? (() => {
+          const defaultMatch = slot.defaultVariantId ? variantProducts.get(slot.defaultVariantId) : undefined;
+          return defaultMatch?.product.variants?.flatMap((variant) => variant.id ? [variant.id] : []) || slot.allowedVariantIds;
+        })()
+      : slot.allowedVariantIds).some((variantId) => {
+      const match = variantProducts.get(variantId);
+      return Boolean(match?.variant.id) && (match?.variant.inventory === undefined || match.variant.inventory >= slot.quantity);
+    }))]];
   }));
   const relatedProducts = products
     .filter((item) => item.id !== product.id && item.brand?.slug === product.brand?.slug)
