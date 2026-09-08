@@ -11,6 +11,11 @@ type CartItem = {
   variantName: string;
   price?: number | string;
   quantity: number;
+  bundleComponents?: Array<{
+    productName: string;
+    variantName: string;
+    quantity: number;
+  }>;
 };
 
 const CART_KEY = "quitrx-cart";
@@ -70,6 +75,17 @@ export default function CartPage() {
                     <h2>{item.productName}</h2>
                     <p>{item.variantName}</p>
                     <strong>{money(numericPrice(item.price))}</strong>
+                    {item.bundleComponents?.length ? (
+                      <ol className={styles.cartBundle} aria-label="Bundle contents">
+                        {item.bundleComponents.map((component, index) => (
+                          <li key={`${component.productName}-${component.variantName}-${index}`}>
+                            <span>{component.productName}</span>
+                            {component.variantName !== "Default" && <span> - {component.variantName}</span>}
+                            {component.quantity > 1 && <span> &times; {component.quantity}</span>}
+                          </li>
+                        ))}
+                      </ol>
+                    ) : null}
                   </div>
                   <div className={styles.cartQuantity}>
                     <button type="button" onClick={() => save(items.map((entry) => entry.key === item.key ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))} aria-label={`Decrease ${item.productName} quantity`}>-</button>

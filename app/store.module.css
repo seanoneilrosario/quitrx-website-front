@@ -696,6 +696,7 @@ select.bundleComponentValue:focus {
 .cartImage img { width: 90%; height: 90%; object-fit: contain; }
 .cartItemInfo h2 { margin: 0 0 5px; font-size: 18px; text-transform: uppercase; }
 .cartItemInfo p { margin: 0 0 8px; color: #628c92; }
+.cartBundle { display: grid; gap: 5px; margin: 12px 0 0; padding-left: 20px; color: #628c92; font-size: 14px; line-height: 1.4; }
 .cartQuantity { display: grid; width: 110px; height: 42px; grid-template-columns: repeat(3, 1fr); border: 1px solid #7eb6bd; }
 .cartQuantity button, .cartQuantity span { display: grid; place-items: center; border: 0; background: transparent; color: inherit; }
 .cartQuantity button { cursor: pointer; }

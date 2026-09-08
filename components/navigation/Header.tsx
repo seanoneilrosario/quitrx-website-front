@@ -38,6 +38,11 @@ type CartItem = {
   variantName: string;
   price?: number | string;
   quantity: number;
+  bundleComponents?: Array<{
+    productName: string;
+    variantName: string;
+    quantity: number;
+  }>;
 };
 type SearchProduct = {
   id: string;
@@ -526,6 +531,17 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                         <strong>{item.productName}</strong>
                         <span>{item.variantName}</span>
                         <span>{cartMoney(item.price)}</span>
+                        {item.bundleComponents?.length ? (
+                          <ol className="cart-drawer__bundle" aria-label="Bundle contents">
+                            {item.bundleComponents.map((component, index) => (
+                              <li key={`${component.productName}-${component.variantName}-${index}`}>
+                                <span>{component.productName}</span>
+                                {component.variantName !== "Default" && <span> - {component.variantName}</span>}
+                                {component.quantity > 1 && <span> &times; {component.quantity}</span>}
+                              </li>
+                            ))}
+                          </ol>
+                        ) : null}
                         <div className="cart-drawer__quantity">
                           <button type="button" aria-label={`Decrease ${item.productName} quantity`} onClick={() => saveCart(item.quantity === 1 ? cartItems.filter((entry) => entry.key !== item.key) : cartItems.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity - 1 } : entry))}>−</button>
                           <span>{item.quantity}</span>
