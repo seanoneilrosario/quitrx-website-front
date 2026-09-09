@@ -2,60 +2,11 @@ import "server-only";
 
 import { client } from "@/sanity/lib/client";
 import { bundleComponentsFrom } from "./quithero-bundle";
-import type { QuitHeroBundleDropdown } from "./quithero-bundle";
+import { FREQUENTLY_BOUGHT_TOGETHER_QUERY } from "./frequently-bought-together";
+import type { FrequentlyBoughtTogetherDocument } from "./frequently-bought-together";
+import type { QuitHeroProduct, QuitHeroVariant } from "./quithero-types";
 
-export type QuitHeroImage = {
-  url?: string;
-  altText?: string;
-  isPrimary?: boolean;
-  sortOrder?: number;
-};
-
-export type QuitHeroVariant = {
-  id?: string;
-  name?: string;
-  sku?: string;
-  price?: number | string;
-  currencyCode?: string;
-  inventory?: number;
-  size?: string;
-  color?: string;
-  options?: Record<string, string>;
-  bundleComponents?: unknown;
-  bundleDropdowns?: QuitHeroBundleDropdown[];
-};
-
-export type QuitHeroBrand = {
-  id?: string;
-  name?: string;
-  slug?: string;
-  description?: string;
-  logo?: string;
-};
-
-export type QuitHeroTag = { name?: string; slug?: string };
-export type QuitHeroProductTag = QuitHeroTag & { tag?: QuitHeroTag };
-
-export type QuitHeroProduct = {
-  id?: string;
-  name?: string;
-  handle?: string;
-  slug?: string;
-  description?: string;
-  shortDescription?: string;
-  status?: string;
-  category?: string;
-  productType?: string | { name?: string; slug?: string };
-  brand?: QuitHeroBrand;
-  tags?: Array<QuitHeroProductTag | string>;
-  images?: QuitHeroImage[];
-  variants?: QuitHeroVariant[];
-  collectionId?: string;
-  collectionIds?: string[];
-  collections?: Array<string | { id?: string; slug?: string }>;
-  sourceId?: string;
-  sourceSystem?: string;
-};
+export type { QuitHeroBrand, QuitHeroImage, QuitHeroProduct, QuitHeroProductTag, QuitHeroTag, QuitHeroVariant } from "./quithero-types";
 
 type QuitHeroCollectionProduct = string | (QuitHeroProduct & {
   productId?: string;
@@ -155,6 +106,15 @@ export async function getQuitHeroProduct(handle: string) {
 export async function getQuitHeroProductById(id: string) {
   const products = await getQuitHeroProducts();
   return products.find((product) => product.id === id);
+}
+
+export async function getFrequentlyBoughtTogetherIds(productId: string) {
+  const recommendation = await client.withConfig({ useCdn: false }).fetch<FrequentlyBoughtTogetherDocument | null>(
+    FREQUENTLY_BOUGHT_TOGETHER_QUERY,
+    { productId },
+    { next: { revalidate: 30 } },
+  );
+  return Array.isArray(recommendation?.relatedProductIds) ? recommendation.relatedProductIds : [];
 }
 
 export async function getQuitHeroBundle(productId: string, variantId: string) {

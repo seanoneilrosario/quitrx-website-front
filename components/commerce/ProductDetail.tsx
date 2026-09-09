@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { QuitHeroProduct } from "@/lib/quithero";
-import { getPrimaryImage, getQuitHeroBundleVariant, getQuitHeroProducts, productHasTag } from "@/lib/quithero";
+import { getFrequentlyBoughtTogetherIds, getPrimaryImage, getQuitHeroBundleVariant, getQuitHeroProducts, productHasTag } from "@/lib/quithero";
 import { bundleDropdownsFrom } from "@/lib/quithero-bundle";
+import { resolveFrequentlyBoughtTogether } from "@/lib/frequently-bought-together";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import styles from "@/app/store.module.css";
@@ -10,7 +11,11 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
   const image = getPrimaryImage(product);
   const description = (product.description || product.shortDescription || "").replace(/<[^>]*>/g, "");
   const isBundle = productHasTag(product, "bundle");
-  const products = await getQuitHeroProducts().catch(() => []);
+  const productId = product.id || product.slug || product.name || "product";
+  const [products, relatedProductIds] = await Promise.all([
+    getQuitHeroProducts().catch(() => []),
+    product.id ? getFrequentlyBoughtTogetherIds(product.id).catch(() => []) : Promise.resolve([]),
+  ]);
   const variants = product.variants || [];
   const bundleVariant = isBundle && product.id && variants[0]?.id
     ? await getQuitHeroBundleVariant(product.id, variants[0].id).catch(() => variants[0])
@@ -31,15 +36,12 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
       };
     }),
   }));
-  const relatedProducts = products
-    .filter((item) => item.id !== product.id && item.brand?.slug === product.brand?.slug)
-    .slice(0, 3)
-    .map((item) => ({
-      id: item.id || item.slug || item.name || "product",
-      name: item.name || "Product",
-      image: getPrimaryImage(item),
-      variants: item.variants || [],
-    }));
+  const relatedProducts = resolveFrequentlyBoughtTogether(productId, relatedProductIds, products).map((item) => ({
+    id: item.id!,
+    name: item.name!,
+    image: getPrimaryImage(item),
+    variants: item.variants!,
+  }));
 
   return (
     <main className={styles.productPage}>
@@ -54,7 +56,7 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
           ) : product.brand?.name ? <span className={styles.eyebrow}>{product.brand.name}</span> : null}
           <h1>{product.name}</h1>
           <ProductPurchasePanel
-            productId={product.id || product.slug || product.name || "product"}
+            productId={productId}
             productName={product.name || "Product"}
             image={image}
             variants={variants}

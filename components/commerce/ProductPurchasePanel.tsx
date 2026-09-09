@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import styles from "@/app/store.module.css";
+import { firstAvailableVariantIndex } from "@/lib/frequently-bought-together";
+import { variantIsAvailable } from "@/lib/quithero-bundle";
+import { buildMultiItemCartPayload } from "@/lib/storefront-cart";
+import type { StorefrontCartItem } from "@/lib/storefront-cart";
 
 type Variant = {
   id?: string;
@@ -10,6 +14,7 @@ type Variant = {
   inventory?: number;
   size?: string;
   options?: Record<string, string>;
+  bundleComponents?: unknown;
 };
 
 type RelatedProduct = {
@@ -27,24 +32,6 @@ type BundleDropdown = {
     productName: string;
     variantName: string;
     available: boolean;
-  }>;
-};
-
-type CartItem = {
-  key: string;
-  productId: string;
-  productName: string;
-  image?: string;
-  variantId?: string;
-  variantName: string;
-  price?: number | string;
-  quantity: number;
-  bundleComponents?: Array<{
-    productId: string;
-    productName: string;
-    variantId: string;
-    variantName: string;
-    quantity: number;
   }>;
 };
 
@@ -72,9 +59,9 @@ function formatPrice(value?: number | string) {
   return value || "Price on request";
 }
 
-function addItemsToCart(items: CartItem[]) {
+function addItemsToCart(items: StorefrontCartItem[]) {
   const stored = localStorage.getItem(CART_KEY);
-  const cart: CartItem[] = stored ? JSON.parse(stored) : [];
+  const cart: StorefrontCartItem[] = stored ? JSON.parse(stored) : [];
 
   items.forEach((item) => {
     const existing = cart.find((cartItem) => cartItem.key === item.key);
@@ -86,7 +73,7 @@ function addItemsToCart(items: CartItem[]) {
   window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items: cart, open: true } }));
 }
 
-async function syncBundleComponents(item: CartItem) {
+async function syncBundleComponents(item: StorefrontCartItem) {
   if (!item.variantId || !item.bundleComponents?.length) return;
 
   const bundlePayload = item.bundleComponents.map((component, index) => ({
@@ -123,10 +110,12 @@ export default function ProductPurchasePanel({
   bundleDropdowns: BundleDropdown[];
   relatedProducts: RelatedProduct[];
 }) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(() => isBundle ? 0 : firstAvailableVariantIndex(variants));
   const [quantity, setQuantity] = useState(1);
   const [relatedSelections, setRelatedSelections] = useState<Record<string, boolean>>({});
-  const [relatedVariants, setRelatedVariants] = useState<Record<string, number>>({});
+  const [relatedVariants, setRelatedVariants] = useState<Record<string, number>>(() => Object.fromEntries(
+    relatedProducts.map((product) => [product.id, firstAvailableVariantIndex(product.variants)]),
+  ));
   const [bundleSelections, setBundleSelections] = useState(() => bundleDropdowns.map((dropdown) =>
     dropdown.options.find((option) => option.available)?.componentVariantId || "",
   ));
@@ -142,7 +131,7 @@ export default function ProductPurchasePanel({
     && selectedBundleOptions.every((option) => option?.available);
   const available = isBundle
     ? Boolean(selected?.id) && !bundleLoading && !bundleError && bundleIsAvailable
-    : inventory === undefined || inventory > 0;
+    : variantIsAvailable(selected);
   const price = formatPrice((selected || variants[0])?.price);
 
   function selectParentVariant(index: number) {
@@ -167,7 +156,7 @@ export default function ProductPurchasePanel({
       quantity: 1,
     }] : []);
     const configurationKey = selectedBundleComponents.map((component) => component.variantId || component.variantName).join(",");
-    const items: CartItem[] = [{
+    const mainItem: StorefrontCartItem = {
       key: `${productId}:${selected?.id || mainVariantName}${configurationKey ? `:${configurationKey}` : ""}`,
       productId,
       productName,
@@ -177,14 +166,13 @@ export default function ProductPurchasePanel({
       price: selected?.price,
       quantity,
       ...(selectedBundleComponents.length ? { bundleComponents: selectedBundleComponents } : {}),
-    }];
-
-    relatedProducts.forEach((product) => {
-      if (!relatedSelections[product.id]) return;
+    };
+    const recommendationItems = relatedProducts.flatMap((product) => {
       const index = relatedVariants[product.id] || 0;
       const variant = product.variants[index];
+      if (!variant || !variantIsAvailable(variant)) return [];
       const name = variant ? variantLabel(variant, index) : "Default";
-      items.push({
+      return [{
         key: `${product.id}:${variant?.id || name}`,
         productId: product.id,
         productName: product.name,
@@ -193,8 +181,10 @@ export default function ProductPurchasePanel({
         variantName: name,
         price: variant?.price,
         quantity: 1,
-      });
+        checked: Boolean(relatedSelections[product.id]),
+      }];
     });
+    const items = buildMultiItemCartPayload(mainItem, recommendationItems);
 
     if (isBundle) {
       setBundleLoading(true);
@@ -223,7 +213,7 @@ export default function ProductPurchasePanel({
           <legend>Choose your strength</legend>
           <div className={styles.variantOptions}>
             {variants.map((variant, index) => (
-              <button key={variant.id || `${variantLabel(variant, index)}-${index}`} type="button" className={selectedIndex === index ? styles.variantActive : ""} onClick={() => selectParentVariant(index)}>
+              <button key={variant.id || `${variantLabel(variant, index)}-${index}`} type="button" className={selectedIndex === index ? styles.variantActive : ""} disabled={!variantIsAvailable(variant)} onClick={() => selectParentVariant(index)}>
                 {variantLabel(variant, index)}
               </button>
             ))}
@@ -266,25 +256,25 @@ export default function ProductPurchasePanel({
         </section>
       )}
 
-      {!isBundle && relatedProducts.length > 0 && (
+      {relatedProducts.length > 0 && (
         <section className={styles.relatedProducts} aria-labelledby="frequently-bought-heading">
-          <h2 id="frequently-bought-heading">Frequently Bought Together</h2>
+          <h2 id="frequently-bought-heading">Frequently Bought Together.</h2>
           {relatedProducts.map((product) => {
             const variantIndex = relatedVariants[product.id] || 0;
             return (
-              <label className={styles.relatedProduct} key={product.id}>
-                <input type="checkbox" checked={Boolean(relatedSelections[product.id])} onChange={(event) => setRelatedSelections((values) => ({ ...values, [product.id]: event.target.checked }))} />
+              <article className={styles.relatedProduct} key={product.id}>
+                <input id={`related-${product.id}`} type="checkbox" checked={Boolean(relatedSelections[product.id])} onChange={(event) => setRelatedSelections((values) => ({ ...values, [product.id]: event.target.checked }))} />
                 {product.image && <img src={product.image} alt="" />}
                 <span>
-                  <strong>{product.name}</strong>
+                  <label htmlFor={`related-${product.id}`}><strong>{product.name}</strong></label>
                   <small>{formatPrice(product.variants[variantIndex]?.price)}</small>
                   {product.variants.length > 0 && (
                     <select value={variantIndex} onChange={(event) => setRelatedVariants((values) => ({ ...values, [product.id]: Number(event.target.value) }))} aria-label={`${product.name} option`}>
-                      {product.variants.map((variant, index) => <option key={variant.id || index} value={index}>{relatedVariantLabel(product.name, variant, index)}</option>)}
+                      {product.variants.map((variant, index) => <option key={variant.id || index} value={index} disabled={!variantIsAvailable(variant)}>{relatedVariantLabel(product.name, variant, index)}</option>)}
                     </select>
                   )}
                 </span>
-              </label>
+              </article>
             );
           })}
         </section>
@@ -301,7 +291,7 @@ export default function ProductPurchasePanel({
         </div>
         {!isBundle && variants.length > 1 && (
           <select value={selectedIndex} onChange={(event) => selectParentVariant(Number(event.target.value))} aria-label="Product option">
-            {variants.map((variant, index) => <option key={variant.id || index} value={index}>{variantLabel(variant, index)}</option>)}
+            {variants.map((variant, index) => <option key={variant.id || index} value={index} disabled={!variantIsAvailable(variant)}>{variantLabel(variant, index)}</option>)}
           </select>
         )}
         <div className={styles.stickyQuantity}>
