@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { client } from "@/sanity/lib/client";
 import { bundleComponentsFrom } from "./quithero-bundle";
 import { FREQUENTLY_BOUGHT_TOGETHER_QUERY } from "./frequently-bought-together";
@@ -44,18 +45,43 @@ type QuitHeroCollectionsResponse =
   | { collections?: QuitHeroCollection[]; data?: QuitHeroCollection[]; items?: QuitHeroCollection[] };
 
 const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
+const RETRY_DELAYS_MS = [150, 400];
+
+function delay(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
 
 async function quitHeroFetch<T>(path: string): Promise<T> {
   const apiKey = process.env.QUITHERO_API_KEY;
   if (!apiKey) throw new Error("QuitHero API key is not configured.");
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: { "x-api-key": apiKey },
-    cache: "no-store",
-  });
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}${path}`, {
+        headers: { "x-api-key": apiKey },
+        cache: "no-store",
+      });
+    } catch (error) {
+      lastError = error;
+      const retryDelay = RETRY_DELAYS_MS[attempt];
+      if (retryDelay === undefined) break;
+      await delay(retryDelay);
+      continue;
+    }
 
-  if (!response.ok) throw new Error(`QuitHero request failed with ${response.status}.`);
-  return response.json() as Promise<T>;
+    if (response.ok) return response.json() as Promise<T>;
+
+    const error = new Error(`QuitHero request failed with ${response.status}.`);
+    if (response.status !== 429 && response.status < 500) throw error;
+    lastError = error;
+    const retryDelay = RETRY_DELAYS_MS[attempt];
+    if (retryDelay === undefined) break;
+    await delay(retryDelay);
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("QuitHero request failed.");
 }
 
 function productsFrom(payload: QuitHeroProductsResponse) {
@@ -82,7 +108,7 @@ export async function getQuitHeroCollections() {
   return collectionsFrom(await quitHeroFetch<QuitHeroCollectionsResponse>("/collections"));
 }
 
-export async function getQuitHeroProducts() {
+export const getQuitHeroProducts = cache(async function getQuitHeroProducts() {
   const first = await quitHeroFetch<QuitHeroProductsResponse>("/products?page=1&limit=100");
   const products = productsFrom(first);
   if (Array.isArray(first)) return products;
@@ -96,17 +122,17 @@ export async function getQuitHeroProducts() {
     ),
   );
   return [products, ...remaining.map(productsFrom)].flat();
-}
+});
 
-export async function getQuitHeroProduct(handle: string) {
+export const getQuitHeroProduct = cache(async function getQuitHeroProduct(handle: string) {
   const products = await getQuitHeroProducts();
-  return products.find((product) => (product.handle ?? product.slug) === handle);
-}
+  return products.find((product) => product.handle === handle || product.slug === handle);
+});
 
-export async function getQuitHeroProductById(id: string) {
+export const getQuitHeroProductById = cache(async function getQuitHeroProductById(id: string) {
   const products = await getQuitHeroProducts();
   return products.find((product) => product.id === id);
-}
+});
 
 export async function getFrequentlyBoughtTogetherIds(productId: string) {
   const recommendation = await client.withConfig({ useCdn: false }).fetch<FrequentlyBoughtTogetherDocument | null>(
