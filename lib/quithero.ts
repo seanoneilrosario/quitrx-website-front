@@ -16,6 +16,7 @@ export type QuitHeroVariant = {
   name?: string;
   sku?: string;
   price?: number | string;
+  currencyCode?: string;
   inventory?: number;
   size?: string;
   color?: string;
@@ -52,7 +53,15 @@ export type QuitHeroProduct = {
   collectionId?: string;
   collectionIds?: string[];
   collections?: Array<string | { id?: string; slug?: string }>;
+  sourceId?: string;
+  sourceSystem?: string;
 };
+
+type QuitHeroCollectionProduct = string | (QuitHeroProduct & {
+  productId?: string;
+  _ref?: string;
+  product?: QuitHeroProduct;
+});
 
 export type QuitHeroCollection = {
   id?: string;
@@ -60,7 +69,7 @@ export type QuitHeroCollection = {
   slug?: string;
   description?: string;
   image?: string;
-  products?: Array<QuitHeroProduct | string>;
+  products?: QuitHeroCollectionProduct[];
   productIds?: string[];
 };
 
@@ -208,21 +217,18 @@ export async function getQuitHeroCollection(slug: string) {
     } | null>(
       `*[_type == "productCollection" && slug.current == $slug][0]{title, description, productIds, selectionMode, dynamicTag, ruleMatch, dynamicRules}`,
       { slug },
+      { next: { revalidate: 30 } },
     ),
   ]);
   const apiCollection = apiCollections.find((collection) => collection.slug === slug);
   if (apiCollection) {
-    const embeddedProducts = (apiCollection.products ?? []).filter(
-      (product): product is QuitHeroProduct => typeof product === "object" && product !== null,
-    );
-    const assignedIds = new Set([
+    const references: QuitHeroCollectionProduct[] = [
+      ...(apiCollection.products ?? []),
       ...(apiCollection.productIds ?? []),
-      ...(apiCollection.products ?? []).filter((product): product is string => typeof product === "string"),
-    ]);
-    const assignedProducts = embeddedProducts.length
-      ? embeddedProducts
+    ];
+    const assignedProducts = references.length
+      ? resolveCollectionProducts(references, products, slug)
       : products.filter((product) => {
-          if (product.id && assignedIds.has(product.id)) return true;
           if (apiCollection.id && product.collectionId === apiCollection.id) return true;
           if (apiCollection.id && product.collectionIds?.includes(apiCollection.id)) return true;
           return product.collections?.some((collection) =>
@@ -264,6 +270,54 @@ export async function getQuitHeroCollection(slug: string) {
     brand: collectionProducts[0].brand,
     products: collectionProducts,
   };
+}
+
+function resolveCollectionProducts(
+  references: QuitHeroCollectionProduct[],
+  products: QuitHeroProduct[],
+  collectionSlug: string,
+) {
+  const lookup = new Map<string, QuitHeroProduct>();
+  for (const product of products) {
+    for (const value of [product.id, product.handle, product.slug, product.sourceId]) {
+      if (value) lookup.set(value, product);
+    }
+  }
+
+  const resolved: QuitHeroProduct[] = [];
+  const seen = new Set<string>();
+  for (const reference of references) {
+    const record = typeof reference === "object" && reference !== null ? reference : undefined;
+    const nested = record?.product;
+    const identifiers = typeof reference === "string"
+      ? [reference]
+      : [record?.productId, nested?.id, record?._ref, record?.handle, record?.slug, record?.id];
+    const product = identifiers.flatMap((value) => value ? [lookup.get(value)] : []).find(Boolean)
+      ?? (isCompleteProduct(nested) ? nested : undefined)
+      ?? (isCompleteProduct(record) ? record : undefined);
+
+    if (!product || !isCompleteProduct(product)) {
+      console.warn("Unable to resolve collection product.", {
+        collectionSlug,
+        storedId: typeof reference === "string" ? reference : record?.productId ?? record?.id,
+        handle: record?.handle ?? nested?.handle,
+        slug: record?.slug ?? nested?.slug,
+        reference: record?._ref,
+      });
+      continue;
+    }
+
+    const key = product.id ?? product.handle ?? product.slug!;
+    if (!seen.has(key)) {
+      seen.add(key);
+      resolved.push(product);
+    }
+  }
+  return resolved;
+}
+
+function isCompleteProduct(product: QuitHeroProduct | undefined): product is QuitHeroProduct {
+  return Boolean(product?.name && (product.handle || product.slug) && Array.isArray(product.variants));
 }
 
 export function productHasTag(product: Pick<QuitHeroProduct, "tags">, expectedTag: string) {

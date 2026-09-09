@@ -6,7 +6,11 @@ import styles from "../../store.module.css";
 type CollectionPageProps = { params: Promise<{ slug: string }> };
 
 export default async function CollectionPage({ params }: CollectionPageProps) {
-  const collection = await getQuitHeroCollection((await params).slug).catch(() => undefined);
+  const slug = (await params).slug;
+  const collection = await getQuitHeroCollection(slug).catch((error) => {
+    console.error("Unable to load collection page.", { slug, error });
+    return undefined;
+  });
   if (!collection) notFound();
 
   return (
