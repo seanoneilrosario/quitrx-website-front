@@ -21,6 +21,10 @@ export type QuitHeroCollection = {
   slug?: string;
   description?: string;
   image?: string;
+  type?: string;
+  match?: string;
+  rules?: CollectionRule[];
+  dynamicRules?: CollectionRule[];
   products?: QuitHeroCollectionProduct[];
   productIds?: string[];
 };
@@ -208,6 +212,36 @@ export async function getQuitHeroCollection(slug: string) {
   ]);
   const apiCollection = apiCollections.find((collection) => collection.slug === slug);
   if (apiCollection) {
+    const collectionType = apiCollection.type?.toLowerCase();
+    if (collectionType === "dynamic") {
+      const apiRules = apiCollection.rules?.length ? apiCollection.rules : apiCollection.dynamicRules ?? [];
+      const fallbackRules = assignment?.dynamicRules?.length
+        ? assignment.dynamicRules
+        : assignment?.dynamicTag
+          ? [{ field: "tag", operator: "equals", value: assignment.dynamicTag } satisfies CollectionRule]
+          : [];
+      const rules = apiRules.length ? apiRules : fallbackRules;
+      const match = (apiCollection.match ?? assignment?.ruleMatch)?.toLowerCase() === "any"
+        ? "any"
+        : "all";
+      const fallbackIds = new Set(assignment?.productIds ?? []);
+      const needsProductFallback = !apiRules.length || rules.some((rule) => rule.field === "tag")
+        && products.some((product) => !product.tags?.length);
+      const assignedProducts = products.filter((product) =>
+        productMatchesCollectionRules(product, rules, match)
+        || Boolean(needsProductFallback && product.id && fallbackIds.has(product.id)),
+      );
+      return {
+        brand: {
+          id: apiCollection.id,
+          name: apiCollection.name ?? assignment?.title ?? slug,
+          slug,
+          description: apiCollection.description ?? assignment?.description,
+          logo: apiCollection.image,
+        },
+        products: assignedProducts,
+      };
+    }
     const references: QuitHeroCollectionProduct[] = [
       ...(apiCollection.products ?? []),
       ...(apiCollection.productIds ?? []),
