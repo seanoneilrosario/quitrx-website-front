@@ -99,6 +99,7 @@ export default function ProductApiGrid({
   collection,
   collections = [],
 }: ProductApiGridProps) {
+  const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "anonymous">("loading");
   const [products, setProducts] = useState<ApiRecord[]>([]);
   const [apiCollections, setApiCollections] = useState<ApiRecord[]>([]);
   const [error, setError] = useState("");
@@ -113,7 +114,20 @@ export default function ProductApiGrid({
     : "";
 
   useEffect(() => {
-    if (showingSelectedCollections) return;
+    const controller = new AbortController();
+
+    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
+      .then((response) => setAuthStatus(response.ok ? "authenticated" : "anonymous"))
+      .catch((requestError: unknown) => {
+        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+        setAuthStatus("anonymous");
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (authStatus !== "authenticated" || showingSelectedCollections) return;
     const controller = new AbortController();
 
     const url = displayMode === "collections" ? "/api/quithero-collections" : `/api/quithero-products${collectionQuery}`;
@@ -134,7 +148,7 @@ export default function ProductApiGrid({
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [collectionQuery, displayMode, showingSelectedCollections]);
+  }, [authStatus, collectionQuery, displayMode, showingSelectedCollections]);
 
   const sectionStyle = {
     "--desktop-padding-top": `${desktopPaddingTop ?? paddingTop}px`,
@@ -142,6 +156,25 @@ export default function ProductApiGrid({
     "--mobile-padding-top": `${mobilePaddingTop}px`,
     "--mobile-padding-bottom": `${mobilePaddingBottom}px`,
   } as CSSProperties;
+
+  if (authStatus === "loading") {
+    return <section className={styles.section} style={sectionStyle} aria-busy="true" />;
+  }
+
+  if (authStatus === "anonymous") {
+    return (
+      <section className={styles.section} style={sectionStyle}>
+        <div className="page-width">
+          <div className={styles.lockedCard}>
+            <p className={styles.lockedEyebrow}>This content is locked</p>
+            <h2>Looking for Products?<br />A free nicotine vaping script unlocks your options</h2>
+            <Link href="/account/login" className={styles.loginButton}>Login</Link>
+            <p className={styles.contact}>Any questions? <Link href="/contact">Contact us.</Link></p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className={styles.section} style={sectionStyle}>
