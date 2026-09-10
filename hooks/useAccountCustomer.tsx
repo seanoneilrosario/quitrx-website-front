@@ -16,6 +16,7 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [customer, setCustomer] = useState<QuitHeroCustomer>();
   const [loading, setLoading] = useState(true);
+  const [loadedPathname, setLoadedPathname] = useState<string>();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -28,14 +29,19 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
         if (!(error instanceof DOMException && error.name === "AbortError")) setCustomer(undefined);
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoadedPathname(pathname);
+          setLoading(false);
+        }
       });
 
     return () => controller.abort();
   }, [pathname]);
 
+  const isLoadingCurrentPath = loading || loadedPathname !== pathname;
+
   return (
-    <AccountCustomerContext.Provider value={{ customer, loading, setCustomer }}>
+    <AccountCustomerContext.Provider value={{ customer, loading: isLoadingCurrentPath, setCustomer }}>
       {children}
     </AccountCustomerContext.Provider>
   );
