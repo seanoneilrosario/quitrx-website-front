@@ -270,11 +270,21 @@ export default function SpreadComponents({
       return [] as COMPONENTS[];
     }
 
+    let hasProductApiGrid = false;
+
     return components.filter(
-      (component): component is COMPONENTS =>
-        Boolean(component) &&
+      (component): component is COMPONENTS => {
+        const isValid = Boolean(component) &&
         typeof component === "object" &&
-        typeof component._type === "string"
+        typeof component._type === "string";
+
+        if (!isValid) return false;
+        if (component._type !== "product_api_grid") return true;
+        if (hasProductApiGrid) return false;
+
+        hasProductApiGrid = true;
+        return true;
+      }
     );
   }, [components]);
 
