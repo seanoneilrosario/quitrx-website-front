@@ -8,6 +8,7 @@ import { PortableTextBlock } from "@/components/global/components";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
+import { useEffect, useState } from "react";
 
 interface BannerProps {
   image: string;
@@ -48,6 +49,27 @@ export function Banner({
 }: BannerProps) {
   console.log(doc_img)
   const titleBlocks = Array.isArray(title_array) ? title_array : [];
+  const isLoginButton = secondary_button_text?.trim().toLowerCase() === "login";
+  const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "anonymous">(
+    isLoginButton ? "loading" : "anonymous",
+  );
+  const secondaryButtonLink = isLoginButton
+    ? secondary_button_link || "/account/login"
+    : secondary_button_link;
+
+  useEffect(() => {
+    if (!isLoginButton) return;
+
+    const controller = new AbortController();
+    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
+      .then((response) => setAuthStatus(response.ok ? "authenticated" : "anonymous"))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setAuthStatus("anonymous");
+      });
+
+    return () => controller.abort();
+  }, [isLoginButton]);
 
   const handleButtonClick = (url?: string) => {
     if (url) {
@@ -137,11 +159,11 @@ export function Banner({
                 </button>
               )
             )}
-            {secondary_button_text && (
-              secondary_button_style === "link" ? (
+            {secondary_button_text && (!isLoginButton || authStatus === "anonymous") && (
+              secondary_button_style === "link" || isLoginButton ? (
                 <Link
-                  href={secondary_button_link || "#"}
-                  className="banner-button banner-button--primary"
+                  href={secondaryButtonLink || "#"}
+                  className={`banner-button ${secondary_button_style === "link" ? "banner-button--primary" : "banner-button--secondary"}`}
                 >
                   {secondary_button_text}
                 </Link>
@@ -149,7 +171,7 @@ export function Banner({
                 <button
                   type="button"
                   className="banner-button banner-button--secondary"
-                  onClick={() => handleButtonClick(secondary_button_link)}
+                  onClick={() => handleButtonClick(secondaryButtonLink)}
                 >
                   {secondary_button_text}
                 </button>
