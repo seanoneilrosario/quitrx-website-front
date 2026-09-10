@@ -86,6 +86,14 @@ function getCollectionEntries(products: ApiRecord[]): Array<[string, ApiRecord]>
   return products.length ? [["all-products", products[0]], ...entries] : entries;
 }
 
+function hasScriptAccess(account: ApiRecord) {
+  if (account.scriptActive === true) return true;
+
+  return Array.isArray(account.tags) && account.tags.some(
+    (tag) => typeof tag === "string" && ["script", "scriptactive"].includes(tag.trim().toLowerCase()),
+  );
+}
+
 export default function ProductApiGrid({
   heading = "Products",
   productLimit = 12,
@@ -99,7 +107,7 @@ export default function ProductApiGrid({
   collection,
   collections = [],
 }: ProductApiGridProps) {
-  const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "anonymous">("loading");
+  const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "missing-script" | "anonymous">("loading");
   const [products, setProducts] = useState<ApiRecord[]>([]);
   const [apiCollections, setApiCollections] = useState<ApiRecord[]>([]);
   const [error, setError] = useState("");
@@ -117,7 +125,15 @@ export default function ProductApiGrid({
     const controller = new AbortController();
 
     fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
-      .then((response) => setAuthStatus(response.ok ? "authenticated" : "anonymous"))
+      .then(async (response) => {
+        if (!response.ok) {
+          setAuthStatus("anonymous");
+          return;
+        }
+
+        const account = asRecord(await response.json()) || {};
+        setAuthStatus(hasScriptAccess(account) ? "authenticated" : "missing-script");
+      })
       .catch((requestError: unknown) => {
         if (requestError instanceof DOMException && requestError.name === "AbortError") return;
         setAuthStatus("anonymous");
@@ -169,6 +185,21 @@ export default function ProductApiGrid({
             <p className={styles.lockedEyebrow}>This content is locked</p>
             <h2>Looking for Products?<br />A free nicotine vaping script unlocks your options</h2>
             <Link href="/account/login" className={styles.loginButton}>Login</Link>
+            <p className={styles.contact}>Any questions? <Link href="/contact">Contact us.</Link></p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (authStatus === "missing-script") {
+    return (
+      <section className={styles.section} style={sectionStyle}>
+        <div className="page-width">
+          <div className={styles.lockedCard}>
+            <p className={styles.lockedEyebrow}>This content is locked</p>
+            <h2>Looking for Products?<br />A free nicotine vaping script unlocks your options</h2>
+            <Link href="https://quitrx-website-front-ecru.vercel.app/intake-form" className={styles.loginButton}>Apply Free</Link>
             <p className={styles.contact}>Any questions? <Link href="/contact">Contact us.</Link></p>
           </div>
         </div>
