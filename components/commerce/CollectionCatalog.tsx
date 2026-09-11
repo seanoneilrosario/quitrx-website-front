@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { variantIsAvailable } from "@/lib/quithero-bundle";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { hasActiveScript } from "@/lib/script-access";
 import ProductCard from "./ProductCard";
 import styles from "./collectionCatalog.module.css";
 
@@ -33,6 +35,8 @@ function unique(values: Array<string | undefined>) {
 }
 
 export default function CollectionCatalog({ products }: { products: QuitHeroProduct[] }) {
+  const { customer } = useAccountCustomer();
+  const productsLocked = !hasActiveScript(customer);
   const [brands, setBrands] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
@@ -167,7 +171,7 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
           <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"}</span>
         </div>
         <div className={styles.productGrid}>
-          {paginatedProducts.map((product, index) => <ProductCard product={product} key={product.id || product.slug || index} />)}
+          {paginatedProducts.map((product, index) => <ProductCard product={product} locked={productsLocked} key={product.id || product.slug || index} />)}
         </div>
         {!visibleProducts.length && <p className={styles.empty}>No products match these filters.</p>}
         {totalPages > 1 && <nav className={styles.pagination} aria-label="Product pages">

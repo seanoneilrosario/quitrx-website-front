@@ -206,12 +206,34 @@
 }
 
 .productImageWrap {
+  position: relative;
   display: grid;
   aspect-ratio: 1;
   place-items: center;
   padding: clamp(24px, 3vw, 42px);
   background: linear-gradient(135deg, #eef1fb, #e0f3ec);
 }
+
+.scriptRequired {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  padding: 5px 24px;
+  border-radius: 999px;
+  background: #50d993;
+  color: #035c67;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.lockIcon {
+  width: 64px;
+  height: 64px;
+  fill: #155e68;
+}
+
+.lockIcon circle { fill: #fff; }
 
 .productImage {
   width: 100%;
@@ -471,6 +493,15 @@
     aspect-ratio: auto;
     padding: 20px;
   }
+
+  .scriptRequired {
+    top: 14px;
+    left: 14px;
+    padding: 4px 12px;
+    font-size: 11px;
+  }
+
+  .lockIcon { width: 46px; height: 46px; }
 
   .productInfo {
     grid-row: 1;

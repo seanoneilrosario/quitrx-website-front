@@ -229,6 +229,72 @@
   .grid { grid-template-columns: 1fr; }
 }
 
+.lockedProductPage {
+  box-sizing: border-box;
+  display: grid;
+  min-height: 78vh;
+  place-items: center;
+  padding: clamp(70px, 10vw, 170px) 0;
+  background: #00636c;
+  color: #035c67;
+}
+
+.lockedProductCard {
+  box-sizing: border-box;
+  width: calc(100% - 48px);
+  padding: clamp(34px, 4vw, 64px);
+  border-radius: 42px;
+  background: linear-gradient(110deg, #fff 0%, #effefa 100%);
+  box-shadow: 0 22px 24px rgb(188 255 246 / 50%);
+}
+
+.lockedProductCard h1 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 48px);
+  line-height: 1.2;
+}
+
+.lockedProductEyebrow {
+  margin: 4px 0 30px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.lockedProductCard h2 {
+  margin: 0 0 34px;
+  color: #348a83;
+  font-size: clamp(30px, 3vw, 48px);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.applyFreeButton {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: 11px;
+  background: #3bf0ba;
+  color: #035c67;
+  font-size: 20px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lockedProductContact {
+  margin: 18px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.lockedProductContact a { color: inherit; text-underline-offset: 3px; }
+
+@media (max-width: 599px) {
+  .lockedProductCard { width: calc(100% - 28px); padding: 30px 22px; border-radius: 24px; }
+  .lockedProductEyebrow { margin-bottom: 22px; font-size: 15px; }
+  .lockedProductCard h2 { font-size: 25px; }
+  .applyFreeButton { font-size: 17px; }
+  .lockedProductContact { font-size: 14px; }
+}
+
 /* Product page */
 .productPage {
   min-height: 100vh;

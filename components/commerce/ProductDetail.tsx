@@ -5,6 +5,7 @@ import { bundleDropdownsFrom } from "@/lib/quithero-bundle";
 import { resolveFrequentlyBoughtTogether } from "@/lib/frequently-bought-together";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
+import ProductAccessGate from "./ProductAccessGate";
 import styles from "@/app/store.module.css";
 
 export default async function ProductDetail({ product }: { product: QuitHeroProduct }) {
@@ -43,7 +44,7 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
     variants: item.variants!,
   }));
 
-  return (
+  return <ProductAccessGate productName={product.name || "Product"}>
     <main className={styles.productPage}>
       <div className={`${styles.productDetail} page-width`}>
         <ProductImageZoom image={image} alt={product.name || "Product"} />
@@ -86,5 +87,5 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
         </div>
       </div>
     </main>
-  );
+  </ProductAccessGate>;
 }
