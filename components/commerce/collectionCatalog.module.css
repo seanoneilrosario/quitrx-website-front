@@ -230,10 +230,8 @@
 .lockIcon {
   width: 64px;
   height: 64px;
-  fill: #155e68;
+  object-fit: contain;
 }
-
-.lockIcon circle { fill: #fff; }
 
 .productImage {
   width: 100%;
@@ -301,6 +299,100 @@
 
 .empty { padding: 48px; text-align: center; }
 
+.lockedModal {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(24px, 6vw, 100px);
+}
+
+.lockedModalBackdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(0 91 101 / 94%);
+  cursor: default;
+}
+
+.lockedModalCard {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(1800px, 100%);
+  padding: clamp(34px, 4vw, 64px);
+  border-radius: 42px;
+  background: linear-gradient(110deg, #fff 0%, #effefa 100%);
+  box-shadow: 0 22px 24px rgb(188 255 246 / 50%);
+  color: #035c67;
+}
+
+.lockedModalCard h2 {
+  margin: 0;
+  font-size: clamp(28px, 3vw, 48px);
+  line-height: 1.2;
+}
+
+.lockedModalEyebrow {
+  margin: 4px 0 30px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.lockedModalCard h3 {
+  margin: 0 0 34px;
+  color: #348a83;
+  font-size: clamp(30px, 3vw, 48px);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.applyFreeButton {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: 11px;
+  background: #3bf0ba;
+  color: #035c67;
+  font-size: 20px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lockedModalContact {
+  margin: 18px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.lockedModalContact a { color: inherit; text-underline-offset: 3px; }
+
+.lockedModalClose {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lockedModalClose::before,
+.lockedModalClose::after {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 9px;
+  width: 24px;
+  height: 2px;
+  background: #035c67;
+  transform: rotate(45deg);
+}
+
+.lockedModalClose::after { transform: rotate(-45deg); }
+
 @media (max-width: 989px) {
   .catalog { grid-template-columns: 220px minmax(0, 1fr); gap: 24px; }
   .productGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -317,6 +409,15 @@
   .filters { grid-template-columns: 1fr; }
   .toolbar { align-items: flex-start; flex-direction: column; gap: 10px; }
   .productGrid { grid-template-columns: 1fr; }
+
+  .lockedModal { padding: 14px; }
+  .lockedModalCard { padding: 54px 22px 30px; border-radius: 24px; }
+  .lockedModalCard h2 { font-size: 25px; }
+  .lockedModalEyebrow { margin-bottom: 22px; font-size: 15px; }
+  .lockedModalCard h3 { font-size: 25px; }
+  .applyFreeButton { font-size: 17px; }
+  .lockedModalContact { font-size: 14px; }
+  .lockedModalClose { top: 10px; right: 10px; }
 }
 
 @media (max-width: 699px) {

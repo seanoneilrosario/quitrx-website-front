@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { variantIsAvailable } from "@/lib/quithero-bundle";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
@@ -43,10 +44,26 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
   const [availability, setAvailability] = useState("all");
   const [sort, setSort] = useState<Sort>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [lockedProductName, setLockedProductName] = useState<string>();
   const [page, setPage] = useState(1);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
+
+  useEffect(() => {
+    if (!lockedProductName) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLockedProductName(undefined);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [lockedProductName]);
 
   const clearFilters = () => {
     setBrands([]);
@@ -171,7 +188,14 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
           <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"}</span>
         </div>
         <div className={styles.productGrid}>
-          {paginatedProducts.map((product, index) => <ProductCard product={product} locked={productsLocked} key={product.id || product.slug || index} />)}
+          {paginatedProducts.map((product, index) => (
+            <ProductCard
+              product={product}
+              locked={productsLocked}
+              onLockedClick={() => setLockedProductName(product.name || "Product")}
+              key={product.id || product.slug || index}
+            />
+          ))}
         </div>
         {!visibleProducts.length && <p className={styles.empty}>No products match these filters.</p>}
         {totalPages > 1 && <nav className={styles.pagination} aria-label="Product pages">
@@ -180,6 +204,20 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
           <button type="button" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>Next</button>
         </nav>}
       </section>
+
+      {lockedProductName && (
+        <div className={styles.lockedModal} role="dialog" aria-modal="true" aria-labelledby="locked-product-title">
+          <button type="button" className={styles.lockedModalBackdrop} aria-label="Close" onClick={() => setLockedProductName(undefined)} />
+          <div className={styles.lockedModalCard}>
+            <button type="button" className={styles.lockedModalClose} aria-label="Close" onClick={() => setLockedProductName(undefined)} />
+            <h2 id="locked-product-title">{lockedProductName}</h2>
+            <p className={styles.lockedModalEyebrow}>This content is locked</p>
+            <h3>Looking for Products?<br />A free nicotine vaping script unlocks your options</h3>
+            <Link href="/intake-form" className={styles.applyFreeButton}>Apply Free</Link>
+            <p className={styles.lockedModalContact}>Any questions? <Link href="/contact">Contact us.</Link></p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

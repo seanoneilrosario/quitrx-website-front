@@ -1,9 +1,16 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { QuitHeroProduct } from "@/lib/quithero";
 import { variantIsAvailable } from "@/lib/quithero-bundle";
 import styles from "./collectionCatalog.module.css";
 
-export default function ProductCard({ product, locked = false }: { product: QuitHeroProduct; locked?: boolean }) {
+type ProductCardProps = {
+  product: QuitHeroProduct;
+  locked?: boolean;
+  onLockedClick?: () => void;
+};
+
+export default function ProductCard({ product, locked = false, onLockedClick }: ProductCardProps) {
   const image = product.images?.find((item) => item.isPrimary) ?? product.images?.[0];
   const prices = (product.variants ?? []).flatMap((variant) => {
     if (variant.price === undefined || variant.price === null || variant.price === "") return [];
@@ -25,14 +32,18 @@ export default function ProductCard({ product, locked = false }: { product: Quit
 
   return (
     <article className={styles.productCard}>
-      <Link href={productUrl} className={styles.productLink}>
+      <Link
+        href={productUrl}
+        className={styles.productLink}
+        onClick={locked && onLockedClick ? (event) => {
+          event.preventDefault();
+          onLockedClick();
+        } : undefined}
+      >
         <span className={styles.productImageWrap}>
           {locked && <span className={styles.scriptRequired}>Script required</span>}
           {locked ? (
-            <svg className={styles.lockIcon} viewBox="0 0 64 64" aria-hidden="true">
-              <path d="M19 27v-7a13 13 0 0 1 26 0v7M14 27h36v27H14z" />
-              <circle cx="32" cy="40" r="3" />
-            </svg>
+            <Image src="/images/lock-icon.webp" width={64} height={64} alt="" className={styles.lockIcon} aria-hidden="true" />
           ) : image?.url ? <img src={image.url} alt={image.altText || product.name || "Product"} className={styles.productImage} /> : null}
         </span>
         <span className={styles.productInfo}>
