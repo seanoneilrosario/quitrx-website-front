@@ -28,7 +28,7 @@ describe("bundleDropdownsFrom", () => {
   it("treats a configured dropdown bundle independently of parent inventory", () => {
     expect(variantIsAvailable({
       inventory: 0,
-      bundleDropdowns: [{ name: "Device", options: [{ componentVariantId: "device" }] }],
+      bundleDropdowns: [{ name: "Device", options: [{ componentVariantId: "device", componentVariant: { inventory: 2 } }] }],
     })).toBe(true);
   });
 });
@@ -113,6 +113,8 @@ describe("bundleComponentsFrom", () => {
   it("preserves parent inventory behavior for non-bundle variants", () => {
     expect(variantIsAvailable({ inventory: 0 })).toBe(false);
     expect(variantIsAvailable({ inventory: 1 })).toBe(true);
-    expect(variantIsAvailable({})).toBe(true);
+    expect(variantIsAvailable({})).toBe(false);
+    expect(variantIsAvailable({ inventory: 5, allocatedInventory: 5 })).toBe(false);
+    expect(variantIsAvailable({ inventory: 5, allocatedInventory: 4 })).toBe(true);
   });
 });

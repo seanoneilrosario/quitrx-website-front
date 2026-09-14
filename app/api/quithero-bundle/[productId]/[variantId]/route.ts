@@ -1,4 +1,5 @@
 import { getQuitHeroBundle, getQuitHeroProducts, patchQuitHeroBundle } from "@/lib/quithero";
+import { getAvailableStock } from "@/lib/available-stock";
 
 type BundlePayloadComponent = {
   componentVariantId: string;
@@ -29,7 +30,7 @@ export async function GET(
         productId,
         productName,
         variantName: variant.name || "Default",
-        available: variant.inventory === undefined || variant.inventory > 0,
+        available: getAvailableStock(variant) > 0,
       }] : []);
 
       return Array.from({ length: component.quantity }, (_, unitIndex) => ({
@@ -39,8 +40,7 @@ export async function GET(
         productName,
         variantName: match?.variant.name || component.componentVariant?.name || "Default",
         quantity: 1,
-        available: (match?.variant.inventory ?? component.componentVariant?.inventory) === undefined
-          || Number(match?.variant.inventory ?? component.componentVariant?.inventory) > unitIndex,
+        available: getAvailableStock(match?.variant ?? component.componentVariant) > unitIndex,
         choices: choices.length ? choices : undefined,
       }));
     });

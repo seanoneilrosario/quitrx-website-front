@@ -39,6 +39,7 @@
 .submitButton { display: flex; min-height: 58px; align-items: center; justify-content: center; gap: 15px; border: 0; border-radius: 9px; background: #70fac6; color: #075d67; font-size: 16px; font-weight: 800; cursor: pointer; transition: background-color .18s, transform .18s; }
 .submitButton:hover { background: #58edb4; transform: translateY(-1px); }
 .submitButton span { font-size: 21px; }
+.submitButton:disabled { cursor: wait; opacity: .7; transform: none; }
 .notice { margin: 0; padding: 13px 15px; border-radius: 8px; background: #fff7df; color: #765d10; font-size: 12px; line-height: 1.5; }
 .terms { margin: 0; color: #859596; font-size: 11px; text-align: center; }
 .terms a { color: #41777c; }

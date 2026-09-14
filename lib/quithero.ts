@@ -156,6 +156,36 @@ async function loadQuitHeroProducts() {
   return products;
 }
 
+export async function getFreshQuitHeroProducts() {
+  return loadQuitHeroProducts();
+}
+
+export type QuitHeroOrderPayload = {
+  source: "NATIVE";
+  currencyCode: "AUD";
+  subtotal: number;
+  total: number;
+  customerId: string;
+  items: Array<{ variantId: string; quantity: number }>;
+};
+
+export async function createQuitHeroOrder(payload: QuitHeroOrderPayload) {
+  const apiKey = process.env.QUITHERO_API_KEY;
+  if (!apiKey) throw new Error("QuitHero API key is not configured.");
+
+  const response = await fetch(`${API_BASE}/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const body = await response.text();
+  let parsed: unknown;
+  try { parsed = body ? JSON.parse(body) : undefined; } catch { parsed = undefined; }
+  if (!response.ok) throw new Error(`QuitHero order creation failed with ${response.status}.`);
+  return parsed;
+}
+
 const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quithero-products"], {
   revalidate: QUITHERO_CACHE_SECONDS,
   tags: ["quithero-products"],

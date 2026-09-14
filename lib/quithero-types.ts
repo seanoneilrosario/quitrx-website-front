@@ -14,6 +14,7 @@ export type QuitHeroVariant = {
   price?: number | string;
   currencyCode?: string;
   inventory?: number;
+  allocatedInventory?: number;
   size?: string;
   color?: string;
   options?: Record<string, string>;

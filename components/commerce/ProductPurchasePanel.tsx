@@ -7,12 +7,14 @@ import { firstAvailableVariantIndex } from "@/lib/frequently-bought-together";
 import { variantIsAvailable } from "@/lib/quithero-bundle";
 import { buildMultiItemCartPayload } from "@/lib/storefront-cart";
 import type { StorefrontCartItem } from "@/lib/storefront-cart";
+import { getAvailableStock } from "@/lib/available-stock";
 
 type Variant = {
   id?: string;
   name?: string;
   price?: number | string;
   inventory?: number;
+  allocatedInventory?: number;
   size?: string;
   options?: Record<string, string>;
   bundleComponents?: unknown;
@@ -33,6 +35,7 @@ type BundleDropdown = {
     productName: string;
     variantName: string;
     available: boolean;
+    availableStock: number;
   }>;
 };
 
@@ -122,14 +125,17 @@ export default function ProductPurchasePanel({
   ));
   const [bundleLoading, setBundleLoading] = useState(false);
   const [bundleError, setBundleError] = useState("");
+  const [stockError, setStockError] = useState("");
   const [added, setAdded] = useState(false);
   const selected = variants[selectedIndex];
-  const inventory = selected?.inventory;
   const selectedBundleOptions = bundleDropdowns.map((dropdown, index) =>
     dropdown.options.find((option) => option.componentVariantId === bundleSelections[index]),
   );
   const bundleIsAvailable = selectedBundleOptions.length > 0
     && selectedBundleOptions.every((option) => option?.available);
+  const availableStock = isBundle
+    ? Math.min(...selectedBundleOptions.map((option) => option?.availableStock ?? 0))
+    : getAvailableStock(selected);
   const available = isBundle
     ? Boolean(selected?.id) && !bundleLoading && !bundleError && bundleIsAvailable
     : variantIsAvailable(selected);
@@ -147,6 +153,9 @@ export default function ProductPurchasePanel({
 
   async function addToCart() {
     if (!available) return;
+
+    setStockError("");
+    const storedCart: StorefrontCartItem[] = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
 
     const mainVariantName = selected ? variantLabel(selected, selectedIndex) : "Default";
     const selectedBundleComponents = selectedBundleOptions.flatMap((option) => option ? [{
@@ -166,6 +175,7 @@ export default function ProductPurchasePanel({
       variantName: mainVariantName,
       price: selected?.price,
       quantity,
+      availableStock,
       ...(selectedBundleComponents.length ? { bundleComponents: selectedBundleComponents } : {}),
     };
     const recommendationItems = relatedProducts.flatMap((product) => {
@@ -182,10 +192,19 @@ export default function ProductPurchasePanel({
         variantName: name,
         price: variant?.price,
         quantity: 1,
+        availableStock: getAvailableStock(variant),
         checked: Boolean(relatedSelections[product.id]),
       }];
     });
     const items = buildMultiItemCartPayload(mainItem, recommendationItems);
+
+    if (items.some((item) => {
+      const existingQuantity = storedCart.find((entry) => entry.key === item.key)?.quantity ?? 0;
+      return existingQuantity + item.quantity > (item.availableStock ?? 0);
+    })) {
+      setStockError("The requested quantity is no longer available. Please reduce the quantity and try again.");
+      return;
+    }
 
     if (isBundle) {
       setBundleLoading(true);
@@ -226,12 +245,13 @@ export default function ProductPurchasePanel({
       <div className={styles.quantityControl}>
         <button type="button" aria-label="Decrease quantity" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>-</button>
         <output aria-live="polite">{quantity}</output>
-        <button type="button" aria-label="Increase quantity" onClick={() => setQuantity((value) => value + 1)}>+</button>
+        <button type="button" aria-label="Increase quantity" disabled={!available || quantity >= availableStock} onClick={() => setQuantity((value) => Math.min(availableStock, value + 1))}>+</button>
       </div>
 
       <p className={available ? styles.stockStatus : styles.outOfStock}>
-        {bundleLoading ? "Loading bundle..." : bundleError || (available ? (inventory ? <>Low stock! Only <strong>{inventory}</strong> units left!</> : "In stock") : selected ? "Out of stock" : "Select a bundle")}
+        {bundleLoading ? "Loading bundle..." : bundleError || (available ? <>Low stock! Only <strong>{availableStock}</strong> units left!</> : selected ? "Out of stock" : "Select a bundle")}
       </p>
+      {stockError && <p className={styles.outOfStock} role="alert">{stockError}</p>}
       <span className={styles.stockBar} aria-hidden="true"><span /></span>
 
       {isBundle && bundleDropdowns.length > 0 && (
@@ -298,7 +318,7 @@ export default function ProductPurchasePanel({
         <div className={styles.stickyQuantity}>
           <button type="button" aria-label="Decrease quantity" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>-</button>
           <span>{quantity}</span>
-          <button type="button" aria-label="Increase quantity" onClick={() => setQuantity((value) => value + 1)}>+</button>
+          <button type="button" aria-label="Increase quantity" disabled={!available || quantity >= availableStock} onClick={() => setQuantity((value) => Math.min(availableStock, value + 1))}>+</button>
         </div>
         <strong className={styles.stickyPrice}>{price}</strong>
         <button type="button" className={styles.stickyButton} disabled={!available} onClick={addToCart}>{added ? "Added" : bundleLoading ? "Loading" : !selected ? "Select bundle" : available ? "Add to Cart" : "Sold out"}</button>

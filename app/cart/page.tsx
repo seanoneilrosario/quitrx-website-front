@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import styles from "@/app/store.module.css";
 
 type CartItem = {
@@ -12,6 +12,7 @@ type CartItem = {
   variantName: string;
   price?: number | string;
   quantity: number;
+  availableStock?: number;
   bundleComponents?: Array<{
     productName: string;
     variantName: string;
@@ -32,6 +33,7 @@ function money(value: number) {
 }
 
 export default function CartPage() {
+  const [stockError, setStockError] = useState("");
   const storedCart = useSyncExternalStore(
     (onStoreChange) => {
       window.addEventListener("storage", onStoreChange);
@@ -49,6 +51,15 @@ export default function CartPage() {
   function save(nextItems: CartItem[]) {
     localStorage.setItem(CART_KEY, JSON.stringify(nextItems));
     window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: nextItems }));
+  }
+
+  function increase(item: CartItem) {
+    if (item.quantity >= (item.availableStock ?? 0)) {
+      setStockError(`Only ${item.availableStock ?? 0} units of ${item.productName} are available.`);
+      return;
+    }
+    setStockError("");
+    save(items.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry));
   }
 
   const subtotal = items.reduce((total, item) => total + numericPrice(item.price) * item.quantity, 0);
@@ -69,6 +80,7 @@ export default function CartPage() {
         ) : (
           <div className={styles.cartLayout}>
             <div className={styles.cartItems}>
+              {stockError && <p role="alert">{stockError}</p>}
               {items.map((item) => (
                 <article className={styles.cartItem} key={item.key}>
                   <div className={styles.cartImage}>{item.image && <Image src={item.image} width={110} height={110} alt="" sizes="110px" />}</div>
@@ -91,7 +103,7 @@ export default function CartPage() {
                   <div className={styles.cartQuantity}>
                     <button type="button" onClick={() => save(items.map((entry) => entry.key === item.key ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))} aria-label={`Decrease ${item.productName} quantity`}>-</button>
                     <span>{item.quantity}</span>
-                    <button type="button" onClick={() => save(items.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry))} aria-label={`Increase ${item.productName} quantity`}>+</button>
+                    <button type="button" disabled={item.quantity >= (item.availableStock ?? 0)} onClick={() => increase(item)} aria-label={`Increase ${item.productName} quantity`}>+</button>
                   </div>
                   <button className={styles.removeCartItem} type="button" onClick={() => save(items.filter((entry) => entry.key !== item.key))}>Remove</button>
                 </article>

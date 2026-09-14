@@ -7,6 +7,7 @@ export type StorefrontCartItem = {
   variantName: string;
   price?: number | string;
   quantity: number;
+  availableStock?: number;
   bundleComponents?: Array<{
     productId: string;
     productName: string;

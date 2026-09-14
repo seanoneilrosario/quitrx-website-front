@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { FormEvent, useMemo, useState, useSyncExternalStore } from "react";
+import { FormEvent, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import styles from "./checkout.module.css";
 
 type CartItem = {
@@ -12,6 +12,7 @@ type CartItem = {
   variantName: string;
   price?: number | string;
   quantity: number;
+  variantId?: string;
 };
 
 const CART_KEY = "quitrx-cart";
@@ -36,6 +37,8 @@ function readCart() {
 export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
   const [notice, setNotice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionLock = useRef(false);
   const storedCart = useSyncExternalStore(
     (onStoreChange) => {
       window.addEventListener("storage", onStoreChange);
@@ -61,9 +64,38 @@ export default function CheckoutPage() {
   );
   const shipping = shippingMethod === "express" ? 12.95 : 0;
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setNotice("Your details are ready. Secure payment processing still needs to be connected before orders can be placed.");
+    if (submissionLock.current) return;
+    const orderItems = items.flatMap((item) => item.variantId
+      ? [{ variantId: item.variantId, quantity: item.quantity }]
+      : []);
+    if (orderItems.length !== items.length) {
+      setNotice("One or more cart items are missing a variant. Please remove them and add them again.");
+      return;
+    }
+
+    submissionLock.current = true;
+    setIsSubmitting(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subtotal, total: subtotal + shipping, items: orderItems }),
+      });
+      const result = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(result.error || "We couldn't place your order. Please try again.");
+
+      localStorage.setItem(CART_KEY, "[]");
+      window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items: [] } }));
+      setNotice("Your order has been placed successfully.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "We couldn't place your order. Please try again.");
+    } finally {
+      submissionLock.current = false;
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -88,8 +120,8 @@ export default function CheckoutPage() {
 
           {items.length === 0 ? (
             <div className={styles.emptyState}>
-              <h2>Your cart is empty</h2>
-              <p>Add a product before continuing to checkout.</p>
+              <h2>{notice ? "Order confirmed" : "Your cart is empty"}</h2>
+              <p>{notice || "Add a product before continuing to checkout."}</p>
               <Link href="/collections/all-products">Browse products</Link>
             </div>
           ) : (
@@ -157,7 +189,7 @@ export default function CheckoutPage() {
               </section>
 
               {notice && <p className={styles.notice} role="status">{notice}</p>}
-              <button className={styles.submitButton} type="submit">Continue to payment <span aria-hidden="true">→</span></button>
+              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>{isSubmitting ? "Placing order…" : "Place order"} <span aria-hidden="true">→</span></button>
               <p className={styles.terms}>By continuing, you agree to our <Link href="/terms-and-conditions">terms</Link> and <Link href="/privacy-policy">privacy policy</Link>.</p>
             </form>
           )}

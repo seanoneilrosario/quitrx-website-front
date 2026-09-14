@@ -38,6 +38,7 @@ type CartItem = {
   variantName: string;
   price?: number | string;
   quantity: number;
+  availableStock?: number;
   bundleComponents?: Array<{
     productName: string;
     variantName: string;
@@ -160,6 +161,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartStockError, setCartStockError] = useState("");
   const { customer: accountIdentity } = useAccountCustomer();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
@@ -307,6 +309,14 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     localStorage.setItem(CART_KEY, JSON.stringify(items));
     setCartItems(items);
     window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items } }));
+  }
+  function increaseCartItem(item: CartItem) {
+    if (item.quantity >= (item.availableStock ?? 0)) {
+      setCartStockError(`Only ${item.availableStock ?? 0} units of ${item.productName} are available.`);
+      return;
+    }
+    setCartStockError("");
+    saveCart(cartItems.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry));
   }
   return (
     <Fragment>
@@ -545,7 +555,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                         <div className="cart-drawer__quantity">
                           <button type="button" aria-label={`Decrease ${item.productName} quantity`} onClick={() => saveCart(item.quantity === 1 ? cartItems.filter((entry) => entry.key !== item.key) : cartItems.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity - 1 } : entry))}>−</button>
                           <span>{item.quantity}</span>
-                          <button type="button" aria-label={`Increase ${item.productName} quantity`} onClick={() => saveCart(cartItems.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry))}>+</button>
+                          <button type="button" disabled={item.quantity >= (item.availableStock ?? 0)} aria-label={`Increase ${item.productName} quantity`} onClick={() => increaseCartItem(item)}>+</button>
                         </div>
                       </div>
                       <button className="cart-drawer__remove" type="button" onClick={() => saveCart(cartItems.filter((entry) => entry.key !== item.key))}>Remove</button>
@@ -553,6 +563,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                   ))}
                 </div>
                 <div className="cart-drawer__footer">
+                  {cartStockError && <p role="alert">{cartStockError}</p>}
                   <div><span>Subtotal</span><strong>{cartMoney(cartSubtotal)}</strong></div>
                   <p>Shipping and payment are confirmed at checkout.</p>
                   <Link href="/cart" onClick={() => setIsCartOpen(false)}>View cart</Link>

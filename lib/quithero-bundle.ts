@@ -1,9 +1,12 @@
+import { getAvailableStock } from "./available-stock";
+
 export type QuitHeroBundleComponent = {
   componentVariantId: string;
   componentVariant?: {
     id?: string;
     name?: string;
     inventory?: number;
+    allocatedInventory?: number;
     product?: { id?: string; name?: string };
   };
   position: number;
@@ -28,6 +31,7 @@ export type QuitHeroBundleDropdown = {
       id?: string;
       name?: string;
       inventory?: number;
+      allocatedInventory?: number;
       productId?: string;
       product?: { id?: string; name?: string };
     };
@@ -36,6 +40,7 @@ export type QuitHeroBundleDropdown = {
 
 export type BundleAwareVariant = {
   inventory?: number;
+  allocatedInventory?: number;
   bundleComponents?: unknown;
   bundleDropdowns?: unknown;
 };
@@ -171,16 +176,29 @@ export function bundleSlotsFrom(payload: unknown): QuitHeroBundleSlot[] {
 
 export function bundleComponentsAreAvailable(components: QuitHeroBundleComponent[]) {
   return components.length > 0 && components.every(({ componentVariant, quantity }) =>
-    Number(componentVariant?.inventory ?? 0) >= quantity,
+    getAvailableStock(componentVariant) >= quantity,
   );
+}
+
+export function getPurchasableStock(variant?: BundleAwareVariant) {
+  if (!variant) return 0;
+  const components = bundleComponentsFrom(variant);
+  if (components.length) {
+    return Math.min(...components.map(({ componentVariant, quantity }) =>
+      Math.floor(getAvailableStock(componentVariant) / quantity),
+    ));
+  }
+  const dropdowns = bundleDropdownsFrom(variant);
+  if (dropdowns.length) {
+    return Math.min(...dropdowns.map((dropdown) => Math.max(
+      0,
+      ...dropdown.options.map((option) => getAvailableStock(option.componentVariant)),
+    )));
+  }
+  return getAvailableStock(variant);
 }
 
 export function variantIsAvailable(variant?: BundleAwareVariant) {
   if (!variant) return false;
-  const dropdowns = bundleDropdownsFrom(variant);
-  if (dropdowns.length) return dropdowns.every((dropdown) => dropdown.options.length > 0);
-  const components = bundleComponentsFrom(variant);
-  return components.length
-    ? bundleComponentsAreAvailable(components)
-    : variant.inventory === undefined || variant.inventory > 0;
+  return getPurchasableStock(variant) > 0;
 }

@@ -3,6 +3,7 @@ import type { QuitHeroProduct } from "@/lib/quithero";
 import { getFrequentlyBoughtTogetherIds, getPrimaryImage, getQuitHeroBundleVariant, getQuitHeroProducts, productHasTag } from "@/lib/quithero";
 import { bundleDropdownsFrom } from "@/lib/quithero-bundle";
 import { resolveFrequentlyBoughtTogether } from "@/lib/frequently-bought-together";
+import { getAvailableStock } from "@/lib/available-stock";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import ProductAccessGate from "./ProductAccessGate";
@@ -33,7 +34,8 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
         productId: componentVariant?.product?.id || componentVariant?.productId || match?.product.id || componentVariantId,
         productName: componentVariant?.product?.name || match?.product.name || "Bundle item",
         variantName: componentVariant?.name || match?.variant.name || "Default",
-        available: (componentVariant?.inventory ?? match?.variant.inventory ?? 0) > 0,
+        availableStock: getAvailableStock(componentVariant ?? match?.variant),
+        available: getAvailableStock(componentVariant ?? match?.variant) > 0,
       };
     }),
   }));
