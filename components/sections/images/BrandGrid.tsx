@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { CSSProperties } from "react";
 import styles from "./BrandGrid.module.css";
 
@@ -73,10 +74,13 @@ export default function BrandGrid({
             const content = (
               <>
                 <span className={styles.logoCard}>
-                  <img
+                  <Image
                     className={styles.logo}
-                    src={brand.logo}
+                    src={brand.logo!}
                     alt={brand.alt || `${brand.name} logo`}
+                    width={600}
+                    height={500}
+                    sizes="(max-width: 767px) 50vw, 25vw"
                   />
                 </span>
                 <span className={styles.name}>{brand.name}</span>

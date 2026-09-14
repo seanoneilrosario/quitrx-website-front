@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-/* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -47,7 +45,6 @@ export function Banner({
   secondary_button_style = "button",
   hide_separator
 }: BannerProps) {
-  console.log(doc_img)
   const titleBlocks = Array.isArray(title_array) ? title_array : [];
   const isLoginButton = secondary_button_text?.trim().toLowerCase() === "login";
   const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "anonymous">(
@@ -211,7 +208,7 @@ export function Banner({
           height={1000}
         />
       } */}
-        <img src={doc_img} className="front_image" width={1000} height={1000} />
+        <Image src={doc_img} className="front_image" width={1000} height={1000} alt="" />
         {/* <div>{doc_img}</div> */}
     </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./ProductApiGrid.module.css";
 
 type ApiRecord = Record<string, unknown>;
@@ -223,7 +224,7 @@ export default function ProductApiGrid({
             selectedCollections.slice(0, productLimit).map((item) => item.slug && (
               <Link href={`/collections/${item.slug}`} className={styles.card} key={item.slug}>
                 <div className={styles.imageWrap}>
-                  {item.image ? <img src={item.image} alt={item.title || "Collection"} className={styles.image} /> : <span className={styles.missingImageTitle}>{item.title || "Collection"}</span>}
+                  {item.image ? <Image src={item.image} width={600} height={600} sizes="(max-width: 767px) 50vw, 25vw" alt={item.title || "Collection"} className={styles.image} /> : <span className={styles.missingImageTitle}>{item.title || "Collection"}</span>}
                 </div>
                 <div className={styles.content}><h3>{item.title || "Collection"}</h3></div>
               </Link>
@@ -246,7 +247,7 @@ export default function ProductApiGrid({
               return (
                 <Link href={`/collections/${slug}`} className={styles.card} key={slug}>
                   <div className={styles.imageWrap}>
-                    {image ? <img src={image} alt={name} className={styles.image} loading="eager" /> : <span className={styles.allTile}>ALL</span>}
+                    {image ? <Image src={image} width={600} height={600} sizes="(max-width: 767px) 50vw, 25vw" alt={name} className={styles.image} /> : <span className={styles.allTile}>ALL</span>}
                   </div>
                   <div className={styles.content}>
                     <h3>{name}</h3>
@@ -266,7 +267,7 @@ export default function ProductApiGrid({
             const card = (
               <>
                 <div className={styles.imageWrap}>
-                  {image ? <img src={image} alt={name} className={styles.image} loading="eager" /> : null}
+                  {image ? <Image src={image} width={600} height={600} sizes="(max-width: 767px) 50vw, 25vw" alt={name} className={styles.image} /> : null}
                 </div>
                 <div className={styles.content}>
                   <h3>{name}</h3>

@@ -1,32 +1,10 @@
 "use client"
 
-import Image from "next/image";
 import Link from "next/link";
-import { PortableText } from "@portabletext/react";
-import { urlFor } from "@/sanity/lib/image";
 
 import "./footer.css";
 import { PortableTextBlock } from "../global/components";
 import { usePathname } from "next/navigation";
-
-const components = {
-  marks: {
-    link: ({ children, value }: { children: React.ReactNode; value?: { href?: string } }) => {
-      const href = value?.href || "";
-      const isExternal = href.startsWith("https://");
-
-      return (
-        <a
-          href={href}
-          target={isExternal ? "_blank" : undefined}
-          rel={isExternal ? "noopener noreferrer" : undefined}
-        >
-          {children}
-        </a>
-      );
-    },
-  },
-};
 
 export interface FooterProps {
   navigation: {

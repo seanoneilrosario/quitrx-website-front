@@ -505,7 +505,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                   className="site-search__product"
                   onClick={() => setIsSearchOpen(false)}
                 >
-                  {product.image && <img src={product.image} alt="" />}
+                  {product.image && <Image src={product.image} width={72} height={72} alt="" sizes="72px" />}
                   <strong>{product.name}</strong>
                 </Link>
               ))}
@@ -526,7 +526,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                 <div className="cart-drawer__items">
                   {cartItems.map((item) => (
                     <article className="cart-drawer__item" key={item.key}>
-                      <div className="cart-drawer__image">{item.image && <img src={item.image} alt="" />}</div>
+                      <div className="cart-drawer__image">{item.image && <Image src={item.image} width={86} height={100} alt="" sizes="86px" />}</div>
                       <div className="cart-drawer__details">
                         <strong>{item.productName}</strong>
                         <span>{item.variantName}</span>

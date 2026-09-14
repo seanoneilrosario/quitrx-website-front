@@ -1,7 +1,5 @@
 "use client"
 
-import { motion } from "motion/react"
-
 interface VideoHeroBannerProps {
   heading?: string;
   video_url: string

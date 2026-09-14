@@ -13,8 +13,6 @@ import {
   type SetStateAction,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
-import bg from "@/public/bg.png"
 
 type Theme = "light" | "dark";
 

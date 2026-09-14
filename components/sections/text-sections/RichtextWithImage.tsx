@@ -19,7 +19,6 @@ const RichtextImage = ({
   paddingTop = 0,
   paddingBottom,
 }: RichtextImageProps) => {
-  console.log(image)
   return (
     <section
       className="richtext-image"

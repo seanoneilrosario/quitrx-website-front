@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useSyncExternalStore } from "react";
 import styles from "@/app/store.module.css";
 
@@ -70,7 +71,7 @@ export default function CartPage() {
             <div className={styles.cartItems}>
               {items.map((item) => (
                 <article className={styles.cartItem} key={item.key}>
-                  <div className={styles.cartImage}>{item.image && <img src={item.image} alt="" />}</div>
+                  <div className={styles.cartImage}>{item.image && <Image src={item.image} width={110} height={110} alt="" sizes="110px" />}</div>
                   <div className={styles.cartItemInfo}>
                     <h2>{item.productName}</h2>
                     <p>{item.variantName}</p>

@@ -10,7 +10,6 @@ import { PortableTextBlock } from "@/components/global/components";
 import { useWindowWide } from "@/hooks/screenSize";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 interface CTAButton {
@@ -40,8 +39,6 @@ const RichtextWithGroupedCTA = ({
   const [activeButton, setActiveButton] = useState<number | null>(null);
   const [closeButtons, setCloseButtons] = useState(false);
   const [hideButtons, setHideButtons] = useState(false);
-  const [slugTitle, setSlugTitle] = useState("");
-
   const pathname = usePathname();
 
   const wide = useWindowWide();

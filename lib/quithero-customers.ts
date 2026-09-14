@@ -245,11 +245,13 @@ export async function findQuitHeroCustomerByOAuth(
     return undefined;
   }
 
-  return quitHeroRequest<QuitHeroCustomer | null>(
+  const response = await quitHeroRequest<QuitHeroSearchResponse>(
     `/customers/oauth/${encodeURIComponent(
       provider,
     )}/${encodeURIComponent(normalizedProviderAccountId)}`,
   );
+
+  return extractCustomers(response)[0];
 }
 
 /**

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type PromotionalSlide = {
@@ -57,16 +58,22 @@ export default function PromotionalBannerSlider({
           : ""
       }`}
     >
-      <img
+      <Image
         className="promotional-banner-slider__desktop-image"
-        src={currentSlide.image}
+        src={currentSlide.image!}
         alt={currentSlide.alt || "Promotional banner"}
+        width={1920}
+        height={640}
+        sizes="100vw"
       />
       {currentSlide.mobileImage && (
-        <img
+        <Image
           className="promotional-banner-slider__mobile-image"
           src={currentSlide.mobileImage}
           alt={currentSlide.alt || "Promotional banner"}
+          width={768}
+          height={768}
+          sizes="100vw"
         />
       )}
     </div>

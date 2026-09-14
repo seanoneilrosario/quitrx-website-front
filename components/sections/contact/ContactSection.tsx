@@ -25,7 +25,6 @@ export default function ContactSection({
   heading,
   offices,
   button_text,
-  button_link,
 }: ContactSectionProps) {
   const [open, setOpen] = useState(false);
 

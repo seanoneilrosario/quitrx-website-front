@@ -44,7 +44,7 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
           {locked && <span className={styles.scriptRequired}>Script required</span>}
           {locked ? (
             <Image src="/images/lock-icon.webp" width={64} height={64} alt="" className={styles.lockIcon} aria-hidden="true" />
-          ) : image?.url ? <img src={image.url} alt={image.altText || product.name || "Product"} className={styles.productImage} /> : null}
+          ) : image?.url ? <Image src={image.url} width={600} height={600} sizes="(max-width: 599px) 190px, (max-width: 989px) 50vw, 25vw" alt={image.altText || product.name || "Product"} className={styles.productImage} /> : null}
         </span>
         <span className={styles.productInfo}>
           {product.brand?.name && <span className={styles.brand}>{product.brand.name}</span>}

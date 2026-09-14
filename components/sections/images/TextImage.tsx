@@ -42,7 +42,6 @@ export default function TextImage({
   paddingTop = 60,
   paddingBottom = 60,
 }: TextImageProps) {
-  console.log(imageTheme)
   return (
    <section
   className={`text-img_wrap ${

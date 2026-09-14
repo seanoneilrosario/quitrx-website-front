@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import styles from "@/app/store.module.css";
 import { firstAvailableVariantIndex } from "@/lib/frequently-bought-together";
 import { variantIsAvailable } from "@/lib/quithero-bundle";
@@ -264,7 +265,7 @@ export default function ProductPurchasePanel({
             return (
               <article className={styles.relatedProduct} key={product.id}>
                 <input id={`related-${product.id}`} type="checkbox" checked={Boolean(relatedSelections[product.id])} onChange={(event) => setRelatedSelections((values) => ({ ...values, [product.id]: event.target.checked }))} />
-                {product.image && <img src={product.image} alt="" />}
+                {product.image && <Image src={product.image} width={96} height={96} alt="" sizes="96px" />}
                 <span>
                   <label htmlFor={`related-${product.id}`}><strong>{product.name}</strong></label>
                   <small>{formatPrice(product.variants[variantIndex]?.price)}</small>
@@ -286,7 +287,7 @@ export default function ProductPurchasePanel({
 
       <div className={styles.stickyPurchaseBar}>
         <div className={styles.stickyProduct}>
-          {image && <img src={image} alt="" />}
+          {image && <Image src={image} width={32} height={50} alt="" sizes="32px" />}
           <strong>{productName}</strong>
         </div>
         {!isBundle && variants.length > 1 && (

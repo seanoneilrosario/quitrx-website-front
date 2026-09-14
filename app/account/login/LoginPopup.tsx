@@ -12,25 +12,13 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
   const router = useRouter();
 
   useEffect(() => {
-    console.log("[OAuth Debug] login page mounted", {
-      pathname: window.location.pathname,
-      origin: window.location.origin,
-    });
-
     const handleAuthSuccess = (event: MessageEvent) => {
-      console.log("[OAuth Debug] message received", {
-        origin: event.origin,
-        type: event.data?.type,
-      });
-
       if (
         event.origin !== window.location.origin ||
         event.data?.type !== "quitrx:auth-success"
       ) {
         return;
       }
-
-      console.log("[OAuth Debug] auth success -> /account");
 
       router.replace("/account");
       router.refresh();
@@ -46,12 +34,6 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
     event: React.MouseEvent<HTMLAnchorElement>,
     provider: "google" | "facebook",
   ) => {
-    console.log("[OAuth Debug] clicked", {
-      provider,
-      href: event.currentTarget.href,
-      origin: window.location.origin,
-    });
-
     const width = 730;
     const height = 760;
     const left = Math.max(
@@ -68,11 +50,6 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
       `quitrx-${provider}-login`,
       `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
     );
-
-    console.log("[OAuth Debug] popup result", {
-      provider,
-      popupOpened: Boolean(popup),
-    });
 
     if (popup) {
       event.preventDefault();
