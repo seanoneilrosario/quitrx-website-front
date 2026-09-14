@@ -147,9 +147,12 @@ async function loadQuitHeroProducts() {
   const totalPages = Math.max(1, Number(first.pagination?.totalPages) || 1);
   if (totalPages === 1) return products;
 
-  for (let page = 2; page <= totalPages; page += 1) {
-    products.push(...productsFrom(await quitHeroFetch<QuitHeroProductsResponse>(`/products?page=${page}&limit=100`)));
-  }
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) => index + 2).map((page) =>
+      quitHeroFetch<QuitHeroProductsResponse>(`/products?page=${page}&limit=100`),
+    ),
+  );
+  products.push(...remainingPages.flatMap(productsFrom));
   return products;
 }
 
