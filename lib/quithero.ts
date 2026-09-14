@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { client } from "@/sanity/lib/client";
 import { bundleComponentsFrom } from "./quithero-bundle";
 import { FREQUENTLY_BOUGHT_TOGETHER_QUERY } from "./frequently-bought-together";
@@ -49,10 +50,29 @@ type QuitHeroCollectionsResponse =
   | { collections?: QuitHeroCollection[]; data?: QuitHeroCollection[]; items?: QuitHeroCollection[] };
 
 const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
-const RETRY_DELAYS_MS = [150, 400];
+const RETRY_DELAYS_MS = [1_000, 4_000];
+const QUITHERO_CACHE_SECONDS = 60;
 
 function delay(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function retryDelayFrom(response: Response, fallback: number) {
+  const retryAfter = response.headers.get("retry-after");
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds)) return Math.max(250, Math.min(seconds * 1_000, 10_000));
+
+    const retryAt = Date.parse(retryAfter);
+    if (Number.isFinite(retryAt)) return Math.max(250, Math.min(retryAt - Date.now(), 10_000));
+  }
+
+  const resetSeconds = Number(response.headers.get("x-ratelimit-reset"));
+  if (response.status === 429 && Number.isFinite(resetSeconds)) {
+    return Math.max(250, Math.min(resetSeconds * 1_000, 10_000));
+  }
+
+  return fallback;
 }
 
 async function quitHeroFetch<T>(path: string): Promise<T> {
@@ -82,7 +102,7 @@ async function quitHeroFetch<T>(path: string): Promise<T> {
     lastError = error;
     const retryDelay = RETRY_DELAYS_MS[attempt];
     if (retryDelay === undefined) break;
-    await delay(retryDelay);
+    await delay(retryDelayFrom(response, retryDelay));
   }
 
   throw lastError instanceof Error ? lastError : new Error("QuitHero request failed.");
@@ -108,11 +128,18 @@ function collectionsFrom(payload: QuitHeroCollectionsResponse) {
   return collections;
 }
 
-export async function getQuitHeroCollections() {
+async function loadQuitHeroCollections() {
   return collectionsFrom(await quitHeroFetch<QuitHeroCollectionsResponse>("/collections"));
 }
 
-export const getQuitHeroProducts = cache(async function getQuitHeroProducts() {
+const getCachedQuitHeroCollections = unstable_cache(loadQuitHeroCollections, ["quithero-collections"], {
+  revalidate: QUITHERO_CACHE_SECONDS,
+  tags: ["quithero-collections"],
+});
+
+export const getQuitHeroCollections = cache(getCachedQuitHeroCollections);
+
+async function loadQuitHeroProducts() {
   const first = await quitHeroFetch<QuitHeroProductsResponse>("/products?page=1&limit=100");
   const products = productsFrom(first);
   if (Array.isArray(first)) return products;
@@ -120,13 +147,18 @@ export const getQuitHeroProducts = cache(async function getQuitHeroProducts() {
   const totalPages = Math.max(1, Number(first.pagination?.totalPages) || 1);
   if (totalPages === 1) return products;
 
-  const remaining = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, index) =>
-      quitHeroFetch<QuitHeroProductsResponse>(`/products?page=${index + 2}&limit=100`),
-    ),
-  );
-  return [products, ...remaining.map(productsFrom)].flat();
+  for (let page = 2; page <= totalPages; page += 1) {
+    products.push(...productsFrom(await quitHeroFetch<QuitHeroProductsResponse>(`/products?page=${page}&limit=100`)));
+  }
+  return products;
+}
+
+const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quithero-products"], {
+  revalidate: QUITHERO_CACHE_SECONDS,
+  tags: ["quithero-products"],
 });
+
+export const getQuitHeroProducts = cache(getCachedQuitHeroProducts);
 
 export const getQuitHeroProduct = cache(async function getQuitHeroProduct(handle: string) {
   const products = await getQuitHeroProducts();

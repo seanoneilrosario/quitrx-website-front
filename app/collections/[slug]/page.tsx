@@ -7,10 +7,7 @@ type CollectionPageProps = { params: Promise<{ slug: string }> };
 
 export default async function CollectionPage({ params }: CollectionPageProps) {
   const slug = (await params).slug;
-  const collection = await getQuitHeroCollection(slug).catch((error) => {
-    console.error("Unable to load collection page.", { slug, error });
-    return undefined;
-  });
+  const collection = await getQuitHeroCollection(slug);
   if (!collection) notFound();
 
   return (
