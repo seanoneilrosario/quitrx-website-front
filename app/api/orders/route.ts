@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getCustomerSession } from "@/lib/customer-session";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero-customers";
-import { createQuitHeroOrder, getFreshQuitHeroProducts } from "@/lib/quithero";
+import { createQuitHeroOrder, findRecentlyCreatedQuitHeroOrder, getFreshQuitHeroProducts } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/quithero-bundle";
 
 type OrderRequest = {
@@ -42,14 +42,23 @@ export async function POST(request: Request) {
     const unavailable = items.find((item) => getPurchasableStock(variants.get(item.variantId)) < item.quantity);
     if (unavailable) return NextResponse.json({ error: "One or more items no longer have enough stock. Please update your cart." }, { status: 409 });
 
-    const order = await createQuitHeroOrder({
+    const orderPayload = {
       source: "NATIVE",
       currencyCode: "AUD",
       subtotal,
       total,
       customerId: customer.id,
       items,
-    });
+    } as const;
+    const createStartedAt = Date.now() - 5_000;
+    let order: unknown;
+    try {
+      order = await createQuitHeroOrder(orderPayload);
+    } catch (createError) {
+      const recoveredOrder = await findRecentlyCreatedQuitHeroOrder(orderPayload, createStartedAt).catch(() => undefined);
+      if (!recoveredOrder) throw createError;
+      order = recoveredOrder;
+    }
     return NextResponse.json(order ?? { success: true }, { status: 201 });
   } catch (error) {
     console.error("Unable to create QuitHero order:", error);

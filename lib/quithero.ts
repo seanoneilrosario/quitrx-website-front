@@ -169,6 +169,20 @@ export type QuitHeroOrderPayload = {
   items: Array<{ variantId: string; quantity: number }>;
 };
 
+type QuitHeroOrder = {
+  id?: string;
+  customerId?: string;
+  total?: number | string;
+  createdAt?: string;
+  items?: Array<{ variantId?: string; quantity?: number }>;
+};
+
+type QuitHeroOrdersResponse = {
+  data?: QuitHeroOrder[];
+  orders?: QuitHeroOrder[];
+  items?: QuitHeroOrder[];
+};
+
 export async function createQuitHeroOrder(payload: QuitHeroOrderPayload) {
   const apiKey = process.env.QUITHERO_API_KEY;
   if (!apiKey) throw new Error("QuitHero API key is not configured.");
@@ -184,6 +198,22 @@ export async function createQuitHeroOrder(payload: QuitHeroOrderPayload) {
   try { parsed = body ? JSON.parse(body) : undefined; } catch { parsed = undefined; }
   if (!response.ok) throw new Error(`QuitHero order creation failed with ${response.status}.`);
   return parsed;
+}
+
+export async function findRecentlyCreatedQuitHeroOrder(
+  payload: QuitHeroOrderPayload,
+  createdAfter: number,
+) {
+  const response = await quitHeroFetch<QuitHeroOrdersResponse>("/orders?page=1&limit=25");
+  const orders = response.data ?? response.orders ?? response.items ?? [];
+  const requestedItems = new Map(payload.items.map((item) => [item.variantId, item.quantity]));
+
+  return orders.find((order) => {
+    const createdAt = Date.parse(order.createdAt ?? "");
+    if (order.customerId !== payload.customerId || !Number.isFinite(createdAt) || createdAt < createdAfter) return false;
+    if (Math.abs(Number(order.total) - payload.total) > 0.001 || order.items?.length !== payload.items.length) return false;
+    return order.items.every((item) => item.variantId && requestedItems.get(item.variantId) === Number(item.quantity));
+  });
 }
 
 const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quithero-products"], {
