@@ -90,7 +90,11 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
       return uniqueProducts;
     });
     setCurrentApiPage(payload.pagination.page);
-    setHasNextPage(payload.pagination.hasNextPage);
+    const hasMoreMatchingProducts = payload.pagination.hasNextPage && payload.products.length > 0;
+    setHasNextPage(hasMoreMatchingProducts);
+    if (append && !payload.products.length) {
+      console.log(`[Collection] No more matching products for ${collectionSlug}; hiding Load more.`);
+    }
   }, [collectionSlug]);
 
   useEffect(() => {
