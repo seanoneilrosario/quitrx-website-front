@@ -924,3 +924,63 @@ select.bundleComponentValue:focus {
   .productSkeletonTitle { width: 100%; height: 72px; }
   .productSkeletonSticky { padding: 9px 14px; }
 }
+
+.productErrorPage {
+  display: grid;
+  min-height: 70vh;
+  place-items: center;
+  padding: 48px 24px;
+  background: #f4f8fc;
+  color: #035c67;
+}
+
+.productErrorCard {
+  width: min(100%, 620px);
+  padding: clamp(32px, 5vw, 58px);
+  border: 1px solid #dce7ea;
+  background: #fff;
+  text-align: center;
+}
+
+.productErrorEyebrow {
+  margin: 0 0 12px;
+  color: #3fbd87;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.productErrorCard h1 {
+  margin: 0 0 16px;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 600;
+}
+
+.productErrorCard > p:not(.productErrorEyebrow) {
+  margin: 0 auto 28px;
+  color: #59777c;
+  line-height: 1.6;
+}
+
+.productErrorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.productErrorActions button,
+.productErrorActions a {
+  min-width: 150px;
+  padding: 13px 22px;
+  border: 1px solid #006b75;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.productErrorActions button { background: #006b75; color: #fff; }
+.productErrorActions a { background: transparent; color: #006b75; }
