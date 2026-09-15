@@ -14,10 +14,12 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
   const description = (product.description || product.shortDescription || "").replace(/<[^>]*>/g, "");
   const isBundle = productHasTag(product, "bundle");
   const productId = product.id || product.slug || product.name || "product";
-  const [products, relatedProductIds] = await Promise.all([
-    getQuitHeroProducts().catch(() => []),
-    product.id ? getFrequentlyBoughtTogetherIds(product.id).catch(() => []) : Promise.resolve([]),
-  ]);
+  const relatedProductIds = product.id
+    ? await getFrequentlyBoughtTogetherIds(product.id).catch(() => [])
+    : [];
+  const products = isBundle || relatedProductIds.length
+    ? await getQuitHeroProducts().catch(() => [])
+    : [];
   const variants = product.variants || [];
   const bundleVariant = isBundle && product.id && variants[0]?.id
     ? await getQuitHeroBundleVariant(product.id, variants[0].id).catch(() => variants[0])

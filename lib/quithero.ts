@@ -52,6 +52,7 @@ type QuitHeroCollectionsResponse =
 const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
 const RETRY_DELAYS_MS = [1_000, 4_000];
 const QUITHERO_CACHE_SECONDS = 60;
+const QUITHERO_CATALOG_CACHE_SECONDS = 300;
 
 function delay(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -217,16 +218,32 @@ export async function findRecentlyCreatedQuitHeroOrder(
 }
 
 const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quithero-products"], {
-  revalidate: QUITHERO_CACHE_SECONDS,
+  revalidate: QUITHERO_CATALOG_CACHE_SECONDS,
   tags: ["quithero-products"],
 });
 
 export const getQuitHeroProducts = cache(getCachedQuitHeroProducts);
 
-export const getQuitHeroProduct = cache(async function getQuitHeroProduct(handle: string) {
-  const products = await getQuitHeroProducts();
-  return products.find((product) => product.handle === handle || product.slug === handle);
+async function loadQuitHeroProduct(handle: string) {
+  const searchTerm = handle.split("-").filter(Boolean).slice(0, 3).join(" ") || handle;
+  const response = await quitHeroFetch<QuitHeroProductsResponse>(
+    `/products?search=${encodeURIComponent(searchTerm)}&page=1&limit=100`,
+  );
+  const products = productsFrom(response);
+  const match = products.find((product) => product.handle === handle || product.slug === handle);
+  if (match) return match;
+
+  // Preserve support for unusual slugs that cannot be derived from the product name.
+  const catalog = await getQuitHeroProducts();
+  return catalog.find((product) => product.handle === handle || product.slug === handle);
+}
+
+const getCachedQuitHeroProduct = unstable_cache(loadQuitHeroProduct, ["quithero-product"], {
+  revalidate: QUITHERO_CACHE_SECONDS,
+  tags: ["quithero-products"],
 });
+
+export const getQuitHeroProduct = cache(getCachedQuitHeroProduct);
 
 export const getQuitHeroProductWhenReady = cache(async function getQuitHeroProductWhenReady(handle: string) {
   const cachedProduct = await getQuitHeroProduct(handle);
@@ -235,8 +252,7 @@ export const getQuitHeroProductWhenReady = cache(async function getQuitHeroProdu
   // A newly synced product can be missing from the short-lived product cache.
   // Check fresh API data before treating the URL as a genuine 404.
   await delay(750);
-  const freshProducts = await getFreshQuitHeroProducts();
-  return freshProducts.find((product) => product.handle === handle || product.slug === handle);
+  return loadQuitHeroProduct(handle);
 });
 
 export const getQuitHeroProductById = cache(async function getQuitHeroProductById(id: string) {

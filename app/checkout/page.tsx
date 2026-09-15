@@ -16,6 +16,8 @@ type CartItem = {
 };
 
 const CART_KEY = "quitrx-cart";
+const STANDARD_SHIPPING = 12.90;
+const EXPRESS_SHIPPING = 15.90;
 
 function numericPrice(value?: number | string) {
   if (typeof value === "number") return value;
@@ -62,7 +64,7 @@ export default function CheckoutPage() {
     (total, item) => total + numericPrice(item.price) * item.quantity,
     0,
   );
-  const shipping = shippingMethod === "express" ? 12.95 : 0;
+  const shipping = shippingMethod === "express" ? EXPRESS_SHIPPING : STANDARD_SHIPPING;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -167,12 +169,12 @@ export default function CheckoutPage() {
                   <label className={shippingMethod === "standard" ? styles.selectedOption : ""}>
                     <input type="radio" name="shipping" checked={shippingMethod === "standard"} onChange={() => setShippingMethod("standard")} />
                     <span><strong>Standard shipping</strong><small>3–7 business days</small></span>
-                    <strong>Free</strong>
+                    <strong>{money(STANDARD_SHIPPING)}</strong>
                   </label>
                   <label className={shippingMethod === "express" ? styles.selectedOption : ""}>
                     <input type="radio" name="shipping" checked={shippingMethod === "express"} onChange={() => setShippingMethod("express")} />
                     <span><strong>Express shipping</strong><small>1–3 business days</small></span>
-                    <strong>{money(12.95)}</strong>
+                    <strong>{money(EXPRESS_SHIPPING)}</strong>
                   </label>
                 </div>
               </section>
@@ -216,7 +218,7 @@ export default function CheckoutPage() {
             </div>
             <dl className={styles.totals}>
               <div><dt>Subtotal</dt><dd>{money(subtotal)}</dd></div>
-              <div><dt>Shipping</dt><dd>{shipping ? money(shipping) : "Free"}</dd></div>
+              <div><dt>Shipping</dt><dd>{money(shipping)}</dd></div>
               <div className={styles.total}><dt>Total <small>AUD</small></dt><dd>{money(subtotal + shipping)}</dd></div>
             </dl>
             <div className={styles.help}><span aria-hidden="true">?</span><p><strong>Need help?</strong><br /><Link href="/contact">Contact our support team</Link></p></div>
