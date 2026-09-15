@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
 type NavigationMenuItem = {
   title?: string | null;
   href?: string | null;
@@ -71,9 +72,9 @@ function productImage(product: Record<string, unknown>) {
   if (directImage) return directImage;
 
   const images = product.images;
-  if (!Array.isArray(images) || !images.length) return undefined;
+  if (!Array.isArray(images) || !images.length) return DEFAULT_PRODUCT_IMAGE;
   if (typeof images[0] === "string") return images[0];
-  return textValue(asRecord(images[0]) || {}, ["url", "src", "imageUrl"]);
+  return textValue(asRecord(images[0]) || {}, ["url", "src", "imageUrl"]) || DEFAULT_PRODUCT_IMAGE;
 }
 
 function productKeywords(product: Record<string, unknown>) {
@@ -536,7 +537,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                 <div className="cart-drawer__items">
                   {cartItems.map((item) => (
                     <article className="cart-drawer__item" key={item.key}>
-                      <div className="cart-drawer__image">{item.image && <Image src={item.image} width={86} height={100} alt="" sizes="86px" />}</div>
+                      <div className="cart-drawer__image"><Image src={item.image || DEFAULT_PRODUCT_IMAGE} width={86} height={100} alt="" sizes="86px" /></div>
                       <div className="cart-drawer__details">
                         <strong>{item.productName}</strong>
                         <span>{item.variantName}</span>

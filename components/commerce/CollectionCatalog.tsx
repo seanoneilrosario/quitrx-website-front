@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { variantIsAvailable } from "@/lib/quithero-bundle";
@@ -8,9 +8,16 @@ import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { hasActiveScript } from "@/lib/script-access";
 import ProductCard from "./ProductCard";
 import styles from "./collectionCatalog.module.css";
+import storeStyles from "@/app/store.module.css";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
+
+type CollectionPageResponse = {
+  collection: { name: string; slug: string; description?: string };
+  products: QuitHeroProduct[];
+  pagination: { page: number; limit: number; totalPages: number; hasNextPage: boolean };
+};
 
 function variantPrices(product: QuitHeroProduct) {
   return (product.variants ?? []).flatMap((variant) => {
@@ -35,9 +42,15 @@ function unique(values: Array<string | undefined>) {
   return [...new Set(values.filter((value): value is string => Boolean(value)))].sort();
 }
 
-export default function CollectionCatalog({ products }: { products: QuitHeroProduct[] }) {
+export default function CollectionCatalog({ collectionSlug }: { collectionSlug: string }) {
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
+  const [products, setProducts] = useState<QuitHeroProduct[]>([]);
+  const [collection, setCollection] = useState({ name: collectionSlug.replaceAll("-", " "), description: "" });
+  const [currentApiPage, setCurrentApiPage] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
   const [brands, setBrands] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
@@ -45,10 +58,60 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
   const [sort, setSort] = useState<Sort>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [lockedProductName, setLockedProductName] = useState<string>();
-  const [page, setPage] = useState(1);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
+
+  const loadProductsPage = useCallback(async (page: number, append: boolean, signal?: AbortSignal) => {
+    const query = new URLSearchParams({ collectionPage: collectionSlug, page: String(page), limit: String(PAGE_SIZE) });
+    const requestUrl = `/api/quithero-products?${query}`;
+    console.groupCollapsed(`[Collection] Request page ${page}: ${collectionSlug}`);
+    console.log("Collection being loaded:", collectionSlug);
+    console.log("API request URL:", requestUrl);
+    console.log("Query params being sent:", Object.fromEntries(query.entries()));
+    console.log("Current page:", page);
+    console.log("Pagination limit:", PAGE_SIZE);
+    console.groupEnd();
+
+    const response = await fetch(requestUrl, { cache: "no-store", signal });
+    const payload = await response.json() as CollectionPageResponse & { error?: string };
+    if (!response.ok) throw new Error(payload.error || "Unable to load products.");
+    console.groupCollapsed(`[Collection] Response page ${page}: ${collectionSlug}`);
+    console.log("Raw products returned by the API:", payload.products);
+    console.log("Number of products returned per request:", payload.products.length);
+    console.log("Pagination response:", payload.pagination);
+    console.groupEnd();
+
+    setCollection({ name: payload.collection.name, description: payload.collection.description ?? "" });
+    setProducts((existing) => {
+      const combined = append ? [...existing, ...payload.products] : payload.products;
+      const uniqueProducts = Array.from(new Map(combined.map((product) => [product.id ?? product.slug, product])).values());
+      console.log("Final products loaded in the collection:", uniqueProducts);
+      return uniqueProducts;
+    });
+    setCurrentApiPage(payload.pagination.page);
+    setHasNextPage(payload.pagination.hasNextPage);
+  }, [collectionSlug]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      loadProductsPage(1, false, controller.signal)
+        .catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === "AbortError")) {
+            console.error(`[Collection] Failed to load ${collectionSlug}:`, error);
+            setProductsError(error instanceof Error ? error.message : "Unable to load products.");
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setProductsLoading(false);
+        });
+    }, 0);
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [collectionSlug, loadProductsPage]);
 
   useEffect(() => {
     if (!lockedProductName) return;
@@ -99,9 +162,23 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
       return 0;
     });
   }, [availability, brands, colors, maxPrice, products, sizes, sort]);
-  const totalPages = Math.max(1, Math.ceil(visibleProducts.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const paginatedProducts = visibleProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  useEffect(() => {
+    console.log(`[Collection] Final products displayed for ${collectionSlug}:`, visibleProducts);
+  }, [collectionSlug, visibleProducts]);
+
+  const loadMore = async () => {
+    if (productsLoading || !hasNextPage) return;
+    setProductsLoading(true);
+    setProductsError("");
+    try {
+      await loadProductsPage(currentApiPage + 1, true);
+    } catch (error) {
+      console.error(`[Collection] Failed to load page ${currentApiPage + 1}:`, error);
+      setProductsError(error instanceof Error ? error.message : "Unable to load products.");
+    } finally {
+      setProductsLoading(false);
+    }
+  };
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
@@ -129,6 +206,11 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
   ) : null;
 
   return (
+    <>
+    <header className={storeStyles.collectionHeader}>
+      <h1>{collection.name}</h1>
+      {collection.description && <p>{collection.description}</p>}
+    </header>
     <div className={styles.catalog}>
       <button
         type="button"
@@ -188,7 +270,7 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
           <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"}</span>
         </div>
         <div className={styles.productGrid}>
-          {paginatedProducts.map((product, index) => (
+          {visibleProducts.map((product, index) => (
             <ProductCard
               product={product}
               locked={productsLocked}
@@ -197,11 +279,11 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
             />
           ))}
         </div>
-        {!visibleProducts.length && <p className={styles.empty}>No products match these filters.</p>}
-        {totalPages > 1 && <nav className={styles.pagination} aria-label="Product pages">
-          <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</button>
-          <span>Page {currentPage} of {totalPages}</span>
-          <button type="button" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>Next</button>
+        {!productsLoading && !visibleProducts.length && <p className={styles.empty}>No products match these filters.</p>}
+        {productsError && <p className={styles.empty} role="alert">{productsError}</p>}
+        {(hasNextPage || productsLoading) && <nav className={styles.pagination} aria-label="Load more products">
+          <button type="button" disabled={productsLoading || !hasNextPage} onClick={loadMore}>{productsLoading ? "Loading..." : "Load more"}</button>
+          <span>{products.length} product{products.length === 1 ? "" : "s"} loaded</span>
         </nav>}
       </section>
 
@@ -219,5 +301,6 @@ export default function CollectionCatalog({ products }: { products: QuitHeroProd
         </div>
       )}
     </div>
+    </>
   );
 }

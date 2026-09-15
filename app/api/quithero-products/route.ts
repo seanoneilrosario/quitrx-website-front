@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getQuitHeroCollection, getQuitHeroProducts } from "@/lib/quithero";
+import { getQuitHeroCollection, getQuitHeroCollectionPage, getQuitHeroProducts } from "@/lib/quithero";
 
 export async function GET(request: Request) {
   try {
@@ -8,6 +8,18 @@ export async function GET(request: Request) {
       await getQuitHeroProducts();
       return new NextResponse(null, {
         status: 204,
+        headers: { "cache-control": "private, no-store" },
+      });
+    }
+
+    const collectionSlug = searchParams.get("collectionPage")?.trim();
+    if (collectionSlug) {
+      const page = Number(searchParams.get("page") ?? 1);
+      const limit = Number(searchParams.get("limit") ?? 20);
+      if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1) {
+        return NextResponse.json({ error: "Invalid pagination parameters." }, { status: 400 });
+      }
+      return NextResponse.json(await getQuitHeroCollectionPage(collectionSlug, page, limit), {
         headers: { "cache-control": "private, no-store" },
       });
     }

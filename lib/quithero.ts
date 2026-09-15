@@ -7,6 +7,7 @@ import { bundleComponentsFrom } from "./quithero-bundle";
 import { FREQUENTLY_BOUGHT_TOGETHER_QUERY } from "./frequently-bought-together";
 import type { FrequentlyBoughtTogetherDocument } from "./frequently-bought-together";
 import type { QuitHeroProduct, QuitHeroVariant } from "./quithero-types";
+import { DEFAULT_PRODUCT_IMAGE } from "./product-image";
 
 export type { QuitHeroBrand, QuitHeroImage, QuitHeroProduct, QuitHeroProductTag, QuitHeroTag, QuitHeroVariant } from "./quithero-types";
 
@@ -44,6 +45,12 @@ type QuitHeroProductsResponse =
       items?: QuitHeroProduct[];
       pagination?: { page?: number; limit?: number; total?: number; totalPages?: number };
     };
+
+export type QuitHeroCollectionPage = {
+  collection: { name: string; slug: string; description?: string };
+  products: QuitHeroProduct[];
+  pagination: { page: number; limit: number; totalPages: number; hasNextPage: boolean };
+};
 
 type QuitHeroCollectionsResponse =
   | QuitHeroCollection[]
@@ -155,6 +162,94 @@ async function loadQuitHeroProducts() {
   );
   products.push(...remainingPages.flatMap(productsFrom));
   return products;
+}
+
+async function loadQuitHeroProductsPage(page: number, limit: number, search?: string) {
+  const query = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search) query.set("search", search);
+  const payload = await quitHeroFetch<QuitHeroProductsResponse>(`/products?${query}`);
+  const products = productsFrom(payload);
+  const totalPages = Array.isArray(payload)
+    ? 1
+    : Math.max(1, Number(payload.pagination?.totalPages) || 1);
+  return { products, totalPages };
+}
+
+export async function getQuitHeroCollectionPage(slug: string, page: number, limit: number): Promise<QuitHeroCollectionPage> {
+  const normalizedPage = Math.max(1, Math.floor(page));
+  const normalizedLimit = Math.max(1, Math.min(20, Math.floor(limit)));
+  const assignmentPromise = client.withConfig({ useCdn: false }).fetch<{
+    title?: string;
+    description?: string;
+    productIds?: string[];
+    selectionMode?: "manual" | "dynamic";
+    dynamicTag?: string;
+    ruleMatch?: "all" | "any";
+    dynamicRules?: CollectionRule[];
+  } | null>(
+    `*[_type == "productCollection" && slug.current == $slug][0]{title, description, productIds, selectionMode, dynamicTag, ruleMatch, dynamicRules}`,
+    { slug },
+    { next: { revalidate: 30 } },
+  ).catch(() => null);
+  const [apiCollections, assignment] = await Promise.all([
+    getQuitHeroCollections().catch(() => []),
+    assignmentPromise,
+  ]);
+  const apiCollection = apiCollections.find((collection) => collection.slug === slug);
+  const isDefinedCollection = Boolean(apiCollection || assignment || slug === "all-products");
+  const search = isDefinedCollection ? undefined : slug.split("-").filter(Boolean).slice(0, 3).join(" ");
+  const { products: batch, totalPages } = await loadQuitHeroProductsPage(normalizedPage, normalizedLimit, search);
+
+  let products = batch;
+  if (apiCollection?.type?.toLowerCase() === "dynamic") {
+    const apiRules = apiCollection.rules?.length ? apiCollection.rules : apiCollection.dynamicRules ?? [];
+    const fallbackRules = assignment?.dynamicRules?.length
+      ? assignment.dynamicRules
+      : assignment?.dynamicTag
+        ? [{ field: "tag", operator: "equals", value: assignment.dynamicTag } satisfies CollectionRule]
+        : [];
+    const rules = apiRules.length ? apiRules : fallbackRules;
+    const match = (apiCollection.match ?? assignment?.ruleMatch)?.toLowerCase() === "any" ? "any" : "all";
+    const fallbackIds = new Set(assignment?.productIds ?? []);
+    const needsProductFallback = !apiRules.length || rules.some((rule) => rule.field === "tag")
+      && batch.some((product) => !product.tags?.length);
+    products = batch.filter((product) => productMatchesCollectionRules(product, rules, match)
+      || Boolean(needsProductFallback && product.id && fallbackIds.has(product.id)));
+  } else if (apiCollection) {
+    const references: QuitHeroCollectionProduct[] = [...(apiCollection.products ?? []), ...(apiCollection.productIds ?? [])];
+    const identifiers = new Set(references.flatMap((reference) => {
+      if (typeof reference === "string") return [reference];
+      return [reference.productId, reference._ref, reference.product?.id, reference.id].filter((value): value is string => Boolean(value));
+    }));
+    products = batch.filter((product) => [product.id, product.sourceId, product.handle, product.slug].some((id) => id && identifiers.has(id)));
+  } else if (assignment) {
+    const selected = new Set(assignment.productIds ?? []);
+    const rules = assignment.dynamicRules?.length
+      ? assignment.dynamicRules
+      : assignment.dynamicTag
+        ? [{ field: "tag", operator: "equals", value: assignment.dynamicTag } satisfies CollectionRule]
+        : [];
+    products = assignment.selectionMode === "dynamic"
+      ? batch.filter((product) => productMatchesCollectionRules(product, rules, assignment.ruleMatch ?? "all"))
+      : batch.filter((product) => Boolean(product.id && selected.has(product.id)));
+  } else if (slug !== "all-products") {
+    products = batch.filter((product) => product.brand?.slug === slug);
+  }
+
+  return {
+    collection: {
+      name: apiCollection?.name ?? assignment?.title ?? (slug === "all-products" ? "All Products" : slug.replaceAll("-", " ")),
+      slug,
+      description: apiCollection?.description ?? assignment?.description,
+    },
+    products,
+    pagination: {
+      page: normalizedPage,
+      limit: normalizedLimit,
+      totalPages,
+      hasNextPage: normalizedPage < totalPages,
+    },
+  };
 }
 
 export async function getFreshQuitHeroProducts() {
@@ -531,7 +626,7 @@ export function productMatchesCollectionRules(product: QuitHeroProduct, rules: C
 }
 
 export function getPrimaryImage(product: QuitHeroProduct) {
-  return product.images?.find((image) => image.isPrimary)?.url || product.images?.[0]?.url;
+  return product.images?.find((image) => image.isPrimary)?.url || product.images?.[0]?.url || DEFAULT_PRODUCT_IMAGE;
 }
 
 export function getVariantPrices(product: Pick<QuitHeroProduct, "variants">) {

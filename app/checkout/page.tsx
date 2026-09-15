@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import styles from "./checkout.module.css";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
 
 type CartItem = {
   key: string;
@@ -204,7 +205,7 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <article className={styles.item} key={item.key}>
                   <div className={styles.itemImage}>
-                    {item.image && <Image src={item.image} width={68} height={72} alt="" sizes="68px" />}
+                    <Image src={item.image || DEFAULT_PRODUCT_IMAGE} width={68} height={72} alt="" sizes="68px" />
                     <span>{item.quantity}</span>
                   </div>
                   <div><strong>{item.productName}</strong><small>{item.variantName}</small></div>

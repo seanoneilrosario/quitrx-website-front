@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import styles from "@/app/store.module.css";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
 
 type CartItem = {
   key: string;
@@ -83,7 +84,7 @@ export default function CartPage() {
               {stockError && <p role="alert">{stockError}</p>}
               {items.map((item) => (
                 <article className={styles.cartItem} key={item.key}>
-                  <div className={styles.cartImage}>{item.image && <Image src={item.image} width={110} height={110} alt="" sizes="110px" />}</div>
+                  <div className={styles.cartImage}><Image src={item.image || DEFAULT_PRODUCT_IMAGE} width={110} height={110} alt="" sizes="110px" /></div>
                   <div className={styles.cartItemInfo}>
                     <h2>{item.productName}</h2>
                     <p>{item.variantName}</p>

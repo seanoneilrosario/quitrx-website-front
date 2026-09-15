@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./ProductApiGrid.module.css";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
 
 type ApiRecord = Record<string, unknown>;
 
@@ -267,7 +268,7 @@ export default function ProductApiGrid({
             const card = (
               <>
                 <div className={styles.imageWrap}>
-                  {image ? <Image src={image} width={600} height={600} sizes="(max-width: 767px) 50vw, 25vw" alt={name} className={styles.image} /> : null}
+                  <Image src={image || DEFAULT_PRODUCT_IMAGE} width={600} height={600} sizes="(max-width: 767px) 50vw, 25vw" alt={name} className={styles.image} />
                 </div>
                 <div className={styles.content}>
                   <h3>{name}</h3>

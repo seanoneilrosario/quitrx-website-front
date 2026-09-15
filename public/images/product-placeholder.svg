@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-labelledby="title description">
+  <title id="title">QuitRx product image placeholder</title>
+  <desc id="description">Product image coming soon</desc>
+  <rect width="800" height="800" fill="#f4f8fc"/>
+  <rect x="245" y="170" width="310" height="410" rx="24" fill="#ffffff" stroke="#b9d2d7" stroke-width="8"/>
+  <path d="M300 170v-42c0-25 20-45 45-45h110c25 0 45 20 45 45v42" fill="none" stroke="#287b85" stroke-width="16" stroke-linecap="round"/>
+  <rect x="285" y="270" width="230" height="170" rx="14" fill="#dff7ee"/>
+  <text x="400" y="350" text-anchor="middle" fill="#075d67" font-family="Arial, sans-serif" font-size="62" font-weight="700">QuitRx</text>
+  <text x="400" y="650" text-anchor="middle" fill="#65848a" font-family="Arial, sans-serif" font-size="28">Image coming soon</text>
+</svg>
