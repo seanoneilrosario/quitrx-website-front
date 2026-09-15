@@ -201,6 +201,7 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
   const { products: batch, totalPages } = await loadQuitHeroProductsPage(normalizedPage, normalizedLimit, search);
 
   let products = batch;
+  let knownCollectionTotal: number | undefined;
   if (apiCollection?.type?.toLowerCase() === "dynamic") {
     const apiRules = apiCollection.rules?.length ? apiCollection.rules : apiCollection.dynamicRules ?? [];
     const fallbackRules = assignment?.dynamicRules?.length
@@ -221,6 +222,7 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
       if (typeof reference === "string") return [reference];
       return [reference.productId, reference._ref, reference.product?.id, reference.id].filter((value): value is string => Boolean(value));
     }));
+    knownCollectionTotal = identifiers.size;
     products = batch.filter((product) => [product.id, product.sourceId, product.handle, product.slug].some((id) => id && identifiers.has(id)));
   } else if (assignment) {
     const selected = new Set(assignment.productIds ?? []);
@@ -232,6 +234,7 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
     products = assignment.selectionMode === "dynamic"
       ? batch.filter((product) => productMatchesCollectionRules(product, rules, assignment.ruleMatch ?? "all"))
       : batch.filter((product) => Boolean(product.id && selected.has(product.id)));
+    if (assignment.selectionMode !== "dynamic") knownCollectionTotal = selected.size;
   } else if (slug !== "all-products") {
     products = batch.filter((product) => product.brand?.slug === slug);
   }
@@ -247,7 +250,8 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
       page: normalizedPage,
       limit: normalizedLimit,
       totalPages,
-      hasNextPage: normalizedPage < totalPages,
+      hasNextPage: normalizedPage < totalPages
+        && (knownCollectionTotal === undefined || products.length < knownCollectionTotal),
     },
   };
 }
