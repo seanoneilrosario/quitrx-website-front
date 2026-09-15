@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import styles from "@/app/store.module.css";
+import ProductImage from "./ProductImage";
 
 export default function ProductImageZoom({ image, alt }: { image?: string; alt: string }) {
   const [open, setOpen] = useState(false);
@@ -34,7 +34,7 @@ export default function ProductImageZoom({ image, alt }: { image?: string; alt: 
         disabled={!image}
       >
         <span className={styles.zoomIcon} aria-hidden="true">+</span>
-        {image && <Image src={image} width={900} height={900} sizes="(max-width: 989px) 100vw, 50vw" alt={alt} className={styles.productImage} />}
+        <ProductImage src={image} width={900} height={900} sizes="(max-width: 989px) 100vw, 50vw" alt={alt} className={styles.productImage} />
       </button>
 
       {open && image && typeof document !== "undefined" && createPortal(
@@ -42,7 +42,7 @@ export default function ProductImageZoom({ image, alt }: { image?: string; alt: 
           <button type="button" className={styles.zoomClose} onClick={() => setOpen(false)} aria-label="Close image zoom">
             <span />
           </button>
-          <Image src={image} width={1600} height={1600} sizes="92vw" alt={alt} className={styles.zoomedImage} onClick={(event) => event.stopPropagation()} />
+          <ProductImage src={image} width={1600} height={1600} sizes="92vw" alt={alt} className={styles.zoomedImage} onClick={(event) => event.stopPropagation()} />
         </div>,
         document.body,
       )}
