@@ -3,7 +3,16 @@ import { getQuitHeroCollection, getQuitHeroProducts } from "@/lib/quithero";
 
 export async function GET(request: Request) {
   try {
-    const collectionSlugs = new URL(request.url).searchParams
+    const searchParams = new URL(request.url).searchParams;
+    if (searchParams.get("prefetch") === "1") {
+      await getQuitHeroProducts();
+      return new NextResponse(null, {
+        status: 204,
+        headers: { "cache-control": "private, no-store" },
+      });
+    }
+
+    const collectionSlugs = searchParams
       .getAll("collection")
       .map((slug) => slug.trim())
       .filter(Boolean);

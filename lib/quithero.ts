@@ -170,9 +170,14 @@ export type QuitHeroOrderPayload = {
   items: Array<{ variantId: string; quantity: number }>;
 };
 
-type QuitHeroOrder = {
+export type QuitHeroOrder = {
   id?: string;
   customerId?: string;
+  orderNumber?: string;
+  status?: string;
+  paymentStatus?: string;
+  fulfillmentStatus?: string;
+  currencyCode?: string;
   total?: number | string;
   createdAt?: string;
   items?: Array<{ variantId?: string; quantity?: number }>;
@@ -183,6 +188,13 @@ type QuitHeroOrdersResponse = {
   orders?: QuitHeroOrder[];
   items?: QuitHeroOrder[];
 };
+
+export async function getQuitHeroOrdersForCustomer(customerId: string) {
+  const response = await quitHeroFetch<QuitHeroOrdersResponse>(
+    `/orders?customerId=${encodeURIComponent(customerId)}&page=1&limit=50`,
+  );
+  return response.data ?? response.orders ?? response.items ?? [];
+}
 
 export async function createQuitHeroOrder(payload: QuitHeroOrderPayload) {
   const apiKey = process.env.QUITHERO_API_KEY;

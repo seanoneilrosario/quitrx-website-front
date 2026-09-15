@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import OrderHistoryTable from "@/components/account/OrderHistoryTable";
 
 function addressLines(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];
@@ -78,10 +79,7 @@ export default function AccountDashboard() {
 
     <section className="account-order-history">
       <div className="account-order-history__header"><span className="account-order-history__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><h2>Order History</h2></div>
-      <div className="account-order-table">
-        <div className="account-order-table__row account-order-table__head"><span>Order Number</span><span>Date</span><span>Fulfillment Status</span></div>
-        <div className="account-order-table__empty">Order details are not available from the customer response.</div>
-      </div>
+      <OrderHistoryTable />
     </section>
     {hasActiveScriptTag && (
       <section className="account-banner">
