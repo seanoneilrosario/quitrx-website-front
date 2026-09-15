@@ -198,6 +198,17 @@ export const getQuitHeroProduct = cache(async function getQuitHeroProduct(handle
   return products.find((product) => product.handle === handle || product.slug === handle);
 });
 
+export const getQuitHeroProductWhenReady = cache(async function getQuitHeroProductWhenReady(handle: string) {
+  const cachedProduct = await getQuitHeroProduct(handle);
+  if (cachedProduct) return cachedProduct;
+
+  // A newly synced product can be missing from the short-lived product cache.
+  // Check fresh API data before treating the URL as a genuine 404.
+  await delay(750);
+  const freshProducts = await getFreshQuitHeroProducts();
+  return freshProducts.find((product) => product.handle === handle || product.slug === handle);
+});
+
 export const getQuitHeroProductById = cache(async function getQuitHeroProductById(id: string) {
   const products = await getQuitHeroProducts();
   return products.find((product) => product.id === id);
