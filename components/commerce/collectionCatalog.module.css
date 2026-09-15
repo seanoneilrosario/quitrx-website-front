@@ -189,6 +189,73 @@
   gap: 18px;
 }
 
+.skeletonCard {
+  overflow: hidden;
+  border-radius: 28px;
+  background: #fff;
+}
+
+.skeletonImage,
+.skeletonLine,
+.skeletonButton,
+.skeletonFilter,
+.skeletonToolbar {
+  background: linear-gradient(90deg, #e4ecec 25%, #f3f7f7 50%, #e4ecec 75%);
+  background-size: 200% 100%;
+  animation: collectionShimmer 1.4s ease-in-out infinite;
+}
+
+.skeletonImage { aspect-ratio: 1; }
+
+.skeletonInfo {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+}
+
+.skeletonLine {
+  display: block;
+  width: 88%;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.skeletonBrand { width: 38%; height: 12px; }
+.skeletonName { width: 70%; }
+.skeletonPrice { width: 35%; height: 22px; margin-top: 3px; }
+.skeletonButton { height: 36px; margin-top: 8px; border-radius: 999px; }
+.skeletonHeading { width: min(360px, 65%); height: 44px; }
+
+.skeletonFilters {
+  display: grid;
+  gap: 24px;
+}
+
+.skeletonFilter {
+  display: block;
+  height: 52px;
+  border-radius: 10px;
+}
+
+.skeletonToolbar {
+  width: 260px;
+  height: 36px;
+  margin: 4px 0 28px auto;
+  border-radius: 999px;
+}
+
+@keyframes collectionShimmer {
+  to { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonImage,
+  .skeletonLine,
+  .skeletonButton,
+  .skeletonFilter,
+  .skeletonToolbar { animation: none; }
+}
+
 .productCard {
   display: flex;
   flex-direction: column;
@@ -401,6 +468,7 @@
 @media (max-width: 699px) {
   .catalog { grid-template-columns: 1fr; }
   .filters { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 16px; }
+  .skeletonFilters { display: none; }
   .filters h2 { grid-column: 1 / -1; }
   .toolbar { justify-content: space-between; }
 }

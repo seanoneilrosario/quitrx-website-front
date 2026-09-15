@@ -7,6 +7,7 @@ import { variantIsAvailable } from "@/lib/quithero-bundle";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { hasActiveScript } from "@/lib/script-access";
 import ProductCard from "./ProductCard";
+import { CollectionProductSkeletons } from "./CollectionLoading";
 import styles from "./collectionCatalog.module.css";
 import storeStyles from "@/app/store.module.css";
 
@@ -273,8 +274,8 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
           </label>
           <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"}</span>
         </div>
-        <div className={styles.productGrid}>
-          {visibleProducts.map((product, index) => (
+        <div className={styles.productGrid} aria-busy={productsLoading && !products.length}>
+          {productsLoading && !products.length ? <CollectionProductSkeletons /> : visibleProducts.map((product, index) => (
             <ProductCard
               product={product}
               locked={productsLocked}

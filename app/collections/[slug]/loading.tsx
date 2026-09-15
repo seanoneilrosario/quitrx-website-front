@@ -1,5 +1,5 @@
-import SuspenseFallback from "@/components/SuspenseFallback";
+import CollectionLoading from "@/components/commerce/CollectionLoading";
 
 export default function Loading() {
-  return <SuspenseFallback />;
+  return <CollectionLoading />;
 }
