@@ -87,6 +87,12 @@ function normalizeSmsDestination(phone: string) {
   return /^\+614\d{8}$/.test(international) ? international : undefined;
 }
 
+function isAllowedTestDestination(destination: string) {
+  return process.env.SMS_LOGIN_ALLOW_TEST_NUMBER === "true"
+    && (process.env.NODE_ENV !== "production" || process.env.VERCEL_ENV === "preview")
+    && normalizeSmsDestination(process.env.SMS_LOGIN_TEST_PHONE ?? "") === destination;
+}
+
 async function sendLoginCode(phone: string, code: string) {
   const apiKey = process.env.SINCH_ENGAGE_API_KEY;
   const apiSecret = process.env.SINCH_ENGAGE_API_SECRET;
@@ -134,7 +140,8 @@ async function requestCode(email: string, phone: string): Promise<CustomerAccess
   try {
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
     const accountPhone = customer?.phone ? normalizeSmsDestination(customer.phone) : undefined;
-    if (!accountPhone || accountPhone !== destination) {
+    const usingTestDestination = isAllowedTestDestination(destination);
+    if (!customer || (!usingTestDestination && accountPhone !== destination)) {
       return { error: "The email and mobile number do not match an existing account. Use social login or contact support." };
     }
 
