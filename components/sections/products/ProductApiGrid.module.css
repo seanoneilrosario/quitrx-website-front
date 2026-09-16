@@ -83,6 +83,35 @@
   text-decoration: none;
 }
 
+.skeletonCard {
+  min-width: 0;
+}
+
+.skeletonImage,
+.skeletonLine {
+  background: linear-gradient(90deg, rgb(255 255 255 / 18%) 25%, rgb(255 255 255 / 36%) 50%, rgb(255 255 255 / 18%) 75%);
+  background-size: 200% 100%;
+  animation: gridShimmer 1.4s ease-in-out infinite;
+}
+
+.skeletonImage {
+  aspect-ratio: 1;
+  border-radius: 24px;
+}
+
+.skeletonLine {
+  width: 68%;
+  height: 18px;
+  margin: 17px auto;
+  border-radius: 999px;
+}
+
+@keyframes gridShimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
 .imageWrap {
   display: grid;
   aspect-ratio: 1;
@@ -200,6 +229,15 @@
     border-radius: 12px;
   }
 
+  .skeletonImage {
+    border-radius: 12px;
+  }
+
+  .skeletonLine {
+    height: 12px;
+    margin-top: 8px;
+  }
+
   .content {
     padding-top: 6px;
   }
@@ -223,5 +261,12 @@
 @media (min-width: 1024px) {
   .heading {
     margin-bottom: 45px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonImage,
+  .skeletonLine {
+    animation: none;
   }
 }

@@ -96,6 +96,19 @@ function hasScriptAccess(account: ApiRecord) {
   );
 }
 
+function ProductGridSkeleton({ count }: { count: number }) {
+  return (
+    <div className={styles.grid} aria-hidden="true">
+      {Array.from({ length: count }, (_, index) => (
+        <div className={styles.skeletonCard} key={index}>
+          <div className={styles.skeletonImage} />
+          <div className={styles.skeletonLine} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ProductApiGrid({
   heading = "Products",
   productLimit = 12,
@@ -122,6 +135,7 @@ export default function ProductApiGrid({
   const collectionQuery = selectedCollectionSlugs.length
     ? `?${selectedCollectionSlugs.map((slug) => `collection=${encodeURIComponent(slug)}`).join("&")}`
     : "";
+  const skeletonCount = Math.max(4, Math.min(productLimit, 8));
 
   useEffect(() => {
     const controller = new AbortController();
@@ -176,7 +190,14 @@ export default function ProductApiGrid({
   } as CSSProperties;
 
   if (authStatus === "loading") {
-    return <section className={styles.section} style={sectionStyle} aria-busy="true" />;
+    return (
+      <section className={styles.section} style={sectionStyle} aria-busy="true" aria-label="Loading products">
+        <div className="page-width">
+          {heading && <h2 className={styles.heading}>{heading}</h2>}
+          <ProductGridSkeleton count={skeletonCount} />
+        </div>
+      </section>
+    );
   }
 
   if (authStatus === "anonymous") {
@@ -210,10 +231,10 @@ export default function ProductApiGrid({
   }
 
   return (
-    <section className={styles.section} style={sectionStyle}>
+    <section className={styles.section} style={sectionStyle} aria-busy={!showingSelectedCollections && loading}>
       <div className="page-width">
         {heading && <h2 className={styles.heading}>{heading}</h2>}
-        {!showingSelectedCollections && loading && <p className={styles.status}>Loading products…</p>}
+        {!showingSelectedCollections && loading && <ProductGridSkeleton count={skeletonCount} />}
         {!showingSelectedCollections && error && <p className={styles.error}>{error}</p>}
         {!showingSelectedCollections && !loading && !error &&
           (displayMode === "collections" ? !apiCollections.length : !products.length) && (
