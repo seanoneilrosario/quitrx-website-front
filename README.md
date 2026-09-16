@@ -14,6 +14,8 @@ AUTH_GOOGLE_ID=your_google_oauth_client_id
 AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
 AUTH_FACEBOOK_ID=your_facebook_app_id
 AUTH_FACEBOOK_SECRET=your_facebook_app_secret
+SINCH_ENGAGE_API_KEY=your_sinch_engage_api_key
+SINCH_ENGAGE_API_SECRET=your_sinch_engage_api_secret
 ```
 
 Do not prefix these variables with `NEXT_PUBLIC_`; API keys and OAuth secrets must never be included in browser code.
@@ -31,7 +33,7 @@ await syncQuitHeroCustomerWithoutBlocking({
 
 Authentication is handled by Auth.js. Register `/api/auth/callback/google` and `/api/auth/callback/facebook` on your public site URL with the corresponding OAuth provider. Successful verified social logins automatically synchronize the customer with QuitHero.
 
-`AUTH_SECRET` signs both Auth.js and email customer sessions. If `AUTH_SESSION_SECRET` is configured, it is used for email customer sessions instead.
+`AUTH_SECRET` signs Auth.js, customer sessions, and SMS login challenges. If `AUTH_SESSION_SECRET` is configured, it is used for customer sessions and SMS login challenges instead.
 
 First, run the development server:
 

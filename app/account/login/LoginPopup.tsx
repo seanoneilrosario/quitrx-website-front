@@ -88,18 +88,38 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
         <div className="customer-login__divider"><span>or</span></div>
 
         <form action={action} className="customer-login__form">
-          <label className="sr-only" htmlFor="customer-email">Email address</label>
-          <div className="customer-login__field">
-            <input id="customer-email" name="email" type="email" inputMode="email" autoComplete="email" placeholder="Email" required autoFocus aria-describedby={state.error ? "customer-login-error" : "customer-login-help"} />
-            <button type="submit" disabled={pending} aria-label="Continue with email">
-              {pending ? <span className="customer-login__spinner" /> : <span aria-hidden="true">&rarr;</span>}
-            </button>
-          </div>
+          {state.step === "code" ? (
+            <>
+              <input type="hidden" name="email" value={state.email} />
+              <label htmlFor="customer-code">Confirmation code</label>
+              <p className="customer-login__message">{state.message ?? "Enter the SMS code sent to the mobile number on your account."}</p>
+              <div className="customer-login__field">
+                <input id="customer-code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} placeholder="6-digit code" required autoFocus aria-describedby={state.error ? "customer-login-error" : undefined} />
+                <button type="submit" name="intent" value="verify" disabled={pending} aria-label="Confirm SMS code">
+                  {pending ? <span className="customer-login__spinner" /> : <span aria-hidden="true">&rarr;</span>}
+                </button>
+              </div>
+              <div className="customer-login__code-actions">
+                <button type="submit" name="intent" value="request" formNoValidate disabled={pending}>Resend code</button>
+                <button type="submit" name="intent" value="reset" formNoValidate disabled={pending}>Use another email</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <label className="sr-only" htmlFor="customer-email">Email address</label>
+              <div className="customer-login__field">
+                <input id="customer-email" name="email" type="email" inputMode="email" autoComplete="email" placeholder="Email" required autoFocus aria-describedby={state.error ? "customer-login-error" : "customer-login-help"} />
+                <button type="submit" name="intent" value="request" disabled={pending} aria-label="Send SMS confirmation code">
+                  {pending ? <span className="customer-login__spinner" /> : <span aria-hidden="true">&rarr;</span>}
+                </button>
+              </div>
+            </>
+          )}
           {state.error && <p id="customer-login-error" className="customer-login__error" role="alert">{state.error}</p>}
         </form>
 
         <p id="customer-login-help" className="customer-login__note">
-          Customers can sign in using Google, Facebook, or email. If an email account does not exist, it is automatically added to the customer database.
+          Enter the email linked to your account and we will send a confirmation code to your saved mobile number.
         </p>
       </section>
     </div>
