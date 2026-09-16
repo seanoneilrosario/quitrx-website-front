@@ -178,6 +178,29 @@ async function loadQuitHeroProductsPage(page: number, limit: number, search?: st
 export async function getQuitHeroCollectionPage(slug: string, page: number, limit: number): Promise<QuitHeroCollectionPage> {
   const normalizedPage = Math.max(1, Math.floor(page));
   const normalizedLimit = Math.max(1, Math.min(20, Math.floor(limit)));
+  const resolvedCollection = await getQuitHeroCollection(slug);
+
+  if (resolvedCollection) {
+    const collectionProducts = resolvedCollection.products;
+    const totalPages = Math.max(1, Math.ceil(collectionProducts.length / normalizedLimit));
+    const startIndex = (normalizedPage - 1) * normalizedLimit;
+
+    return {
+      collection: {
+        name: resolvedCollection.brand?.name ?? slug.replaceAll("-", " "),
+        slug,
+        description: resolvedCollection.brand?.description,
+      },
+      products: collectionProducts.slice(startIndex, startIndex + normalizedLimit),
+      pagination: {
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages,
+        hasNextPage: normalizedPage < totalPages,
+      },
+    };
+  }
+
   const assignmentPromise = client.withConfig({ useCdn: false }).fetch<{
     title?: string;
     description?: string;
