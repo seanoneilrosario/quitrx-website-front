@@ -214,7 +214,6 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
     <>
     <header className={storeStyles.collectionHeader}>
       <h1>{collection.name}</h1>
-      {collection.description && <p>{collection.description}</p>}
     </header>
     <div className={styles.catalog}>
       <button
