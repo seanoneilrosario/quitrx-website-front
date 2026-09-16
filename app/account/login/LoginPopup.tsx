@@ -91,6 +91,7 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
           {state.step === "code" ? (
             <>
               <input type="hidden" name="email" value={state.email} />
+              <input type="hidden" name="phone" value={state.phone} />
               <label htmlFor="customer-code">Confirmation code</label>
               <p className="customer-login__message">{state.message ?? "Enter the SMS code sent to the mobile number on your account."}</p>
               <div className="customer-login__field">
@@ -101,7 +102,7 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
               </div>
               <div className="customer-login__code-actions">
                 <button type="submit" name="intent" value="request" formNoValidate disabled={pending}>Resend code</button>
-                <button type="submit" name="intent" value="reset" formNoValidate disabled={pending}>Use another email</button>
+                <button type="submit" name="intent" value="reset" formNoValidate disabled={pending}>Change details</button>
               </div>
             </>
           ) : (
@@ -109,6 +110,10 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
               <label className="sr-only" htmlFor="customer-email">Email address</label>
               <div className="customer-login__field">
                 <input id="customer-email" name="email" type="email" inputMode="email" autoComplete="email" placeholder="Email" required autoFocus aria-describedby={state.error ? "customer-login-error" : "customer-login-help"} />
+              </div>
+              <label className="sr-only" htmlFor="customer-phone">Australian mobile number</label>
+              <div className="customer-login__field">
+                <input id="customer-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="Australian mobile (0412 345 678)" pattern="(?:\+?61|0)4[\s-]?\d{2}[\s-]?\d{3}[\s-]?\d{3}" required aria-describedby={state.error ? "customer-login-error" : "customer-login-help"} />
                 <button type="submit" name="intent" value="request" disabled={pending} aria-label="Send SMS confirmation code">
                   {pending ? <span className="customer-login__spinner" /> : <span aria-hidden="true">&rarr;</span>}
                 </button>
@@ -119,7 +124,7 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
         </form>
 
         <p id="customer-login-help" className="customer-login__note">
-          Enter the email linked to your account and we will send a confirmation code to your saved mobile number.
+          Enter the email and Australian mobile number linked to your account. We will send your confirmation code by SMS.
         </p>
       </section>
     </div>

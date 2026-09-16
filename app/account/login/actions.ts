@@ -22,6 +22,7 @@ type SmsCodeChallenge = {
 export type CustomerAccessState = {
   step?: "code";
   email?: string;
+  phone?: string;
   error?: string;
   message?: string;
 };
@@ -83,7 +84,7 @@ function normalizeSmsDestination(phone: string) {
     : compact.startsWith("61") ? `+${compact}`
     : `+${compact}`;
 
-  return /^\+[1-9]\d{7,14}$/.test(international) ? international : undefined;
+  return /^\+614\d{8}$/.test(international) ? international : undefined;
 }
 
 async function sendLoginCode(phone: string, code: string) {
@@ -108,19 +109,23 @@ async function sendLoginCode(phone: string, code: string) {
     cache: "no-store",
   });
 
-  if (!response.ok) throw new Error(`Email provider returned ${response.status}.`);
+  if (!response.ok) throw new Error(`SMS provider returned ${response.status}.`);
 }
 
-async function requestCode(email: string): Promise<CustomerAccessState> {
+async function requestCode(email: string, phone: string): Promise<CustomerAccessState> {
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email address." };
 
   const normalizedEmail = email.toLowerCase();
+  const destination = normalizeSmsDestination(phone);
+  if (!destination) return { error: "Enter a valid Australian mobile number, such as 0412 345 678." };
+
   const cookieStore = await cookies();
   const existingChallenge = decodeChallenge(cookieStore.get(SMS_CODE_COOKIE)?.value);
   if (existingChallenge?.email === normalizedEmail && existingChallenge.resendAt > Date.now()) {
     return {
       step: "code",
       email: normalizedEmail,
+      phone: destination,
       error: "Please wait a minute before requesting another code.",
     };
   }
@@ -128,9 +133,9 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
 
   try {
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
-    const destination = customer?.phone ? normalizeSmsDestination(customer.phone) : undefined;
-    if (!destination) {
-      return { error: "This account does not have a valid mobile number. Use social login or contact support." };
+    const accountPhone = customer?.phone ? normalizeSmsDestination(customer.phone) : undefined;
+    if (!accountPhone || accountPhone !== destination) {
+      return { error: "The email and mobile number do not match an existing account. Use social login or contact support." };
     }
 
     await sendLoginCode(destination, code);
@@ -142,7 +147,7 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
       resendAt: Date.now() + 60_000,
       attempts: 0,
     });
-    return { step: "code", email: normalizedEmail, message: "We sent a confirmation code to the mobile number on your account." };
+    return { step: "code", email: normalizedEmail, phone: destination, message: "We sent a confirmation code to your mobile number." };
   } catch (error) {
     console.error("SMS sign-in code delivery failed.", {
       error: error instanceof Error ? error.message : "Unknown error",
@@ -165,12 +170,14 @@ export async function accessCustomerAccount(
 
   const emailValue = formData.get("email");
   const email = typeof emailValue === "string" ? emailValue.trim() : "";
-  if (intent !== "verify") return requestCode(email);
+  const phoneValue = formData.get("phone");
+  const phone = typeof phoneValue === "string" ? phoneValue.trim() : "";
+  if (intent !== "verify") return requestCode(email, phone);
 
   const codeValue = formData.get("code");
   const code = typeof codeValue === "string" ? codeValue.trim() : "";
   const challenge = decodeChallenge(cookieStore.get(SMS_CODE_COOKIE)?.value);
-  const codeStep = { step: "code" as const, email: challenge?.email ?? state.email };
+  const codeStep = { step: "code" as const, email: challenge?.email ?? state.email, phone: state.phone };
 
   if (!/^\d{6}$/.test(code)) return { ...codeStep, error: "Enter the six-digit code." };
   if (!challenge || challenge.expiresAt <= Date.now()) {
