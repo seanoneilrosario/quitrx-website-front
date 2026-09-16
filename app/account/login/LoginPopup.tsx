@@ -113,7 +113,7 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
               </div>
               <label className="sr-only" htmlFor="customer-phone">Australian mobile number</label>
               <div className="customer-login__field">
-                <input id="customer-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="Australian mobile (0412 345 678)" pattern="(?:\+?61|0)4[\s-]?\d{2}[\s-]?\d{3}[\s-]?\d{3}" required aria-describedby={state.error ? "customer-login-error" : "customer-login-help"} />
+                <input id="customer-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+61" pattern="(?:\+?61|0)4[\s-]?\d{2}[\s-]?\d{3}[\s-]?\d{3}" required aria-describedby={state.error ? "customer-login-error" : "customer-login-help"} />
                 <button type="submit" name="intent" value="request" disabled={pending} aria-label="Send SMS confirmation code">
                   {pending ? <span className="customer-login__spinner" /> : <span aria-hidden="true">&rarr;</span>}
                 </button>
