@@ -16,7 +16,7 @@ AUTH_FACEBOOK_ID=your_facebook_app_id
 AUTH_FACEBOOK_SECRET=your_facebook_app_secret
 SINCH_ENGAGE_API_KEY=your_sinch_engage_api_key
 SINCH_ENGAGE_API_SECRET=your_sinch_engage_api_secret
-# Optional for local/preview SMS delivery testing only. Never enable in production.
+# Optional for local/preview SMS delivery testing only. Scope these to Preview in Vercel and never enable in Production.
 SMS_LOGIN_ALLOW_TEST_NUMBER=false
 SMS_LOGIN_TEST_PHONE=+61412345678
 ```
