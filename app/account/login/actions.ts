@@ -82,9 +82,14 @@ function normalizeSmsDestination(phone: string) {
     : compact.startsWith("00") ? `+${compact.slice(2)}`
     : compact.startsWith("0") ? `+61${compact.slice(1)}`
     : compact.startsWith("61") ? `+${compact}`
+    : compact.startsWith("4") ? `+61${compact}`
     : `+${compact}`;
 
-  return /^\+614\d{8}$/.test(international) ? international : undefined;
+  const normalizedInternational = international.startsWith("+6104")
+    ? `+61${international.slice(4)}`
+    : international;
+
+  return /^\+614\d{8}$/.test(normalizedInternational) ? normalizedInternational : undefined;
 }
 
 function isAllowedTestDestination(destination: string) {
