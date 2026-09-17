@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { FormEvent, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import styles from "./checkout.module.css";
+import { CHECKOUT_SHIPPING } from "@/lib/checkout";
 import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
 
 type CartItem = {
@@ -17,9 +18,6 @@ type CartItem = {
 };
 
 const CART_KEY = "quitrx-cart";
-const STANDARD_SHIPPING = 12.90;
-const EXPRESS_SHIPPING = 15.90;
-
 function numericPrice(value?: number | string) {
   if (typeof value === "number") return value;
   const parsed = Number(String(value || "").replace(/[^0-9.-]/g, ""));
@@ -35,6 +33,10 @@ function money(value: number) {
 
 function readCart() {
   return localStorage.getItem(CART_KEY) || "[]";
+}
+
+function readPaymentStatus() {
+  return new URLSearchParams(window.location.search).get("payment");
 }
 
 export default function CheckoutPage() {
@@ -54,6 +56,7 @@ export default function CheckoutPage() {
     readCart,
     () => "[]",
   );
+  const paymentStatus = useSyncExternalStore(() => () => undefined, readPaymentStatus, () => null);
   const items = useMemo<CartItem[]>(() => {
     try {
       return JSON.parse(storedCart);
@@ -65,7 +68,25 @@ export default function CheckoutPage() {
     (total, item) => total + numericPrice(item.price) * item.quantity,
     0,
   );
-  const shipping = shippingMethod === "express" ? EXPRESS_SHIPPING : STANDARD_SHIPPING;
+  const shipping = CHECKOUT_SHIPPING[shippingMethod];
+
+  const paymentNotice = paymentStatus === "success"
+    ? "Payment successful. Your order has been placed."
+    : paymentStatus === "failed"
+      ? "Payment was declined or could not be completed. Please try again."
+      : paymentStatus === "cancelled"
+        ? "Payment was cancelled. Your cart has not been changed."
+        : paymentStatus === "invalid"
+          ? "We couldn't verify that payment session. Please try again."
+          : "";
+  const displayedNotice = notice || paymentNotice;
+
+  useEffect(() => {
+    if (paymentStatus === "success") {
+      localStorage.setItem(CART_KEY, "[]");
+      window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items: [] } }));
+    }
+  }, [paymentStatus]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,17 +103,29 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
     setNotice("");
     try {
-      const response = await fetch("/api/orders", {
+      const formData = new FormData(event.currentTarget);
+      const response = await fetch("/api/payments/eway", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subtotal, total: subtotal + shipping, items: orderItems }),
+        body: JSON.stringify({
+          shippingMethod,
+          items: orderItems,
+          customer: {
+            email: formData.get("email"),
+            firstName: formData.get("firstName"),
+            lastName: formData.get("lastName"),
+            address: formData.get("address"),
+            address2: formData.get("address2"),
+            city: formData.get("city"),
+            state: formData.get("state"),
+            postcode: formData.get("postcode"),
+            phone: formData.get("phone"),
+          },
+        }),
       });
-      const result = await response.json().catch(() => ({})) as { error?: string };
-      if (!response.ok) throw new Error(result.error || "We couldn't place your order. Please try again.");
-
-      localStorage.setItem(CART_KEY, "[]");
-      window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items: [] } }));
-      setNotice("Your order has been placed successfully.");
+      const result = await response.json().catch(() => ({})) as { error?: string; paymentUrl?: string };
+      if (!response.ok || !result.paymentUrl) throw new Error(result.error || "We couldn't start payment. Please try again.");
+      window.location.assign(result.paymentUrl);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "We couldn't place your order. Please try again.");
     } finally {
@@ -123,8 +156,8 @@ export default function CheckoutPage() {
 
           {items.length === 0 ? (
             <div className={styles.emptyState}>
-              <h2>{notice ? "Order confirmed" : "Your cart is empty"}</h2>
-              <p>{notice || "Add a product before continuing to checkout."}</p>
+              <h2>{paymentStatus === "success" ? "Order confirmed" : "Your cart is empty"}</h2>
+              <p>{displayedNotice || "Add a product before continuing to checkout."}</p>
               <Link href="/collections/all-products">Browse products</Link>
             </div>
           ) : (
@@ -170,12 +203,12 @@ export default function CheckoutPage() {
                   <label className={shippingMethod === "standard" ? styles.selectedOption : ""}>
                     <input type="radio" name="shipping" checked={shippingMethod === "standard"} onChange={() => setShippingMethod("standard")} />
                     <span><strong>Standard shipping</strong><small>3–7 business days</small></span>
-                    <strong>{money(STANDARD_SHIPPING)}</strong>
+                    <strong>{money(CHECKOUT_SHIPPING.standard)}</strong>
                   </label>
                   <label className={shippingMethod === "express" ? styles.selectedOption : ""}>
                     <input type="radio" name="shipping" checked={shippingMethod === "express"} onChange={() => setShippingMethod("express")} />
                     <span><strong>Express shipping</strong><small>1–3 business days</small></span>
-                    <strong>{money(EXPRESS_SHIPPING)}</strong>
+                    <strong>{money(CHECKOUT_SHIPPING.express)}</strong>
                   </label>
                 </div>
               </section>
@@ -187,12 +220,12 @@ export default function CheckoutPage() {
                 </div>
                 <div className={styles.paymentPlaceholder}>
                   <span aria-hidden="true">◇</span>
-                  <div><strong>Secure payment gateway</strong><p>Connect your payment provider to accept card details and place orders.</p></div>
+                  <div><strong>Pay securely with eWAY</strong><p>You&apos;ll be redirected to eWAY to enter your card details securely.</p></div>
                 </div>
               </section>
 
-              {notice && <p className={styles.notice} role="status">{notice}</p>}
-              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>{isSubmitting ? "Placing order…" : "Place order"} <span aria-hidden="true">→</span></button>
+              {displayedNotice && <p className={styles.notice} role="status">{displayedNotice}</p>}
+              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>{isSubmitting ? "Connecting to eWAY…" : "Pay securely with eWAY"} <span aria-hidden="true">→</span></button>
               <p className={styles.terms}>By continuing, you agree to our <Link href="/terms-and-conditions">terms</Link> and <Link href="/privacy-policy">privacy policy</Link>.</p>
             </form>
           )}
