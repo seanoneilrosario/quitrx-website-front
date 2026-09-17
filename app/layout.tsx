@@ -7,11 +7,11 @@ import { DisableDraftMode } from "@/components/global/DisableDraftMode";
 import ThemeProvider, {
   type ThemeSettings,
 } from "@/components/global/ThemeProvider";
-import Header, {
-  type NavigationData,
-  type SearchPage,
+import type {
+  NavigationData,
+  SearchPage,
 } from "@/components/navigation/Header";
-import { Footer, FooterProps } from "@/components/navigation/Footer";
+import SiteChrome from "@/components/navigation/SiteChrome";
 
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { HEADER_SEARCH_QUERY, NAVIGATION, SETTINGS } from "@/sanity/lib/queries";
@@ -91,20 +91,12 @@ export default async function RootLayout({
           settings={settings as ThemeSettings | undefined}
         >
           <AccountCustomerProvider>
-            <Header
+            <SiteChrome
               navigation={navigation as NavigationData | null}
               searchPages={searchPages as SearchPage[]}
-            />
-
-            <div className="main-sections-wrapper">
+            >
               {children}
-            </div>
-
-            <Footer
-              navigation={
-                navigation as FooterProps["navigation"]
-              }
-            />
+            </SiteChrome>
           </AccountCustomerProvider>
 
           <SanityLive />
