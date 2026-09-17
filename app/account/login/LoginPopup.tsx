@@ -7,7 +7,7 @@ import { accessCustomerAccount, type CustomerAccessState } from "./actions";
 
 const initialState: CustomerAccessState = {};
 
-export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleEnabled: boolean; facebookEnabled: boolean }) {
+export default function LoginPopup({ googleEnabled, facebookEnabled, smsEnabled }: { googleEnabled: boolean; facebookEnabled: boolean; smsEnabled: boolean }) {
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
   const router = useRouter();
 
@@ -85,9 +85,9 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
           )}
         </div>
 
-        <div className="customer-login__divider"><span>or</span></div>
+        {smsEnabled && <div className="customer-login__divider"><span>or</span></div>}
 
-        <form action={action} className="customer-login__form">
+        {smsEnabled && <form action={action} className="customer-login__form">
           {state.step === "code" ? (
             <>
               <input type="hidden" name="email" value={state.email} />
@@ -121,11 +121,11 @@ export default function LoginPopup({ googleEnabled, facebookEnabled }: { googleE
             </>
           )}
           {state.error && <p id="customer-login-error" className="customer-login__error" role="alert">{state.error}</p>}
-        </form>
+        </form>}
 
-        <p id="customer-login-help" className="customer-login__note">
+        {smsEnabled && <p id="customer-login-help" className="customer-login__note">
           Enter the email and Australian mobile number linked to your account. We will send your confirmation code by SMS.
-        </p>
+        </p>}
       </section>
     </div>
   );

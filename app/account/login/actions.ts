@@ -171,6 +171,10 @@ export async function accessCustomerAccount(
   state: CustomerAccessState,
   formData: FormData,
 ): Promise<CustomerAccessState> {
+  if (process.env.SMS_LOGIN_ENABLED === "false") {
+    return { error: "SMS sign-in is temporarily unavailable." };
+  }
+
   const intent = formData.get("intent");
   const cookieStore = await cookies();
 
