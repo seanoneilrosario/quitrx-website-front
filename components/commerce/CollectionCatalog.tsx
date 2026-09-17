@@ -12,7 +12,7 @@ import styles from "./collectionCatalog.module.css";
 import storeStyles from "@/app/store.module.css";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 type CollectionPageResponse = {
   collection: { name: string; slug: string; description?: string };
