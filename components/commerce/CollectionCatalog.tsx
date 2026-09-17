@@ -43,14 +43,16 @@ function unique(values: Array<string | undefined>) {
   return [...new Set(values.filter((value): value is string => Boolean(value)))].sort();
 }
 
-export default function CollectionCatalog({ collectionSlug }: { collectionSlug: string }) {
+export default function CollectionCatalog({ collectionSlug, initialPage }: { collectionSlug: string; initialPage?: CollectionPageResponse }) {
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
-  const [products, setProducts] = useState<QuitHeroProduct[]>([]);
-  const [collection, setCollection] = useState({ name: collectionSlug.replaceAll("-", " "), description: "" });
-  const [currentApiPage, setCurrentApiPage] = useState(0);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [productsLoading, setProductsLoading] = useState(true);
+  const [products, setProducts] = useState<QuitHeroProduct[]>(initialPage?.products ?? []);
+  const [collection, setCollection] = useState(initialPage
+    ? { name: initialPage.collection.name, description: initialPage.collection.description ?? "" }
+    : { name: collectionSlug.replaceAll("-", " "), description: "" });
+  const [currentApiPage, setCurrentApiPage] = useState(initialPage?.pagination.page ?? 0);
+  const [hasNextPage, setHasNextPage] = useState(initialPage?.pagination.hasNextPage ?? false);
+  const [productsLoading, setProductsLoading] = useState(!initialPage);
   const [productsError, setProductsError] = useState("");
   const [brands, setBrands] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
@@ -60,7 +62,7 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [lockedProductName, setLockedProductName] = useState<string>();
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
-  const requestInFlightRef = useRef(true);
+  const requestInFlightRef = useRef(!initialPage);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
@@ -101,6 +103,8 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
   }, [collectionSlug]);
 
   useEffect(() => {
+    if (initialPage) return;
+
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       loadProductsPage(1, false, controller.signal)
@@ -121,7 +125,7 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [collectionSlug, loadProductsPage]);
+  }, [collectionSlug, initialPage, loadProductsPage]);
 
   useEffect(() => {
     if (!lockedProductName) return;
