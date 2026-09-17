@@ -89,6 +89,10 @@ option {
   padding-top: 133px;
 }
 
+.main-sections-wrapper.account-main-sections-wrapper {
+  padding-top: 0;
+}
+
 .template-admin .main-sections-wrapper {
   padding-top: 0 !important;
 }
@@ -202,6 +206,10 @@ blockquote {
 @media (min-width: 1024px) {
  .main-sections-wrapper {
     padding-top: 194px;
+  }
+
+  .main-sections-wrapper.account-main-sections-wrapper {
+    padding-top: 0;
   }
 }
 

@@ -275,6 +275,9 @@
 .productImageWrap {
   position: relative;
   display: grid;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
   aspect-ratio: 1;
   place-items: center;
   padding: clamp(24px, 3vw, 42px);
