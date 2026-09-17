@@ -150,7 +150,7 @@
 
 .account-signout-form {
   position: sticky;
-  bottom: 0;
+  bottom: 15px;
   z-index: 1;
   margin-top: auto;
   padding-top: 12px;
