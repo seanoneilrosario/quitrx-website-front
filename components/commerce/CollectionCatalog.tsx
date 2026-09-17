@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { variantIsAvailable } from "@/lib/quithero-bundle";
@@ -59,6 +59,8 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
   const [sort, setSort] = useState<Sort>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [lockedProductName, setLockedProductName] = useState<string>();
+  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
+  const requestInFlightRef = useRef(true);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
@@ -109,7 +111,10 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
           }
         })
         .finally(() => {
-          if (!controller.signal.aborted) setProductsLoading(false);
+          if (!controller.signal.aborted) {
+            requestInFlightRef.current = false;
+            setProductsLoading(false);
+          }
         });
     }, 0);
     return () => {
@@ -171,8 +176,9 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
     console.log(`[Collection] Final products displayed for ${collectionSlug}:`, visibleProducts);
   }, [collectionSlug, visibleProducts]);
 
-  const loadMore = async () => {
-    if (productsLoading || !hasNextPage) return;
+  const loadMore = useCallback(async () => {
+    if (requestInFlightRef.current || productsLoading || !hasNextPage) return;
+    requestInFlightRef.current = true;
     setProductsLoading(true);
     setProductsError("");
     try {
@@ -181,9 +187,22 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
       console.error(`[Collection] Failed to load page ${currentApiPage + 1}:`, error);
       setProductsError(error instanceof Error ? error.message : "Unable to load products.");
     } finally {
+      requestInFlightRef.current = false;
       setProductsLoading(false);
     }
-  };
+  }, [currentApiPage, hasNextPage, loadProductsPage, productsLoading]);
+
+  useEffect(() => {
+    const trigger = loadMoreTriggerRef.current;
+    if (!trigger || productsLoading || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) void loadMore();
+    }, { rootMargin: "400px 0px" });
+
+    observer.observe(trigger);
+    return () => observer.disconnect();
+  }, [hasNextPage, loadMore, productsLoading]);
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
@@ -285,10 +304,10 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
         </div>
         {!productsLoading && !visibleProducts.length && <p className={styles.empty}>No products match these filters.</p>}
         {productsError && <p className={styles.empty} role="alert">{productsError}</p>}
-        {(hasNextPage || productsLoading) && <nav className={styles.pagination} aria-label="Load more products">
-          <button type="button" disabled={productsLoading || !hasNextPage} onClick={loadMore}>{productsLoading ? "Loading..." : "Load more"}</button>
+        {(hasNextPage || productsLoading) && <div ref={loadMoreTriggerRef} className={styles.pagination} aria-live="polite">
+          {productsLoading && <span>Loading...</span>}
           <span>{products.length} product{products.length === 1 ? "" : "s"} loaded</span>
-        </nav>}
+        </div>}
       </section>
 
       {lockedProductName && (
