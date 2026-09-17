@@ -148,7 +148,14 @@
   cursor: pointer;
 }
 
-.account-signout-form { margin-top: auto; }
+.account-signout-form {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: auto;
+  padding-top: 12px;
+  background: #073f48;
+}
 
 .account-profile-details { margin-top: 24px; }
 .account-profile-details h2 { margin-bottom: 20px; }
