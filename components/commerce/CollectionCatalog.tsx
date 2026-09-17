@@ -60,14 +60,16 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
   const [availability, setAvailability] = useState("all");
   const [sort, setSort] = useState<Sort>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [infiniteScrollReady, setInfiniteScrollReady] = useState(false);
   const [lockedProductName, setLockedProductName] = useState<string>();
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const requestInFlightRef = useRef(!initialPage);
+  const prefetchedPageRef = useRef<{ page: number; promise: Promise<CollectionPageResponse | undefined> } | undefined>(undefined);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
 
-  const loadProductsPage = useCallback(async (page: number, append: boolean, signal?: AbortSignal) => {
+  const fetchProductsPage = useCallback(async (page: number, signal?: AbortSignal) => {
     const query = new URLSearchParams({ collectionPage: collectionSlug, page: String(page), limit: String(PAGE_SIZE) });
     const requestUrl = `/api/quithero-products?${query}`;
     console.groupCollapsed(`[Collection] Request page ${page}: ${collectionSlug}`);
@@ -87,6 +89,10 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
     console.log("Pagination response:", payload.pagination);
     console.groupEnd();
 
+    return payload;
+  }, [collectionSlug]);
+
+  const applyProductsPage = useCallback((payload: CollectionPageResponse, append: boolean) => {
     setCollection({ name: payload.collection.name, description: payload.collection.description ?? "" });
     setProducts((existing) => {
       const combined = append ? [...existing, ...payload.products] : payload.products;
@@ -101,6 +107,10 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
       console.log(`[Collection] No more matching products for ${collectionSlug}; hiding Load more.`);
     }
   }, [collectionSlug]);
+
+  const loadProductsPage = useCallback(async (page: number, append: boolean, signal?: AbortSignal) => {
+    applyProductsPage(await fetchProductsPage(page, signal), append);
+  }, [applyProductsPage, fetchProductsPage]);
 
   useEffect(() => {
     if (initialPage) return;
@@ -126,6 +136,12 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
       controller.abort();
     };
   }, [collectionSlug, initialPage, loadProductsPage]);
+
+  useEffect(() => {
+    const enableInfiniteScroll = () => setInfiniteScrollReady(true);
+    window.addEventListener("scroll", enableInfiniteScroll, { passive: true, once: true });
+    return () => window.removeEventListener("scroll", enableInfiniteScroll);
+  }, []);
 
   useEffect(() => {
     if (!lockedProductName) return;
@@ -186,7 +202,12 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
     setProductsLoading(true);
     setProductsError("");
     try {
-      await loadProductsPage(currentApiPage + 1, true);
+      const nextPage = currentApiPage + 1;
+      const prefetched = prefetchedPageRef.current?.page === nextPage
+        ? await prefetchedPageRef.current.promise
+        : undefined;
+      prefetchedPageRef.current = undefined;
+      applyProductsPage(prefetched ?? await fetchProductsPage(nextPage), true);
     } catch (error) {
       console.error(`[Collection] Failed to load page ${currentApiPage + 1}:`, error);
       setProductsError(error instanceof Error ? error.message : "Unable to load products.");
@@ -194,19 +215,33 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
       requestInFlightRef.current = false;
       setProductsLoading(false);
     }
-  }, [currentApiPage, hasNextPage, loadProductsPage, productsLoading]);
+  }, [applyProductsPage, currentApiPage, fetchProductsPage, hasNextPage, productsLoading]);
+
+  useEffect(() => {
+    if (productsLoading || !hasNextPage || currentApiPage < 1) return;
+    const nextPage = currentApiPage + 1;
+    if (prefetchedPageRef.current?.page === nextPage) return;
+
+    prefetchedPageRef.current = {
+      page: nextPage,
+      promise: fetchProductsPage(nextPage).catch((error: unknown) => {
+        console.error(`[Collection] Failed to prefetch page ${nextPage}:`, error);
+        return undefined;
+      }),
+    };
+  }, [currentApiPage, fetchProductsPage, hasNextPage, productsLoading]);
 
   useEffect(() => {
     const trigger = loadMoreTriggerRef.current;
-    if (!trigger || productsLoading || !hasNextPage) return;
+    if (!infiniteScrollReady || !trigger || productsLoading || !hasNextPage) return;
 
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) void loadMore();
-    }, { rootMargin: "2000px 0px" });
+    });
 
     observer.observe(trigger);
     return () => observer.disconnect();
-  }, [hasNextPage, loadMore, productsLoading]);
+  }, [hasNextPage, infiniteScrollReady, loadMore, productsLoading]);
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
