@@ -279,6 +279,14 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
   };
 }
 
+const getCachedQuitHeroCollectionPage = unstable_cache(
+  getQuitHeroCollectionPage,
+  ["quithero-collection-page"],
+  { revalidate: QUITHERO_CATALOG_CACHE_SECONDS, tags: ["quithero-products", "quithero-collections"] },
+);
+
+export const getFastQuitHeroCollectionPage = cache(getCachedQuitHeroCollectionPage);
+
 export async function getFreshQuitHeroProducts() {
   return loadQuitHeroProducts();
 }
