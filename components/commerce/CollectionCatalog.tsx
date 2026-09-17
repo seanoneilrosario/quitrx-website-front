@@ -198,7 +198,7 @@ export default function CollectionCatalog({ collectionSlug }: { collectionSlug: 
 
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) void loadMore();
-    }, { rootMargin: "400px 0px" });
+    }, { rootMargin: "2000px 0px" });
 
     observer.observe(trigger);
     return () => observer.disconnect();
