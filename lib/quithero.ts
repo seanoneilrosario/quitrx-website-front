@@ -57,7 +57,7 @@ type QuitHeroCollectionsResponse =
   | { collections?: QuitHeroCollection[]; data?: QuitHeroCollection[]; items?: QuitHeroCollection[] };
 
 const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au").replace(/\/$/, "");
-const RETRY_DELAYS_MS = [1_000, 4_000];
+const RETRY_DELAYS_MS = [250, 750];
 const QUITHERO_CACHE_SECONDS = 60;
 const QUITHERO_CATALOG_CACHE_SECONDS = 300;
 
