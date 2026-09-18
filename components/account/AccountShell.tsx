@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { logoutAccount } from "@/app/account/actions";
 
 const navigation = [
   ["/account", "Account Status", "user"],
@@ -89,7 +90,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
             );
           })}
         </nav>
-        <form className="account-signout-form" action="/api/account/logout" method="post">
+        <form className="account-signout-form" action={logoutAccount}>
           <button type="submit" className="account-signout">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M15 16L20 12L15 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
