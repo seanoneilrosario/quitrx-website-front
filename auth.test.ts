@@ -37,7 +37,7 @@ it("redirects a deleted customer with an existing OAuth session to login", async
     auth: { user: { email: "deleted@example.com" } }, request: request(),
   });
   expect(result).toBeInstanceOf(Response);
-  expect((result as Response).headers.get("location")).toBe("https://example.com/account/login");
+  expect((result as Response).headers.get("location")).toBe("https://example.com/account/login?error=AccountNotFound");
 });
 
 it("checks SMS sessions against the database too", async () => {
@@ -56,10 +56,11 @@ it("allows existing customers and keeps the login route accessible", async () =>
 
 it("does not grant account access when the customer service fails", async () => {
   mocks.lookup.mockRejectedValue(new Error("Service unavailable"));
-  expect(await callbacks.authorized({ auth: { user: { email: "member@example.com" } }, request: request() })).toBeInstanceOf(Response);
+  const result = await callbacks.authorized({ auth: { user: { email: "member@example.com" } }, request: request() });
+  expect((result as Response).headers.get("location")).toBe("https://example.com/account/login?error=ServiceUnavailable");
 });
 
 it("returns missing social-login customers to login without linking them", async () => {
-  expect(await callbacks.signIn({ user: { email: "deleted@example.com" }, account: { provider: "google", providerAccountId: "google-1" } })).toBe("/account/login");
+  expect(await callbacks.signIn({ user: { email: "deleted@example.com" }, account: { provider: "google", providerAccountId: "google-1" } })).toBe("/account/login?error=AccountNotFound");
   expect(mocks.link).not.toHaveBeenCalled();
 });

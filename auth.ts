@@ -72,7 +72,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       // Login requires an existing customer; never recreate deleted accounts.
       if (user.email) {
         const customer = await findQuitHeroCustomerByEmail(user.email);
-        if (!customer?.id) return "/account/login";
+        if (!customer?.id) return "/account/login?error=AccountNotFound";
 
         if (customer?.id && providerAccountId) {
           await linkQuitHeroCustomerOAuth(
@@ -129,8 +129,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (email) {
         try {
           if ((await findQuitHeroCustomerByEmail(email))?.id) return true;
+          return Response.redirect(new URL("/account/login?error=AccountNotFound", request.nextUrl));
         } catch {
-          // Access requires a successful customer lookup.
+          return Response.redirect(new URL("/account/login?error=ServiceUnavailable", request.nextUrl));
         }
       }
       return Response.redirect(new URL("/account/login", request.nextUrl));

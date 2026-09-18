@@ -4,13 +4,27 @@ import { getCustomerSession } from "@/lib/customer-session";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero-customers";
 import LoginPopup from "./LoginPopup";
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
+  const { error } = await searchParams;
+  let loginError = error === "AccountNotFound"
+    ? "You don't have an account. Please contact us for help getting started."
+    : error === "ServiceUnavailable"
+      ? "We couldn't check your account right now. Please try again shortly."
+      : undefined;
   const session = await auth();
   const customerSession = await getCustomerSession();
   const email = session?.user?.email ?? customerSession?.email;
-  const customer = email
-    ? await findQuitHeroCustomerByEmail(email).catch(() => undefined)
-    : undefined;
+  let customer;
+  if (email) {
+    try {
+      customer = await findQuitHeroCustomerByEmail(email);
+      if (!customer?.id) loginError = "You don't have an account. Please contact us for help getting started.";
+    } catch {
+      loginError = "We couldn't check your account right now. Please try again shortly.";
+    }
+  }
   if (customer?.id) redirect("/account");
-  return <LoginPopup googleEnabled={Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)} facebookEnabled={Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET)} smsEnabled={process.env.SMS_LOGIN_ENABLED !== "false"} />;
+  return <LoginPopup loginError={loginError} googleEnabled={Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)} facebookEnabled={Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET)} smsEnabled={process.env.SMS_LOGIN_ENABLED !== "false"} />;
 }

@@ -7,7 +7,7 @@ import { accessCustomerAccount, type CustomerAccessState } from "./actions";
 
 const initialState: CustomerAccessState = {};
 
-export default function LoginPopup({ googleEnabled, facebookEnabled, smsEnabled }: { googleEnabled: boolean; facebookEnabled: boolean; smsEnabled: boolean }) {
+export default function LoginPopup({ googleEnabled, facebookEnabled, smsEnabled, loginError }: { googleEnabled: boolean; facebookEnabled: boolean; smsEnabled: boolean; loginError?: string }) {
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
   const router = useRouter();
 
@@ -66,8 +66,10 @@ export default function LoginPopup({ googleEnabled, facebookEnabled, smsEnabled 
 
         <div className="customer-login__copy">
           <h1 id="customer-login-title">Sign in</h1>
-          <p>Sign in or create an account</p>
+          <p>Sign in to your account</p>
         </div>
+
+        {loginError && <p className="customer-login__error" role="alert">{loginError}</p>}
 
         <div className="customer-login__socials">
           {googleEnabled ? (
