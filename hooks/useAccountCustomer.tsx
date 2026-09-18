@@ -24,7 +24,12 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
 
     fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
-        if (response.status === 401 && pathname !== "/account/login") {
+        const isProtectedAccountPage = pathname === "/account" || (
+          pathname.startsWith("/account/") &&
+          pathname !== "/account/login" &&
+          pathname !== "/account/auth-popup"
+        );
+        if (response.status === 401 && isProtectedAccountPage) {
           router.replace("/account/login");
         }
         setCustomer(response.ok ? await response.json() as QuitHeroCustomer : undefined);
