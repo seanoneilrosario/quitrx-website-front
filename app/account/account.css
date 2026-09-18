@@ -882,6 +882,41 @@
   grid-column: 1 / -1;
 }
 
+.account-profile-sections,
+.account-address-list {
+  display: grid;
+  gap: 18px;
+}
+
+.account-addresses__heading,
+.account-address__summary,
+.account-address__actions,
+.account-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-addresses__heading,
+.account-address__summary {
+  justify-content: space-between;
+}
+
+.account-address-list { margin-top: 20px; }
+.account-address-form { margin-top: 20px; }
+
+.account-address {
+  padding: 18px;
+  border: 1px solid #dfe8e5;
+  border-radius: 12px;
+}
+
+.account-address--default { border-color: #1ca6a0; }
+.account-address__summary > div:first-child { display: grid; gap: 5px; color: #173d45; }
+.account-address__summary .status { width: fit-content; margin-bottom: 4px; padding: 4px 9px; border-radius: 99px; background: #dffaf1; color: #0d665e; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.account-form-message { color: #0d665e; }
+.account-form-error { color: #a72d37; }
+
 @media (max-width: 850px) {
   .account-shell {
     grid-template-columns: 1fr;
@@ -1033,6 +1068,9 @@
   .account-form {
     grid-template-columns: 1fr;
   }
+
+  .account-addresses__heading,
+  .account-address__summary { align-items: flex-start; flex-direction: column; }
 
   .account-profile-details dl { grid-template-columns: 1fr; }
 }

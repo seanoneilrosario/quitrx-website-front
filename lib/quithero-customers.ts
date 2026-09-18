@@ -1,6 +1,12 @@
 import "server-only";
 
 export type QuitHeroAddress = {
+  id?: string;
+  addressId?: string;
+  isDefault?: boolean;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   address1?: string;
   address2?: string;
   line1?: string;
@@ -423,4 +429,35 @@ export async function syncQuitHeroCustomerWithoutBlocking(
 
     return undefined;
   }
+}
+
+export async function createQuitHeroCustomerAddress(
+  customerId: string,
+  address: QuitHeroAddress,
+) {
+  return quitHeroRequest<QuitHeroAddress>(
+    `/customers/${encodeURIComponent(customerId)}/addresses`,
+    { method: "POST", body: JSON.stringify(address) },
+  );
+}
+
+export async function updateQuitHeroCustomerAddress(
+  customerId: string,
+  addressId: string,
+  address: QuitHeroAddress,
+) {
+  return quitHeroRequest<QuitHeroAddress>(
+    `/customers/${encodeURIComponent(customerId)}/addresses/${encodeURIComponent(addressId)}`,
+    { method: "PATCH", body: JSON.stringify(address) },
+  );
+}
+
+export async function setDefaultQuitHeroCustomerAddress(
+  customerId: string,
+  addressId: string,
+) {
+  return quitHeroRequest<QuitHeroAddress>(
+    `/customers/${encodeURIComponent(customerId)}/addresses/${encodeURIComponent(addressId)}/default`,
+    { method: "PATCH" },
+  );
 }
