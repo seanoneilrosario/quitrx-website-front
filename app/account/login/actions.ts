@@ -146,7 +146,7 @@ async function requestCode(email: string, phone: string): Promise<CustomerAccess
     const accountPhone = customer?.phone ? normalizeSmsDestination(customer.phone) : undefined;
     const usingTestDestination = isAllowedTestDestination(destination);
     if (!usingTestDestination && (!customer || accountPhone !== destination)) {
-      return { error: "The email and mobile number do not match an existing account. Use social login or contact support." };
+      return { error: "No account found with these details. Check your email and mobile number, or contact us for help getting started." };
     }
 
     await sendLoginCode(destination, code);

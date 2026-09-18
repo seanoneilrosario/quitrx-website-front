@@ -21,7 +21,7 @@ export default function LoginPopup({
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
   const [socialError, setSocialError] = useState<string>();
   const socialPopup = useRef<Window | null>(null);
-  const displayedLoginError = socialError ?? loginError;
+  const displayedLoginError = state.error ?? socialError ?? loginError;
   const router = useRouter();
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function LoginPopup({
         </div>
 
         {displayedLoginError && (
-          <p className="customer-login__error" role="alert">
+          <p id="customer-login-error" className="customer-login__error" role="alert">
             {displayedLoginError}
           </p>
         )}
@@ -262,11 +262,6 @@ export default function LoginPopup({
                   </button>
                 </div>
               </>
-            )}
-            {state.error && (
-              <p id="customer-login-error" className="customer-login__error" role="alert">
-                {state.error}
-              </p>
             )}
           </form>
         )}

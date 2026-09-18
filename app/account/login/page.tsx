@@ -9,10 +9,12 @@ export default async function LoginPage({ searchParams }: {
 }) {
   const { error } = await searchParams;
   let loginError = error === "AccountNotFound"
-    ? "You don't have an account. Please contact us for help getting started."
+    ? "No account found with these details. Please contact us for help getting started."
     : error === "ServiceUnavailable"
       ? "We couldn't check your account right now. Please try again shortly."
-      : undefined;
+      : error
+        ? "We couldn't sign you in. Please try again or contact us for help."
+        : undefined;
   const session = await auth();
   const customerSession = await getCustomerSession();
   const email = session?.user?.email ?? customerSession?.email;
@@ -20,7 +22,7 @@ export default async function LoginPage({ searchParams }: {
   if (email) {
     try {
       customer = await findQuitHeroCustomerByEmail(email);
-      if (!customer?.id) loginError = "You don't have an account. Please contact us for help getting started.";
+      if (!customer?.id) loginError = "No account found with these details. Please contact us for help getting started.";
     } catch {
       loginError = "We couldn't check your account right now. Please try again shortly.";
     }
