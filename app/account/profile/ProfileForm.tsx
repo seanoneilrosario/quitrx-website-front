@@ -7,26 +7,21 @@ import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 function AddressFields({ address }: { address?: QuitHeroAddress }) {
   return <>
-    <label>First name<input name="firstName" defaultValue={address?.firstName ?? ""}/></label>
-    <label>Last name<input name="lastName" defaultValue={address?.lastName ?? ""}/></label>
     <label className="full">Address<input name="address1" autoComplete="address-line1" defaultValue={address?.address1 ?? address?.line1 ?? ""} required/></label>
     <label className="full">Apartment, suite, etc.<input name="address2" autoComplete="address-line2" defaultValue={address?.address2 ?? address?.line2 ?? ""}/></label>
     <label>Suburb / city<input name="city" autoComplete="address-level2" defaultValue={address?.city ?? ""} required/></label>
     <label>State<input name="state" autoComplete="address-level1" defaultValue={address?.state ?? address?.province ?? ""} required/></label>
     <label>Postcode<input name="postcode" autoComplete="postal-code" defaultValue={address?.postcode ?? address?.zip ?? ""} required/></label>
     <label>Country<input name="country" autoComplete="country-name" defaultValue={address?.country ?? "Australia"} required/></label>
-    <label className="full">Phone<input name="phone" type="tel" autoComplete="tel" defaultValue={address?.phone ?? ""}/></label>
   </>;
 }
 
 function addressLines(address: QuitHeroAddress) {
   return [
-    [address.firstName, address.lastName].filter(Boolean).join(" "),
     address.address1 ?? address.line1,
     address.address2 ?? address.line2,
     [address.city, address.state ?? address.province, address.postcode ?? address.zip].filter(Boolean).join(" "),
     address.country,
-    address.phone,
   ].filter(Boolean);
 }
 
