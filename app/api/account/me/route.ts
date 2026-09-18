@@ -34,18 +34,21 @@ export async function GET() {
 
   try {
     const customer = await findQuitHeroCustomerByEmail(email);
-    const account = customer ? {
+    if (!customer?.id) {
+      return NextResponse.json({ error: "Customer account not found." }, { status: 401 });
+    }
+    const account = {
       ...customer,
       email: customer.email?.trim() || identity.email,
       firstName: customer.firstName?.trim() || identity.firstName,
       lastName: customer.lastName?.trim() || identity.lastName,
-    } : identity;
+    };
     return NextResponse.json(account, { headers: { "cache-control": "no-store" } });
   } catch (error) {
     console.error("QuitHero customer lookup failed.", {
       error: error instanceof Error ? error.message : "Unknown error",
     });
-    return NextResponse.json(identity, { headers: { "cache-control": "no-store" } });
+    return NextResponse.json({ error: "Unable to load your account." }, { status: 503 });
   }
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { QuitHeroCustomer } from "@/lib/quithero-customers";
 
 type AccountCustomerContextValue = {
@@ -14,6 +14,7 @@ const AccountCustomerContext = createContext<AccountCustomerContextValue | undef
 
 export function AccountCustomerProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [customer, setCustomer] = useState<QuitHeroCustomer>();
   const [loading, setLoading] = useState(true);
   const [loadedPathname, setLoadedPathname] = useState<string>();
@@ -23,6 +24,9 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
 
     fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
+        if (response.status === 401 && pathname !== "/account/login") {
+          router.replace("/account/login");
+        }
         setCustomer(response.ok ? await response.json() as QuitHeroCustomer : undefined);
       })
       .catch((error: unknown) => {
@@ -36,7 +40,7 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
       });
 
     return () => controller.abort();
-  }, [pathname]);
+  }, [pathname, router]);
 
   const isLoadingCurrentPath = loading || loadedPathname !== pathname;
 

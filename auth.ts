@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google";
 import {
   findQuitHeroCustomerByOAuth,
   linkQuitHeroCustomerOAuth,
-  syncQuitHeroCustomerWithoutBlocking,
+  findQuitHeroCustomerByEmail,
 } from "@/lib/quithero-customers";
 import {
   CUSTOMER_SESSION_COOKIE,
@@ -69,20 +69,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
       }
 
-      // If the OAuth provider supplied an email,
-      // find/create the QuitHero customer and link the OAuth account.
+      // Login requires an existing customer; never recreate deleted accounts.
       if (user.email) {
-        const [firstName, ...lastNameParts] = (user.name ?? "")
-          .trim()
-          .split(/\s+/);
-
-        const customer =
-          await syncQuitHeroCustomerWithoutBlocking({
-            email: user.email,
-            firstName: firstName || undefined,
-            lastName:
-              lastNameParts.join(" ") || undefined,
-          });
+        const customer = await findQuitHeroCustomerByEmail(user.email);
+        if (!customer?.id) return "/account/login";
 
         if (customer?.id && providerAccountId) {
           await linkQuitHeroCustomerOAuth(
@@ -124,7 +114,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return session;
     },
 
-    authorized({ auth: session, request }) {
+    async authorized({ auth: session, request }) {
       const pathname = request.nextUrl.pathname;
       const isLoginPage = pathname === "/account/login";
 
@@ -135,11 +125,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       const emailSession = verifySignedCustomerSession(
         request.cookies.get(CUSTOMER_SESSION_COOKIE)?.value,
       );
-      return Boolean(
-        session?.user?.id ||
-          session?.user?.email ||
-          emailSession?.email,
-      );
+      const email = session?.user?.email ?? emailSession?.email;
+      if (email) {
+        try {
+          if ((await findQuitHeroCustomerByEmail(email))?.id) return true;
+        } catch {
+          // Access requires a successful customer lookup.
+        }
+      }
+      return Response.redirect(new URL("/account/login", request.nextUrl));
     },
   },
 });

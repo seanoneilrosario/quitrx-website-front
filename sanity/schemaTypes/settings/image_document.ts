@@ -1,8 +1,9 @@
 import { defineField, defineType } from "sanity";
+import { ImageUploadInput } from '../../components/ImageUploadInput';
 
 export const imageDocument = defineType({
   name: "image_document",
-  title: "Image Document",
+  title: "Image Uploads",
   type: "document",
 
   fields: [
@@ -17,6 +18,9 @@ export const imageDocument = defineType({
       name: "images",
       title: "Images",
       type: "array",
+      description: "Upload images, then search this document by image ID, URL, filename, alt text, or caption.",
+      options: { layout: "grid" },
+      components: { input: ImageUploadInput },
       of: [
         {
           type: "image",
@@ -35,6 +39,9 @@ export const imageDocument = defineType({
               type: "string",
             }),
           ],
+          preview: {
+            select: { title: 'asset.originalFilename', subtitle: 'alt', media: 'asset' },
+          },
         },
       ],
     }),

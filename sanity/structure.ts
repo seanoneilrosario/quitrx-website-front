@@ -8,6 +8,7 @@ export const structure: StructureResolver = (S) =>
       S.documentTypeListItem('products').title('Products'),
       S.documentTypeListItem('productCollection').title('Product Collections'),
       S.documentTypeListItem('category').title('Product Categories'),
+      S.documentTypeListItem('image_document').title('Image Uploads'),
       S.divider(),
       S.documentTypeListItem('post').title('Posts'),
       // S.documentTypeListItem('author').title('Authors'),
@@ -15,14 +16,4 @@ export const structure: StructureResolver = (S) =>
       ...S.documentTypeListItems().filter(
         (item) => item.getId() && !['products', 'productCollection', 'post', 'category', 'author', 'image_document'].includes(item.getId()!),
       ),
-      S.divider(),
-      S.listItem()
-        .title('Settings')
-        .child(
-          S.list()
-            .title('Settings')
-            .items([
-              S.documentTypeListItem('image_document').title('Image Document'),
-            ]),
-        ),
     ])
