@@ -456,6 +456,10 @@
   color: #fff;
 }
 
+.account-button:hover { background: #0a5d61; border-color: #0a5d61; }
+.account-button:focus-visible { outline: 3px solid rgba(10, 93, 97, .22); outline-offset: 2px; }
+.account-button:disabled { cursor: not-allowed; opacity: .6; }
+
 .account-button--primary {
   background: #0a5d61;
   border-color: #0a5d61;
@@ -914,6 +918,25 @@
 .account-address--default { border-color: #1ca6a0; }
 .account-address__summary > div:first-child { display: grid; gap: 5px; color: #173d45; }
 .account-address__summary .status { width: fit-content; margin-bottom: 4px; padding: 4px 9px; border-radius: 99px; background: #dffaf1; color: #0d665e; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.account-address__actions .text-button,
+.account-form-actions .text-button {
+  padding: 10px 15px;
+  border: 1px solid #0a5d61;
+  border-radius: 7px;
+  background: transparent;
+  color: #0a5d61;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.account-address__actions .text-button:hover,
+.account-form-actions .text-button:hover { background: #edf7f4; }
+.account-address__actions .text-button:focus-visible,
+.account-form-actions .text-button:focus-visible { outline: 3px solid rgba(10, 93, 97, .18); outline-offset: 2px; }
+.account-address__actions .text-button:disabled,
+.account-form-actions .text-button:disabled { cursor: not-allowed; opacity: .55; }
 .account-form-message { color: #0d665e; }
 .account-form-error { color: #a72d37; }
 
