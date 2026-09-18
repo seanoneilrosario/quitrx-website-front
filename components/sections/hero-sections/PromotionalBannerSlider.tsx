@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 type PromotionalSlide = {
   _key?: string;
@@ -30,6 +31,7 @@ export default function PromotionalBannerSlider({
   slides,
   autoplay = true,
 }: PromotionalBannerSliderProps) {
+  const { customer, loading } = useAccountCustomer();
   const visibleSlides = slides.filter((slide) => Boolean(slide.image));
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -45,7 +47,7 @@ export default function PromotionalBannerSlider({
     return () => window.clearInterval(timer);
   }, [autoplay, isPaused, slideCount]);
 
-  if (!slideCount) return null;
+  if (loading || !customer || !slideCount) return null;
 
   const safeActiveIndex = activeIndex % slideCount;
   const currentSlide = visibleSlides[safeActiveIndex];
