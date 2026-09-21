@@ -6,8 +6,25 @@ import ProductDetail from "@/components/commerce/ProductDetail";
 type ProductPageProps = { params: Promise<{ handle: string }> };
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const product = await getQuitHeroProductWhenReady((await params).handle).catch(() => undefined);
-  return { title: product?.name || "Product", description: product?.shortDescription };
+  const { handle } = await params;
+  const product = await getQuitHeroProductWhenReady(handle).catch(() => undefined);
+  const title = product?.name || "Product";
+  const description = product?.shortDescription;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `/product/${handle}` },
+    openGraph: {
+      title,
+      description,
+      url: `/product/${handle}`,
+      siteName: "QuitRx",
+      locale: "en_AU",
+      type: "website",
+    },
+    twitter: { card: "summary", title, description },
+  };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { CHECKOUT_SHIPPING, isCheckoutShippingMethod } from "@/lib/checkout";
 import { getCustomerSession } from "@/lib/customer-session";
-import { createEwaySharedPayment } from "@/lib/eway";
+import { createEwaySharedPayment, EwayApiError } from "@/lib/eway";
 import { setPendingEwayPayment } from "@/lib/eway-payment-session";
 import { getFreshQuitHeroProducts } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/quithero-bundle";
@@ -108,8 +108,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ paymentUrl: result.SharedPaymentUrl }, { headers: { "cache-control": "private, no-store" } });
   } catch (error) {
     console.error("Unable to start eWAY payment:", error);
-    const message = error instanceof Error && error.message.includes("not configured")
-      ? "Payments are temporarily unavailable. Please contact support."
+    const isConfigurationError = error instanceof EwayApiError && (error.status === 401 || error.status === 403);
+    const message = (error instanceof Error && error.message.includes("not configured")) || isConfigurationError
+      ? "Payments are temporarily unavailable because the payment gateway is not configured correctly. Please contact support."
       : "We couldn't start the secure payment. Please try again.";
     return NextResponse.json({ error: message }, { status: 502 });
   }

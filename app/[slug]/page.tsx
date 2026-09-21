@@ -61,7 +61,7 @@ export async function generateMetadata({
 
   if (!page) {
     return {
-      title: "Page Not Found | MCQ Capital LLC",
+      title: "Page Not Found",
       description: "The requested page could not be found.",
       robots: {
         index: false,
@@ -70,26 +70,31 @@ export async function generateMetadata({
     };
   }
 
-  const metaTitle =
-    `${page.title} | MCQ Capital LLC`;
+  const metaTitle = page.title ?? "QuitRx";
 
   const metaDescription =
     page.metaDescription ??
-    "Welcome to MCQ Capital LLC";
+    "Advancing the way Australians quit.";
 
   return {
     title: metaTitle,
 
     description: metaDescription,
 
+    alternates: {
+      canonical: `/${slug}`,
+    },
+
     openGraph: {
       title: metaTitle,
 
       description: metaDescription,
 
-      url: `https://mcq-swart.vercel.app/${slug}`,
+      url: `/${slug}`,
 
-      siteName: "MCQ Capital LLC",
+      siteName: "QuitRx",
+
+      locale: "en_AU",
 
       type: "website",
 
@@ -101,6 +106,15 @@ export async function generateMetadata({
             height: 630,
           },
         ],
+      }),
+    },
+
+    twitter: {
+      card: page.meta_image ? "summary_large_image" : "summary",
+      title: metaTitle,
+      description: metaDescription,
+      ...(page.meta_image && {
+        images: [page.meta_image],
       }),
     },
 

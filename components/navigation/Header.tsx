@@ -372,13 +372,13 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                 {selectedLogo ? (
                   <Image
                     src={selectedLogo}
-                    alt={navigation?.headerLogoAlt || navigation?.title || "MCQ"}
+                    alt={navigation?.headerLogoAlt || navigation?.title || "QuitRx"}
                     width={280}
                     height={80}
                     priority
                   />
                 ) : (
-                  <span>MCQ</span>
+                  <span>QuitRx</span>
                 )}
               </Link>
             <nav className="site-header__desktop-nav" aria-label="Primary navigation">
@@ -414,7 +414,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                 {(!isHome && navigation?.header_logo2) ? (
                   <Image
                     src={navigation.header_logo2}
-                    alt={navigation.headerLogoAlt || navigation.title || "MCQ"}
+                    alt={navigation.headerLogoAlt || navigation.title || "QuitRx"}
                     width={90}
                     height={90}
                   />
@@ -425,13 +425,13 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                       navigation.headerLogoMenuAlt ||
                       navigation.headerLogoAlt ||
                       navigation.title ||
-                      "MCQ"
+                      "QuitRx"
                     }
                     width={90}
                     height={90}
                   />
                 ) : (
-                  <span>MCQ</span>
+                  <span>QuitRx</span>
                 )}
               </Link>
               {/* <button

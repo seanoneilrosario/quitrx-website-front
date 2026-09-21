@@ -5,7 +5,7 @@ import {MetadataRoute} from "next";
 import {defineQuery, SanityDocument} from "next-sanity";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const ROOT_URL = "https://mcq-swart.vercel.app";
+  const ROOT_URL = "https://quitrx.com.au";
 
   const query = defineQuery(ALLPAGE_QUERY);
 

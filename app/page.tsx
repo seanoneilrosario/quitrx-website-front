@@ -10,7 +10,7 @@
 
   interface HomePageData {
     title?: string;
-    meta_description?: string;
+    metaDescription?: string;
     meta_image?: string;
   }
 
@@ -45,21 +45,27 @@
   export async function generateMetadata(): Promise<Metadata> {
     const homeData = (await getHomePage()) as HomePageData | null;
 
-    const metaTitle = "MCQ Capital LLC";
+    const metaTitle = "QuitRx";
 
     const metaDescription =
-      homeData?.meta_description ??
-      "Welcome to Dr. Costas";
+      homeData?.metaDescription ??
+      "Advancing the way Australians quit.";
 
     return {
-      title: metaTitle,
+      title: {
+        absolute: metaTitle,
+      },
       description: metaDescription,
+      alternates: {
+        canonical: "/",
+      },
 
       openGraph: {
         title: metaTitle,
         description: metaDescription,
-        url: "http://localhost:3000/",
+        url: "/",
         siteName: metaTitle,
+        locale: "en_AU",
         type: "website",
 
         ...(homeData?.meta_image && {
@@ -70,6 +76,15 @@
               height: 630,
             },
           ],
+        }),
+      },
+
+      twitter: {
+        card: homeData?.meta_image ? "summary_large_image" : "summary",
+        title: metaTitle,
+        description: metaDescription,
+        ...(homeData?.meta_image && {
+          images: [homeData.meta_image],
         }),
       },
 

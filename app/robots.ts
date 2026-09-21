@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: "/private/",
     },
-    sitemap: "https://mcq-swart.vercel.app/sitemap.xml",
+    sitemap: "https://quitrx.com.au/sitemap.xml",
   };
 }

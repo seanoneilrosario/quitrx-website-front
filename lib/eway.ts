@@ -5,6 +5,17 @@ const PRODUCTION_API_URL = "https://api.ewaypayments.com";
 
 type EwayErrorResponse = { Errors?: string | null };
 
+export class EwayApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly codes?: string,
+  ) {
+    super(message);
+    this.name = "EwayApiError";
+  }
+}
+
 export type EwaySharedPaymentRequest = {
   Customer: EwayAddress & { Email: string };
   ShippingAddress: EwayAddress;
@@ -78,10 +89,14 @@ async function ewayFetch<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     body = (text ? JSON.parse(text) : {}) as T & EwayErrorResponse;
   } catch {
-    throw new Error(`eWAY returned an invalid response (${response.status}).`);
+    throw new EwayApiError(`eWAY returned an invalid response (${response.status}).`, response.status);
   }
   if (!response.ok || body.Errors) {
-    throw new Error(`eWAY rejected the payment request${body.Errors ? ` (${body.Errors})` : ""}.`);
+    throw new EwayApiError(
+      `eWAY rejected the payment request${body.Errors ? ` (${body.Errors})` : ""}.`,
+      response.status,
+      body.Errors || undefined,
+    );
   }
   return body;
 }

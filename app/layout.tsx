@@ -22,9 +22,21 @@ import "./globals.css";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mcq-swart.vercel.app"),
-
-  title: "MCQ Capital LLC",
+  metadataBase: new URL("https://quitrx.com.au"),
+  title: {
+    default: "QuitRx",
+    template: "%s | QuitRx",
+  },
+  description: "Advancing the way Australians quit.",
+  applicationName: "QuitRx",
+  openGraph: {
+    siteName: "QuitRx",
+    type: "website",
+    locale: "en_AU",
+  },
+  twitter: {
+    card: "summary",
+  },
 
   icons: {
     icon: "/favicon.ico",
