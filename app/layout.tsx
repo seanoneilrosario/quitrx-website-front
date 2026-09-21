@@ -4,18 +4,15 @@ import { draftMode } from "next/headers";
 import { defineQuery } from "next-sanity";
 
 import { DisableDraftMode } from "@/components/global/DisableDraftMode";
-import ThemeProvider, {
-  type ThemeSettings,
-} from "@/components/global/ThemeProvider";
+import type { ThemeSettings } from "@/components/global/ThemeProvider";
+import WebsiteShell from "@/components/global/WebsiteShell";
 import type {
   NavigationData,
   SearchPage,
 } from "@/components/navigation/Header";
-import SiteChrome from "@/components/navigation/SiteChrome";
 
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { HEADER_SEARCH_QUERY, NAVIGATION, SETTINGS } from "@/sanity/lib/queries";
-import { AccountCustomerProvider } from "@/hooks/useAccountCustomer";
 
 import "./globals.css";
 
@@ -99,21 +96,19 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider
+        <WebsiteShell
           settings={settings as ThemeSettings | undefined}
+          navigation={navigation as NavigationData | null}
+          searchPages={searchPages as SearchPage[]}
+          liveContent={
+            <>
+              <SanityLive />
+              {isEnabled && <DisableDraftMode />}
+            </>
+          }
         >
-          <AccountCustomerProvider>
-            <SiteChrome
-              navigation={navigation as NavigationData | null}
-              searchPages={searchPages as SearchPage[]}
-            >
-              {children}
-            </SiteChrome>
-          </AccountCustomerProvider>
-
-          <SanityLive />
-          {isEnabled && <DisableDraftMode />}
-        </ThemeProvider>
+          {children}
+        </WebsiteShell>
       </body>
     </html>
   );

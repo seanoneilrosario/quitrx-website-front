@@ -42,7 +42,13 @@ type BundleDropdown = {
 const CART_KEY = "quitrx-cart";
 
 function variantLabel(variant: Variant, index: number) {
-  return variant.options?.strength || variant.options?.Strength || variant.size || variant.name || `Option ${index + 1}`;
+  return (
+    variant.options?.strength ||
+    variant.options?.Strength ||
+    variant.size ||
+    variant.name ||
+    `Option ${index + 1}`
+  );
 }
 
 function relatedVariantLabel(productName: string, variant: Variant, index: number) {
@@ -59,7 +65,8 @@ function bundleChoiceLabel(productName: string, variantName: string) {
 }
 
 function formatPrice(value?: number | string) {
-  if (typeof value === "number") return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
+  if (typeof value === "number")
+    return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
   return value || "Price on request";
 }
 
@@ -74,7 +81,9 @@ function addItemsToCart(items: StorefrontCartItem[]) {
   });
 
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items: cart, open: true } }));
+  window.dispatchEvent(
+    new CustomEvent("quitrx:cart-updated", { detail: { items: cart, open: true } }),
+  );
 }
 
 async function syncBundleComponents(item: StorefrontCartItem) {
@@ -114,15 +123,21 @@ export default function ProductPurchasePanel({
   bundleDropdowns: BundleDropdown[];
   relatedProducts: RelatedProduct[];
 }) {
-  const [selectedIndex, setSelectedIndex] = useState(() => isBundle ? 0 : firstAvailableVariantIndex(variants));
+  const [selectedIndex, setSelectedIndex] = useState(() =>
+    isBundle ? 0 : firstAvailableVariantIndex(variants),
+  );
   const [quantity, setQuantity] = useState(1);
   const [relatedSelections, setRelatedSelections] = useState<Record<string, boolean>>({});
-  const [relatedVariants, setRelatedVariants] = useState<Record<string, number>>(() => Object.fromEntries(
-    relatedProducts.map((product) => [product.id, firstAvailableVariantIndex(product.variants)]),
-  ));
-  const [bundleSelections, setBundleSelections] = useState(() => bundleDropdowns.map((dropdown) =>
-    dropdown.options.find((option) => option.available)?.componentVariantId || "",
-  ));
+  const [relatedVariants, setRelatedVariants] = useState<Record<string, number>>(() =>
+    Object.fromEntries(
+      relatedProducts.map((product) => [product.id, firstAvailableVariantIndex(product.variants)]),
+    ),
+  );
+  const [bundleSelections, setBundleSelections] = useState(() =>
+    bundleDropdowns.map(
+      (dropdown) => dropdown.options.find((option) => option.available)?.componentVariantId || "",
+    ),
+  );
   const [bundleLoading, setBundleLoading] = useState(false);
   const [bundleError, setBundleError] = useState("");
   const [stockError, setStockError] = useState("");
@@ -131,8 +146,8 @@ export default function ProductPurchasePanel({
   const selectedBundleOptions = bundleDropdowns.map((dropdown, index) =>
     dropdown.options.find((option) => option.componentVariantId === bundleSelections[index]),
   );
-  const bundleIsAvailable = selectedBundleOptions.length > 0
-    && selectedBundleOptions.every((option) => option?.available);
+  const bundleIsAvailable =
+    selectedBundleOptions.length > 0 && selectedBundleOptions.every((option) => option?.available);
   const availableStock = isBundle
     ? Math.min(...selectedBundleOptions.map((option) => option?.availableStock ?? 0))
     : getAvailableStock(selected);
@@ -146,9 +161,9 @@ export default function ProductPurchasePanel({
   }
 
   function selectBundleComponent(dropdownIndex: number, variantId: string) {
-    setBundleSelections((selections) => selections.map((selection, index) =>
-      index === dropdownIndex ? variantId : selection,
-    ));
+    setBundleSelections((selections) =>
+      selections.map((selection, index) => (index === dropdownIndex ? variantId : selection)),
+    );
   }
 
   async function addToCart() {
@@ -158,14 +173,22 @@ export default function ProductPurchasePanel({
     const storedCart: StorefrontCartItem[] = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
 
     const mainVariantName = selected ? variantLabel(selected, selectedIndex) : "Default";
-    const selectedBundleComponents = selectedBundleOptions.flatMap((option) => option ? [{
-      productId: option.productId,
-      productName: option.productName,
-      variantId: option.componentVariantId,
-      variantName: option.variantName,
-      quantity: 1,
-    }] : []);
-    const configurationKey = selectedBundleComponents.map((component) => component.variantId || component.variantName).join(",");
+    const selectedBundleComponents = selectedBundleOptions.flatMap((option) =>
+      option
+        ? [
+            {
+              productId: option.productId,
+              productName: option.productName,
+              variantId: option.componentVariantId,
+              variantName: option.variantName,
+              quantity: 1,
+            },
+          ]
+        : [],
+    );
+    const configurationKey = selectedBundleComponents
+      .map((component) => component.variantId || component.variantName)
+      .join(",");
     const mainItem: StorefrontCartItem = {
       key: `${productId}:${selected?.id || mainVariantName}${configurationKey ? `:${configurationKey}` : ""}`,
       productId,
@@ -183,26 +206,32 @@ export default function ProductPurchasePanel({
       const variant = product.variants[index];
       if (!variant || !variantIsAvailable(variant)) return [];
       const name = variant ? variantLabel(variant, index) : "Default";
-      return [{
-        key: `${product.id}:${variant?.id || name}`,
-        productId: product.id,
-        productName: product.name,
-        image: product.image,
-        variantId: variant?.id,
-        variantName: name,
-        price: variant?.price,
-        quantity: 1,
-        availableStock: getAvailableStock(variant),
-        checked: Boolean(relatedSelections[product.id]),
-      }];
+      return [
+        {
+          key: `${product.id}:${variant?.id || name}`,
+          productId: product.id,
+          productName: product.name,
+          image: product.image,
+          variantId: variant?.id,
+          variantName: name,
+          price: variant?.price,
+          quantity: 1,
+          availableStock: getAvailableStock(variant),
+          checked: Boolean(relatedSelections[product.id]),
+        },
+      ];
     });
     const items = buildMultiItemCartPayload(mainItem, recommendationItems);
 
-    if (items.some((item) => {
-      const existingQuantity = storedCart.find((entry) => entry.key === item.key)?.quantity ?? 0;
-      return existingQuantity + item.quantity > (item.availableStock ?? 0);
-    })) {
-      setStockError("The requested quantity is no longer available. Please reduce the quantity and try again.");
+    if (
+      items.some((item) => {
+        const existingQuantity = storedCart.find((entry) => entry.key === item.key)?.quantity ?? 0;
+        return existingQuantity + item.quantity > (item.availableStock ?? 0);
+      })
+    ) {
+      setStockError(
+        "The requested quantity is no longer available. Please reduce the quantity and try again.",
+      );
       return;
     }
 
@@ -225,7 +254,10 @@ export default function ProductPurchasePanel({
 
   return (
     <>
-      <p className={styles.detailPrice}>{price}{price !== "Price on request" && " AUD"}</p>
+      <p className={styles.detailPrice}>
+        ${price}
+        {price !== "Price on request" && " AUD"}
+      </p>
       <p className={styles.shippingNote}>Shipping calculated at checkout</p>
 
       {!isBundle && variants.length > 1 && (
@@ -233,7 +265,13 @@ export default function ProductPurchasePanel({
           <legend>Choose your strength</legend>
           <div className={styles.variantOptions}>
             {variants.map((variant, index) => (
-              <button key={variant.id || `${variantLabel(variant, index)}-${index}`} type="button" className={selectedIndex === index ? styles.variantActive : ""} disabled={!variantIsAvailable(variant)} onClick={() => selectParentVariant(index)}>
+              <button
+                key={variant.id || `${variantLabel(variant, index)}-${index}`}
+                type="button"
+                className={selectedIndex === index ? styles.variantActive : ""}
+                disabled={!variantIsAvailable(variant)}
+                onClick={() => selectParentVariant(index)}
+              >
                 {variantLabel(variant, index)}
               </button>
             ))}
@@ -243,16 +281,46 @@ export default function ProductPurchasePanel({
 
       <span className={styles.quantityLabel}>Quantity</span>
       <div className={styles.quantityControl}>
-        <button type="button" aria-label="Decrease quantity" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>-</button>
+        <button
+          type="button"
+          aria-label="Decrease quantity"
+          onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+        >
+          -
+        </button>
         <output aria-live="polite">{quantity}</output>
-        <button type="button" aria-label="Increase quantity" disabled={!available || quantity >= availableStock} onClick={() => setQuantity((value) => Math.min(availableStock, value + 1))}>+</button>
+        <button
+          type="button"
+          aria-label="Increase quantity"
+          disabled={!available || quantity >= availableStock}
+          onClick={() => setQuantity((value) => Math.min(availableStock, value + 1))}
+        >
+          +
+        </button>
       </div>
 
       <p className={available ? styles.stockStatus : styles.outOfStock}>
-        {bundleLoading ? "Loading bundle..." : bundleError || (available ? <>Low stock! Only <strong>{availableStock}</strong> units left!</> : selected ? "Out of stock" : "Select a bundle")}
+        {bundleLoading
+          ? "Loading bundle..."
+          : bundleError ||
+            (available ? (
+              <>
+                Low stock! Only <strong>{availableStock}</strong> units left!
+              </>
+            ) : selected ? (
+              "Out of stock"
+            ) : (
+              "Select a bundle"
+            ))}
       </p>
-      {stockError && <p className={styles.outOfStock} role="alert">{stockError}</p>}
-      <span className={styles.stockBar} aria-hidden="true"><span /></span>
+      {stockError && (
+        <p className={styles.outOfStock} role="alert">
+          {stockError}
+        </p>
+      )}
+      <span className={styles.stockBar} aria-hidden="true">
+        <span />
+      </span>
 
       {isBundle && bundleDropdowns.length > 0 && (
         <section className={styles.bundleProducts} aria-label="Bundle includes">
@@ -265,9 +333,15 @@ export default function ProductPurchasePanel({
                 required
                 onChange={(event) => selectBundleComponent(dropdownIndex, event.target.value)}
               >
-                <option value="" disabled>Select an option</option>
+                <option value="" disabled>
+                  Select an option
+                </option>
                 {dropdown.options.map((choice) => (
-                  <option key={choice.componentVariantId} value={choice.componentVariantId} disabled={!choice.available}>
+                  <option
+                    key={choice.componentVariantId}
+                    value={choice.componentVariantId}
+                    disabled={!choice.available}
+                  >
                     {bundleChoiceLabel(choice.productName, choice.variantName)}
                   </option>
                 ))}
@@ -284,14 +358,45 @@ export default function ProductPurchasePanel({
             const variantIndex = relatedVariants[product.id] || 0;
             return (
               <article className={styles.relatedProduct} key={product.id}>
-                <input id={`related-${product.id}`} type="checkbox" checked={Boolean(relatedSelections[product.id])} onChange={(event) => setRelatedSelections((values) => ({ ...values, [product.id]: event.target.checked }))} />
-                {product.image && <Image src={product.image} width={96} height={96} alt="" sizes="96px" />}
+                <input
+                  id={`related-${product.id}`}
+                  type="checkbox"
+                  checked={Boolean(relatedSelections[product.id])}
+                  onChange={(event) =>
+                    setRelatedSelections((values) => ({
+                      ...values,
+                      [product.id]: event.target.checked,
+                    }))
+                  }
+                />
+                {product.image && (
+                  <Image src={product.image} width={96} height={96} alt="" sizes="96px" />
+                )}
                 <span>
-                  <label htmlFor={`related-${product.id}`}><strong>{product.name}</strong></label>
+                  <label htmlFor={`related-${product.id}`}>
+                    <strong>{product.name}</strong>
+                  </label>
                   <small>{formatPrice(product.variants[variantIndex]?.price)}</small>
                   {product.variants.length > 0 && (
-                    <select value={variantIndex} onChange={(event) => setRelatedVariants((values) => ({ ...values, [product.id]: Number(event.target.value) }))} aria-label={`${product.name} option`}>
-                      {product.variants.map((variant, index) => <option key={variant.id || index} value={index} disabled={!variantIsAvailable(variant)}>{relatedVariantLabel(product.name, variant, index)}</option>)}
+                    <select
+                      value={variantIndex}
+                      onChange={(event) =>
+                        setRelatedVariants((values) => ({
+                          ...values,
+                          [product.id]: Number(event.target.value),
+                        }))
+                      }
+                      aria-label={`${product.name} option`}
+                    >
+                      {product.variants.map((variant, index) => (
+                        <option
+                          key={variant.id || index}
+                          value={index}
+                          disabled={!variantIsAvailable(variant)}
+                        >
+                          {relatedVariantLabel(product.name, variant, index)}
+                        </option>
+                      ))}
                     </select>
                   )}
                 </span>
@@ -302,7 +407,15 @@ export default function ProductPurchasePanel({
       )}
 
       <button type="button" className={styles.addToCart} disabled={!available} onClick={addToCart}>
-        {added ? "Added to cart" : bundleLoading ? "Loading bundle" : !selected ? "Select a bundle" : available ? "Add to cart" : "Sold out"}
+        {added
+          ? "Added to cart"
+          : bundleLoading
+            ? "Loading bundle"
+            : !selected
+              ? "Select a bundle"
+              : available
+                ? "Add to cart"
+                : "Sold out"}
       </button>
 
       <div className={styles.stickyPurchaseBar}>
@@ -311,17 +424,57 @@ export default function ProductPurchasePanel({
           <strong>{productName}</strong>
         </div>
         {!isBundle && variants.length > 1 && (
-          <select value={selectedIndex} onChange={(event) => selectParentVariant(Number(event.target.value))} aria-label="Product option">
-            {variants.map((variant, index) => <option key={variant.id || index} value={index} disabled={!variantIsAvailable(variant)}>{variantLabel(variant, index)}</option>)}
+          <select
+            value={selectedIndex}
+            onChange={(event) => selectParentVariant(Number(event.target.value))}
+            aria-label="Product option"
+          >
+            {variants.map((variant, index) => (
+              <option
+                key={variant.id || index}
+                value={index}
+                disabled={!variantIsAvailable(variant)}
+              >
+                {variantLabel(variant, index)}
+              </option>
+            ))}
           </select>
         )}
         <div className={styles.stickyQuantity}>
-          <button type="button" aria-label="Decrease quantity" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>-</button>
+          <button
+            type="button"
+            aria-label="Decrease quantity"
+            onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+          >
+            -
+          </button>
           <span>{quantity}</span>
-          <button type="button" aria-label="Increase quantity" disabled={!available || quantity >= availableStock} onClick={() => setQuantity((value) => Math.min(availableStock, value + 1))}>+</button>
+          <button
+            type="button"
+            aria-label="Increase quantity"
+            disabled={!available || quantity >= availableStock}
+            onClick={() => setQuantity((value) => Math.min(availableStock, value + 1))}
+          >
+            +
+          </button>
         </div>
         <strong className={styles.stickyPrice}>{price}</strong>
-        <button type="button" className={styles.stickyButton} disabled={!available} onClick={addToCart}>{added ? "Added" : bundleLoading ? "Loading" : !selected ? "Select bundle" : available ? "Add to Cart" : "Sold out"}</button>
+        <button
+          type="button"
+          className={styles.stickyButton}
+          disabled={!available}
+          onClick={addToCart}
+        >
+          {added
+            ? "Added"
+            : bundleLoading
+              ? "Loading"
+              : !selected
+                ? "Select bundle"
+                : available
+                  ? "Add to Cart"
+                  : "Sold out"}
+        </button>
       </div>
     </>
   );
