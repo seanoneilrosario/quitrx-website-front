@@ -216,6 +216,10 @@
   margin: 0 0 14px;
 }
 
+.disclosureContent :global(p:empty) {
+  display: none;
+}
+
 .disclosureContent :global(p:last-child),
 .disclosureContent :global(ul:last-child),
 .disclosureContent :global(ol:last-child) {
@@ -233,6 +237,22 @@
 .disclosureContent :global(ol) {
   margin: 0 0 14px;
   padding-left: 22px;
+}
+
+.disclosureContent :global(ul) {
+  list-style: disc outside;
+}
+
+.disclosureContent :global(ol) {
+  list-style: decimal outside;
+}
+
+.disclosureContent :global(li) {
+  margin-bottom: 6px;
+}
+
+.disclosureContent :global(li p) {
+  margin: 0;
 }
 
 .sku {
