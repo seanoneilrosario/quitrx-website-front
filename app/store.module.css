@@ -212,6 +212,29 @@
   line-height: 1.65;
 }
 
+.disclosureContent :global(p) {
+  margin: 0 0 14px;
+}
+
+.disclosureContent :global(p:last-child),
+.disclosureContent :global(ul:last-child),
+.disclosureContent :global(ol:last-child) {
+  margin-bottom: 0;
+}
+
+.disclosureContent :global(a) {
+  color: #076c75;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.disclosureContent :global(ul),
+.disclosureContent :global(ol) {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
 .sku {
   font-size: 14px;
   opacity: .7;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import sanitizeHtml from "sanitize-html";
 import type { QuitHeroProduct } from "@/lib/quithero";
 import { getFrequentlyBoughtTogetherIds, getPrimaryImage, getQuitHeroBundleVariant, getQuitHeroProducts, productHasTag } from "@/lib/quithero";
 import { bundleDropdownsFrom } from "@/lib/quithero-bundle";
@@ -11,7 +12,13 @@ import styles from "@/app/store.module.css";
 
 export default async function ProductDetail({ product }: { product: QuitHeroProduct }) {
   const image = getPrimaryImage(product);
-  const description = (product.description || product.shortDescription || "").replace(/<[^>]*>/g, "");
+  const description = sanitizeHtml(product.description || product.shortDescription || "", {
+    allowedTags: ["p", "br", "strong", "b", "em", "i", "a", "ul", "ol", "li"],
+    allowedAttributes: {
+      a: ["href", "target", "rel"],
+    },
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+  });
   const isBundle = productHasTag(product, "bundle");
   const productId = product.id || product.slug || product.name || "product";
   const relatedProductIds = product.id
@@ -72,9 +79,12 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
 
           <details className={styles.productDisclosure} open>
             <summary>Details</summary>
-            <div className={styles.disclosureContent}>
-              {description && <p>{description}</p>}
-            </div>
+            {description && (
+              <div
+                className={styles.disclosureContent}
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
+            )}
           </details>
           <details className={styles.productDisclosure}>
             <summary>What&apos;s in the box</summary>
