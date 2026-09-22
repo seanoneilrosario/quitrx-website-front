@@ -14,11 +14,9 @@ AUTH_GOOGLE_ID=your_google_oauth_client_id
 AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
 AUTH_FACEBOOK_ID=your_facebook_app_id
 AUTH_FACEBOOK_SECRET=your_facebook_app_secret
-SINCH_ENGAGE_API_KEY=your_sinch_engage_api_key
-SINCH_ENGAGE_API_SECRET=your_sinch_engage_api_secret
-# Optional for local/preview SMS delivery testing only. Scope these to Preview in Vercel and never enable in Production.
-SMS_LOGIN_ALLOW_TEST_NUMBER=false
-SMS_LOGIN_TEST_PHONE=+61412345678
+RESEND_API_KEY=your_resend_api_key
+EMAIL_FROM=QuitRx <login@your-verified-domain.com>
+EMAIL_LOGIN_ENABLED=true
 ```
 
 Do not prefix these variables with `NEXT_PUBLIC_`; API keys and OAuth secrets must never be included in browser code.
@@ -36,7 +34,7 @@ await syncQuitHeroCustomerWithoutBlocking({
 
 Authentication is handled by Auth.js. Register `/api/auth/callback/google` and `/api/auth/callback/facebook` on your public site URL with the corresponding OAuth provider. Successful verified social logins automatically synchronize the customer with QuitHero.
 
-`AUTH_SECRET` signs Auth.js, customer sessions, and SMS login challenges. If `AUTH_SESSION_SECRET` is configured, it is used for customer sessions and SMS login challenges instead.
+`AUTH_SECRET` signs Auth.js, customer sessions, and email login challenges. If `AUTH_SESSION_SECRET` is configured, it is used for customer sessions and email login challenges instead.
 
 First, run the development server:
 

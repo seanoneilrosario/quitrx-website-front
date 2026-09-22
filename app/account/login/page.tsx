@@ -31,5 +31,5 @@ export default async function LoginPage({ searchParams }: {
     }
   }
   if (customer?.id) redirect(redirectTo);
-  return <LoginPopup redirectTo={redirectTo} loginError={loginError} googleEnabled={Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)} facebookEnabled={Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET)} smsEnabled={process.env.SMS_LOGIN_ENABLED !== "false"} />;
+  return <LoginPopup redirectTo={redirectTo} loginError={loginError} googleEnabled={Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)} facebookEnabled={Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET)} />;
 }

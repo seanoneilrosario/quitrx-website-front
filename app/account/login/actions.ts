@@ -5,13 +5,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero-customers";
 import { setCustomerSession } from "@/lib/customer-session";
-import { customerHasMobile, normalizeAustralianMobile } from "@/lib/sms-login";
 
-const SMS_CODE_COOKIE = "quitrx_sms_code";
+const EMAIL_CODE_COOKIE = "quitrx_email_code";
 const CODE_MAX_AGE_SECONDS = 10 * 60;
 const MAX_ATTEMPTS = 5;
 
-type SmsCodeChallenge = {
+type EmailCodeChallenge = {
   email: string;
   customerId?: string;
   codeHash: string;
@@ -23,7 +22,6 @@ type SmsCodeChallenge = {
 export type CustomerAccessState = {
   step?: "code";
   email?: string;
-  phone?: string;
   error?: string;
   message?: string;
 };
@@ -44,7 +42,7 @@ function codeHash(email: string, code: string) {
   return sign(`${email}:${code}`);
 }
 
-function encodeChallenge(challenge: SmsCodeChallenge) {
+function encodeChallenge(challenge: EmailCodeChallenge) {
   const payload = Buffer.from(JSON.stringify(challenge)).toString("base64url");
   return `${payload}.${sign(payload)}`;
 }
@@ -59,15 +57,15 @@ function decodeChallenge(value?: string) {
   if (expected.length !== supplied.length || !timingSafeEqual(expected, supplied)) return;
 
   try {
-    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as SmsCodeChallenge;
+    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as EmailCodeChallenge;
   } catch {
     return;
   }
 }
 
-async function storeChallenge(challenge: SmsCodeChallenge) {
+async function storeChallenge(challenge: EmailCodeChallenge) {
   const cookieStore = await cookies();
-  cookieStore.set(SMS_CODE_COOKIE, encodeChallenge(challenge), {
+  cookieStore.set(EMAIL_CODE_COOKIE, encodeChallenge(challenge), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -77,51 +75,39 @@ async function storeChallenge(challenge: SmsCodeChallenge) {
   });
 }
 
-function isAllowedTestDestination(destination: string) {
-  return process.env.SMS_LOGIN_ALLOW_TEST_NUMBER === "true"
-    && normalizeAustralianMobile(process.env.SMS_LOGIN_TEST_PHONE ?? "") === destination;
-}
+async function sendLoginCode(email: string, code: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+  if (!apiKey || !from) throw new Error("Email login is not configured.");
 
-async function sendLoginCode(phone: string, code: string) {
-  const apiKey = process.env.SINCH_ENGAGE_API_KEY;
-  const apiSecret = process.env.SINCH_ENGAGE_API_SECRET;
-  if (!apiKey || !apiSecret) throw new Error("SMS login is not configured.");
-
-  const response = await fetch("https://api.messagemedia.com/v1/messages", {
+  const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")}`,
+      authorization: `Bearer ${apiKey}`,
       "content-type": "application/json",
-      "user-agent": "QuitRx/1.0",
     },
     body: JSON.stringify({
-      messages: [{
-        content: `Your QuitRx sign-in code is ${code}. It expires in 10 minutes.`,
-        destination_number: phone,
-        format: "SMS",
-        source_number: "QUITRX",
-      }],
+      from,
+      to: [email],
+      subject: "Your QuitRx sign-in code",
+      text: `Your QuitRx sign-in code is ${code}. It expires in 10 minutes.`,
     }),
     cache: "no-store",
   });
 
-  if (!response.ok) throw new Error(`SMS provider returned ${response.status}.`);
+  if (!response.ok) throw new Error(`Email provider returned ${response.status}.`);
 }
 
-async function requestCode(email: string, phone: string): Promise<CustomerAccessState> {
+async function requestCode(email: string): Promise<CustomerAccessState> {
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email address." };
 
   const normalizedEmail = email.toLowerCase();
-  const destination = normalizeAustralianMobile(phone);
-  if (!destination) return { error: "Enter a valid Australian mobile number, such as 0412 345 678." };
-
   const cookieStore = await cookies();
-  const existingChallenge = decodeChallenge(cookieStore.get(SMS_CODE_COOKIE)?.value);
+  const existingChallenge = decodeChallenge(cookieStore.get(EMAIL_CODE_COOKIE)?.value);
   if (existingChallenge?.email === normalizedEmail && existingChallenge.resendAt > Date.now()) {
     return {
       step: "code",
       email: normalizedEmail,
-      phone: destination,
       error: "Please wait a minute before requesting another code.",
     };
   }
@@ -129,12 +115,11 @@ async function requestCode(email: string, phone: string): Promise<CustomerAccess
 
   try {
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
-    const usingTestDestination = isAllowedTestDestination(destination);
-    if (!usingTestDestination && !customerHasMobile(customer, destination)) {
-      return { error: "No account found with these details. Check your email and mobile number, or contact us for help getting started." };
+    if (!customer) {
+      return { error: "No account found with that email address. Check your email, or contact us for help getting started." };
     }
 
-    await sendLoginCode(destination, code);
+    await sendLoginCode(normalizedEmail, code);
     await storeChallenge({
       email: normalizedEmail,
       customerId: customer?.id,
@@ -143,12 +128,12 @@ async function requestCode(email: string, phone: string): Promise<CustomerAccess
       resendAt: Date.now() + 60_000,
       attempts: 0,
     });
-    return { step: "code", email: normalizedEmail, phone: destination, message: "We sent a confirmation code to your mobile number." };
+    return { step: "code", email: normalizedEmail, message: `We sent a confirmation code to ${normalizedEmail}.` };
   } catch (error) {
-    console.error("SMS sign-in code delivery failed.", {
+    console.error("Email sign-in code delivery failed.", {
       error: error instanceof Error ? error.message : "Unknown error",
     });
-    return { error: "We could not send your SMS code. Please try again." };
+    return { error: "We could not send your email code. Please try again." };
   }
 }
 
@@ -156,8 +141,8 @@ export async function accessCustomerAccount(
   state: CustomerAccessState,
   formData: FormData,
 ): Promise<CustomerAccessState> {
-  if (process.env.SMS_LOGIN_ENABLED === "false") {
-    return { error: "SMS sign-in is temporarily unavailable." };
+  if (process.env.EMAIL_LOGIN_ENABLED === "false") {
+    return { error: "Email sign-in is temporarily unavailable." };
   }
 
   const intent = formData.get("intent");
@@ -168,28 +153,26 @@ export async function accessCustomerAccount(
   const cookieStore = await cookies();
 
   if (intent === "reset") {
-    cookieStore.delete(SMS_CODE_COOKIE);
+    cookieStore.delete(EMAIL_CODE_COOKIE);
     return {};
   }
 
   const emailValue = formData.get("email");
   const email = typeof emailValue === "string" ? emailValue.trim() : "";
-  const phoneValue = formData.get("phone");
-  const phone = typeof phoneValue === "string" ? phoneValue.trim() : "";
-  if (intent !== "verify") return requestCode(email, phone);
+  if (intent !== "verify") return requestCode(email);
 
   const codeValue = formData.get("code");
   const code = typeof codeValue === "string" ? codeValue.trim() : "";
-  const challenge = decodeChallenge(cookieStore.get(SMS_CODE_COOKIE)?.value);
-  const codeStep = { step: "code" as const, email: challenge?.email ?? state.email, phone: state.phone };
+  const challenge = decodeChallenge(cookieStore.get(EMAIL_CODE_COOKIE)?.value);
+  const codeStep = { step: "code" as const, email: challenge?.email ?? state.email };
 
   if (!/^\d{6}$/.test(code)) return { ...codeStep, error: "Enter the six-digit code." };
   if (!challenge || challenge.expiresAt <= Date.now()) {
-    cookieStore.delete(SMS_CODE_COOKIE);
+    cookieStore.delete(EMAIL_CODE_COOKIE);
     return { error: "That code has expired. Enter your email to request a new one." };
   }
   if (challenge.attempts >= MAX_ATTEMPTS) {
-    cookieStore.delete(SMS_CODE_COOKIE);
+    cookieStore.delete(EMAIL_CODE_COOKIE);
     return { error: "Too many incorrect attempts. Request a new code." };
   }
 
@@ -202,7 +185,7 @@ export async function accessCustomerAccount(
 
   try {
     await setCustomerSession({ id: challenge.customerId, email: challenge.email });
-    cookieStore.delete(SMS_CODE_COOKIE);
+    cookieStore.delete(EMAIL_CODE_COOKIE);
   } catch (error) {
     console.error("Customer session creation failed.", {
       error: error instanceof Error ? error.message : "Unknown error",

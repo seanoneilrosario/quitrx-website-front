@@ -12,13 +12,11 @@ export default function LoginPopup({
   redirectTo,
   googleEnabled,
   facebookEnabled,
-  smsEnabled,
   loginError,
 }: {
   redirectTo: string;
   googleEnabled: boolean;
   facebookEnabled: boolean;
-  smsEnabled: boolean;
   loginError?: string;
 }) {
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
@@ -152,22 +150,18 @@ export default function LoginPopup({
           )}
         </div>
 
-        {smsEnabled && (
-          <div className="customer-login__divider">
-            <span>or</span>
-          </div>
-        )}
+        <div className="customer-login__divider">
+          <span>or</span>
+        </div>
 
-        {smsEnabled && (
-          <form action={action} className="customer-login__form">
+        <form action={action} className="customer-login__form">
             <input type="hidden" name="redirectTo" value={redirectTo} />
             {state.step === "code" ? (
               <>
                 <input type="hidden" name="email" value={state.email} />
-                <input type="hidden" name="phone" value={state.phone} />
                 <label htmlFor="customer-code">Confirmation code</label>
                 <p className="customer-login__message">
-                  {state.message ?? "Enter the SMS code sent to the mobile number on your account."}
+                  {state.message ?? `Enter the code sent to ${state.email}.`}
                 </p>
                 <div className="customer-login__field">
                   <input
@@ -188,7 +182,7 @@ export default function LoginPopup({
                     name="intent"
                     value="verify"
                     disabled={pending}
-                    aria-label="Confirm SMS code"
+                    aria-label="Confirm email code"
                   >
                     {pending ? (
                       <span className="customer-login__spinner" />
@@ -214,7 +208,7 @@ export default function LoginPopup({
                     formNoValidate
                     disabled={pending}
                   >
-                    Change details
+                    Change email
                   </button>
                 </div>
               </>
@@ -235,28 +229,12 @@ export default function LoginPopup({
                     autoFocus
                     aria-describedby={state.error ? "customer-login-error" : "customer-login-help"}
                   />
-                </div>
-                <label className="sr-only" htmlFor="customer-phone">
-                  Australian mobile number
-                </label>
-                <div className="customer-login__field">
-                  <input
-                    id="customer-phone"
-                    name="phone"
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    placeholder="0412 345 678"
-                    pattern="(?:(?:\+?61|0)(?:\s|-)?0?)?4(?:(?:\s|-)?\d){8}"
-                    required
-                    aria-describedby={state.error ? "customer-login-error" : "customer-login-help"}
-                  />
                   <button
                     type="submit"
                     name="intent"
                     value="request"
                     disabled={pending}
-                    aria-label="Send SMS confirmation code"
+                    aria-label="Send email confirmation code"
                   >
                     {pending ? (
                       <span className="customer-login__spinner" />
@@ -267,15 +245,11 @@ export default function LoginPopup({
                 </div>
               </>
             )}
-          </form>
-        )}
+        </form>
 
-        {smsEnabled && (
-          <p id="customer-login-help" className="customer-login__note">
-            Enter the email and Australian mobile number linked to your account. We will send your
-            confirmation code by SMS.
-          </p>
-        )}
+        <p id="customer-login-help" className="customer-login__note">
+          Enter the email linked to your account. We will send your confirmation code by email.
+        </p>
       </section>
     </div>
   );
