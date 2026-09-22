@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero-customers";
 import { setCustomerSession } from "@/lib/customer-session";
+import { customerHasMobile, normalizeAustralianMobile } from "@/lib/sms-login";
 
 const SMS_CODE_COOKIE = "quitrx_sms_code";
 const CODE_MAX_AGE_SECONDS = 10 * 60;
@@ -76,25 +77,9 @@ async function storeChallenge(challenge: SmsCodeChallenge) {
   });
 }
 
-function normalizeSmsDestination(phone: string) {
-  const compact = phone.trim().replace(/[\s()-]/g, "");
-  const international = compact.startsWith("+") ? compact
-    : compact.startsWith("00") ? `+${compact.slice(2)}`
-    : compact.startsWith("0") ? `+61${compact.slice(1)}`
-    : compact.startsWith("61") ? `+${compact}`
-    : compact.startsWith("4") ? `+61${compact}`
-    : `+${compact}`;
-
-  const normalizedInternational = international.startsWith("+6104")
-    ? `+61${international.slice(4)}`
-    : international;
-
-  return /^\+614\d{8}$/.test(normalizedInternational) ? normalizedInternational : undefined;
-}
-
 function isAllowedTestDestination(destination: string) {
   return process.env.SMS_LOGIN_ALLOW_TEST_NUMBER === "true"
-    && normalizeSmsDestination(process.env.SMS_LOGIN_TEST_PHONE ?? "") === destination;
+    && normalizeAustralianMobile(process.env.SMS_LOGIN_TEST_PHONE ?? "") === destination;
 }
 
 async function sendLoginCode(phone: string, code: string) {
@@ -126,7 +111,7 @@ async function requestCode(email: string, phone: string): Promise<CustomerAccess
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email address." };
 
   const normalizedEmail = email.toLowerCase();
-  const destination = normalizeSmsDestination(phone);
+  const destination = normalizeAustralianMobile(phone);
   if (!destination) return { error: "Enter a valid Australian mobile number, such as 0412 345 678." };
 
   const cookieStore = await cookies();
@@ -143,9 +128,8 @@ async function requestCode(email: string, phone: string): Promise<CustomerAccess
 
   try {
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
-    const accountPhone = customer?.phone ? normalizeSmsDestination(customer.phone) : undefined;
     const usingTestDestination = isAllowedTestDestination(destination);
-    if (!usingTestDestination && (!customer || accountPhone !== destination)) {
+    if (!usingTestDestination && !customerHasMobile(customer, destination)) {
       return { error: "No account found with these details. Check your email and mobile number, or contact us for help getting started." };
     }
 
