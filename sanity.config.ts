@@ -12,11 +12,17 @@ import {structureTool} from 'sanity/structure'
 import {apiVersion, dataset, projectId} from './sanity/env'
 import {schema} from './sanity/schemaTypes'
 import {structure} from './sanity/structure'
+import StudioLogo from './sanity/components/StudioLogo'
 
 export default defineConfig({
   basePath: '/admin',
   projectId,
   dataset,
+  studio: {
+    components: {
+      logo: StudioLogo,
+    },
+  },
   // Add and edit the content schema in the './sanity/schemaTypes' folder
   schema,
   plugins: [

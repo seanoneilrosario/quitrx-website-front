@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -83,7 +84,7 @@ export default function AuthPopupCompletePage() {
     return (
       <main className="customer-login" role="status">
         <section className="customer-login__dialog">
-          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">Quit<span>Rx</span></Link>
+          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage"><Image src="/images/quitrx-logo-white.png" width={190} height={53} alt="QuitRx" priority /></Link>
           <div className="customer-login__copy">
             <h1>Signing in</h1>
             <p>{error || "Please wait..."}</p>
@@ -97,7 +98,7 @@ export default function AuthPopupCompletePage() {
     return (
       <main className="customer-login" role="dialog" aria-modal="true">
         <section className="customer-login__dialog">
-          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">Quit<span>Rx</span></Link>
+          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage"><Image src="/images/quitrx-logo-white.png" width={190} height={53} alt="QuitRx" priority /></Link>
           <div className="customer-login__copy">
             <h1>Almost there</h1>
             <p>Enter your email address once to connect your Facebook account to your QuitRx customer account.</p>

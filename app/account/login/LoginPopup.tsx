@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
@@ -95,7 +96,7 @@ export default function LoginPopup({
           <span aria-hidden="true">&times;</span>
         </Link>
         <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">
-          Quit<span>Rx</span>
+          <Image src="/images/quitrx-logo-white.png" width={190} height={53} alt="QuitRx" priority />
         </Link>
 
         <div className="customer-login__copy">

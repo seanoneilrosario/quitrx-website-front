@@ -63,8 +63,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
           <span aria-hidden="true">{menuOpen ? "‹" : "›"}</span>
         </button>
         <Link className="account-brand" href="/" aria-label="QuitRx homepage">
-          <span className="account-brand__mark">Quit</span>
-          <span className="account-brand__rx">Rx</span>
+          <Image src="/images/quitrx-logo-white.png" width={170} height={48} alt="QuitRx" priority />
         </Link>
         <div className="account-sidebar__intro">
           <strong>{accountName ? `Welcome, ${accountName}` : "Welcome"}</strong>
