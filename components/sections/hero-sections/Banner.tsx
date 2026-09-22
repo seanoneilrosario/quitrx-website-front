@@ -54,7 +54,10 @@ export function Banner({
   const secondaryButtonLink = isLoginButton
     ? secondary_button_link || "/account/login"
     : secondary_button_link;
-  const isTreatmentButton = ["apply free", "get started"].includes(button_text?.trim().toLowerCase() || "");
+  const normalizedButtonText = button_text?.trim().toLowerCase() || "";
+  const isTreatmentButton = ["apply free", "get started"].some((label) =>
+    normalizedButtonText.startsWith(label),
+  );
 
   useEffect(() => {
     if (!isLoginButton) return;
