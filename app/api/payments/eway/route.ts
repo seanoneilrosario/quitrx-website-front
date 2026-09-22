@@ -92,6 +92,8 @@ export async function POST(request: Request) {
       Items: [...paymentItems, { SKU: "SHIPPING", Description: `${body.shippingMethod} shipping`, Quantity: 1, UnitCost: shippingCents, Total: shippingCents }],
       RedirectUrl: callbackUrl,
       CancelUrl: cancelUrl,
+      HeaderText: "QuitRx secure payment",
+      CustomView: "BootstrapFlatly",
       Method: "ProcessPayment",
       TransactionType: "Purchase",
     });
