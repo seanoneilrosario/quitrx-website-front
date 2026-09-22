@@ -308,6 +308,7 @@
   height: 100%;
   object-fit: contain;
   transition: transform .25s ease;
+  mix-blend-mode: multiply;
 }
 
 .productCard:hover .productImage { transform: scale(1.035); }
