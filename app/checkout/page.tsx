@@ -139,7 +139,7 @@ export default function CheckoutPage() {
       <div className={styles.checkoutShell}>
         <section className={styles.formColumn}>
           <Link className={styles.logo} href="/" aria-label="QuitRx homepage">
-            <Image src="/images/quitrx-logo-white.png" width={190} height={53} alt="QuitRx" priority />
+            <Image src="/images/quitrx-logo-light.png" width={174} height={71} alt="QuitRx" priority />
           </Link>
           <Link className={styles.backLink} href="/cart" aria-label="Return to cart">
             <span aria-hidden="true">←</span> Return to cart

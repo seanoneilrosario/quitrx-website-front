@@ -233,12 +233,9 @@
   width: max-content;
   align-items: center;
   margin-bottom: 52px;
-  padding: 8px 14px;
-  border-radius: 12px;
-  background: #075d67;
   text-decoration: none;
 }
-.customer-login__brand img { width: 190px; height: auto; }
+.customer-login__brand img { width: 174px; height: auto; }
 .customer-login__socials {
   display: grid;
   grid-template-columns: 1fr 1fr;

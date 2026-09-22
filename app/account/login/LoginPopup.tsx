@@ -96,7 +96,7 @@ export default function LoginPopup({
           <span aria-hidden="true">&times;</span>
         </Link>
         <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">
-          <Image src="/images/quitrx-logo-white.png" width={190} height={53} alt="QuitRx" priority />
+          <Image src="/images/quitrx-logo-light.png" width={174} height={71} alt="QuitRx" priority />
         </Link>
 
         <div className="customer-login__copy">
