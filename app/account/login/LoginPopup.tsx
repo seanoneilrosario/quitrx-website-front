@@ -246,7 +246,7 @@ export default function LoginPopup({
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
-                    placeholder="+61"
+                    placeholder="0412 345 678"
                     pattern="(?:(?:\+?61|0)[\s-]?0?)?4(?:[\s-]?\d){8}"
                     required
                     aria-describedby={state.error ? "customer-login-error" : "customer-login-help"}
