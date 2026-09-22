@@ -176,6 +176,10 @@ export async function accessCustomerAccount(
   }
 
   const intent = formData.get("intent");
+  const redirectValue = formData.get("redirectTo");
+  const redirectTo = typeof redirectValue === "string" && redirectValue.startsWith("/") && !redirectValue.startsWith("//")
+    ? redirectValue
+    : "/account";
   const cookieStore = await cookies();
 
   if (intent === "reset") {
@@ -221,5 +225,5 @@ export async function accessCustomerAccount(
     return { ...codeStep, error: "We could not connect to your account. Please try again." };
   }
 
-  redirect("/account");
+  redirect(redirectTo);
 }

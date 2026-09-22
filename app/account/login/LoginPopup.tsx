@@ -8,11 +8,13 @@ import { accessCustomerAccount, type CustomerAccessState } from "./actions";
 const initialState: CustomerAccessState = {};
 
 export default function LoginPopup({
+  redirectTo,
   googleEnabled,
   facebookEnabled,
   smsEnabled,
   loginError,
 }: {
+  redirectTo: string;
   googleEnabled: boolean;
   facebookEnabled: boolean;
   smsEnabled: boolean;
@@ -48,14 +50,14 @@ export default function LoginPopup({
       }
       if (event.data?.type !== "quitrx:auth-success") return;
 
-      router.replace("/account");
+      router.replace(redirectTo);
       router.refresh();
     };
 
     window.addEventListener("message", handleAuthSuccess);
 
     return () => window.removeEventListener("message", handleAuthSuccess);
-  }, [router]);
+  }, [redirectTo, router]);
 
   const openSocialPopup = (
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -157,6 +159,7 @@ export default function LoginPopup({
 
         {smsEnabled && (
           <form action={action} className="customer-login__form">
+            <input type="hidden" name="redirectTo" value={redirectTo} />
             {state.step === "code" ? (
               <>
                 <input type="hidden" name="email" value={state.email} />

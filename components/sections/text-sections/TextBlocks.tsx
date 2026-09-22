@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PortableText } from "next-sanity";
 import { PortableTextBlock } from "@/components/global/components";
 import "./TextBlocks.css";
+import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
 
 type ComparisonFeature = {
   _key?: string;
@@ -94,9 +95,13 @@ const TextBlocks = ({
         )}
 
         {buttonText && (
-          <Link href={buttonLink || "#"} className="comparison-card__button">
-            {buttonText}
-          </Link>
+          ["apply free", "get started"].includes(buttonText.trim().toLowerCase()) ? (
+            <TreatmentCtaLink className="comparison-card__button" defaultLabel={buttonText} />
+          ) : (
+            <Link href={buttonLink || "#"} className="comparison-card__button">
+              {buttonText}
+            </Link>
+          )
         )}
 
         {disclaimer && (

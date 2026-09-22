@@ -4,6 +4,7 @@ import { PortableText } from "next-sanity";
 import { PortableTextBlock } from "@/components/global/components";
 
 import "./floating-cta.css";
+import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
 
 interface FloatingCTAProps {
   icon?: string;
@@ -52,12 +53,16 @@ const FloatingCTA = ({
             )}
 
             {button_text && (
-              <Link
-                href={button_link || "#"}
-                className="floating-cta__button"
-              >
-                {button_text}
-              </Link>
+              ["apply free", "get started"].includes(button_text.trim().toLowerCase()) ? (
+                <TreatmentCtaLink className="floating-cta__button" defaultLabel={button_text} />
+              ) : (
+                <Link
+                  href={button_link || "#"}
+                  className="floating-cta__button"
+                >
+                  {button_text}
+                </Link>
+              )
             )}
 
           </div>

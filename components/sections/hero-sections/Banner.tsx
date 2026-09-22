@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
+import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
 
 interface BannerProps {
   image: string;
@@ -53,6 +54,7 @@ export function Banner({
   const secondaryButtonLink = isLoginButton
     ? secondary_button_link || "/account/login"
     : secondary_button_link;
+  const isTreatmentButton = ["apply free", "get started"].includes(button_text?.trim().toLowerCase() || "");
 
   useEffect(() => {
     if (!isLoginButton) return;
@@ -139,7 +141,12 @@ export function Banner({
         {(button_text || secondary_button_text) &&
           <div className="banner-links">
             {button_text && (
-              button_style === "link" ? (
+              isTreatmentButton ? (
+                <TreatmentCtaLink
+                  className="banner-button banner-button--primary"
+                  defaultLabel={button_text}
+                />
+              ) : button_style === "link" ? (
                 <Link
                   href={button_url || "#"}
                   className="banner-button banner-button--primary"
