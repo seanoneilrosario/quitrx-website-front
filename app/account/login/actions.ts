@@ -99,6 +99,7 @@ async function sendLoginCode(phone: string, code: string) {
         content: `Your QuitRx sign-in code is ${code}. It expires in 10 minutes.`,
         destination_number: phone,
         format: "SMS",
+        source_number: "QUITRX",
       }],
     }),
     cache: "no-store",
