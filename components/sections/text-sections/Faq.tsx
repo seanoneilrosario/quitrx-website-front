@@ -2,9 +2,20 @@
 
 import { useState } from "react";
 import { PortableText } from "next-sanity";
+import type { PortableTextComponents } from "@portabletext/react";
 
 import "./faq.css";
 import { FAQItem } from "@/components/global/components";
+
+const faqPortableTextComponents: PortableTextComponents = {
+  marks: {
+    link: ({ children, value }) => (
+      <a href={value?.href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    ),
+  },
+};
 
 interface FAQProps {
   heading: string;
@@ -59,7 +70,7 @@ export default function Faq({
 
               {open === index && item.answer && (
                 <div className="faq__answer">
-                  <PortableText value={item.answer} />
+                  <PortableText value={item.answer} components={faqPortableTextComponents} />
                 </div>
               )}
             </div>

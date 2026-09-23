@@ -9,6 +9,16 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
 
+const disclaimerComponents = {
+  marks: {
+    link: ({ children, value }: any) => (
+      <a href={value?.href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    ),
+  },
+};
+
 interface BannerProps {
   image: string;
   back_image: string;
@@ -194,7 +204,7 @@ export function Banner({
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.7, ease: "easeOut", delay: 0.12 }}
           >
-            <PortableText value={disclaimer} />
+            <PortableText value={disclaimer} components={disclaimerComponents} />
           </motion.div>
         )}
         
