@@ -70,6 +70,7 @@ export default async function ProductDetail({ product }: { product: QuitHeroProd
           <ProductPurchasePanel
             productId={productId}
             productName={product.name || "Product"}
+            productStatus={product.status}
             image={image}
             variants={variants}
             isBundle={isBundle}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import styles from "@/app/store.module.css";
 import { firstAvailableVariantIndex } from "@/lib/frequently-bought-together";
-import { variantIsAvailable } from "@/lib/quithero-bundle";
+import { productStatusAllowsPurchase, variantIsAvailable } from "@/lib/quithero-bundle";
 import { buildMultiItemCartPayload } from "@/lib/storefront-cart";
 import type { StorefrontCartItem } from "@/lib/storefront-cart";
 import { getAvailableStock } from "@/lib/available-stock";
@@ -109,6 +109,7 @@ async function syncBundleComponents(item: StorefrontCartItem) {
 export default function ProductPurchasePanel({
   productId,
   productName,
+  productStatus,
   image,
   variants,
   isBundle,
@@ -117,6 +118,7 @@ export default function ProductPurchasePanel({
 }: {
   productId: string;
   productName: string;
+  productStatus?: string;
   image?: string;
   variants: Variant[];
   isBundle: boolean;
@@ -151,9 +153,9 @@ export default function ProductPurchasePanel({
   const availableStock = isBundle
     ? Math.min(...selectedBundleOptions.map((option) => option?.availableStock ?? 0))
     : getAvailableStock(selected);
-  const available = isBundle
+  const available = productStatusAllowsPurchase(productStatus) && (isBundle
     ? Boolean(selected?.id) && !bundleLoading && !bundleError && bundleIsAvailable
-    : variantIsAvailable(selected);
+    : variantIsAvailable(selected));
   const price = formatPrice((selected || variants[0])?.price);
 
   function selectParentVariant(index: number) {

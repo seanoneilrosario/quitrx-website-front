@@ -46,6 +46,14 @@ describe("productIsAvailable", () => {
     expect(productIsAvailable({ status: "SOLD_OUT", variants: [{ inventory: 10 }] })).toBe(false);
   });
 
+  it("uses inventory for archived source products that remain purchasable", () => {
+    expect(productIsAvailable({
+      status: "ARCHIVED",
+      productType: "Premix - Salt",
+      variants: [{ inventory: 163, allocatedInventory: 2 }],
+    })).toBe(true);
+  });
+
   it("keeps configured bundles available when their components have stock", () => {
     expect(productIsAvailable({
       tags: ["Bundle"],

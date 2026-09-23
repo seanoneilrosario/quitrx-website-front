@@ -324,7 +324,15 @@ export type QuitHeroOrder = {
   currencyCode?: string;
   total?: number | string;
   createdAt?: string;
-  items?: Array<{ variantId?: string; quantity?: number }>;
+  items?: Array<{
+    variantId?: string;
+    quantity?: number;
+    productName?: string;
+    variantName?: string;
+    sku?: string;
+    price?: number | string;
+    total?: number | string;
+  }>;
 };
 
 type QuitHeroOrdersResponse = {

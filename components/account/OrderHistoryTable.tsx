@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { QuitHeroOrder } from "@/lib/quithero";
 
 function formatDate(value?: string) {
@@ -59,7 +60,13 @@ export default function OrderHistoryTable({ onOrdersLoaded }: OrderHistoryTableP
     {state === "error" && <div className="account-order-table__empty">We couldn&apos;t load your orders. Please try again.</div>}
     {state === "ready" && !orders.length && <div className="account-order-table__empty">You haven&apos;t placed any orders yet.</div>}
     {state === "ready" && orders.map((order) => <div className="account-order-table__row" key={order.id || order.orderNumber}>
-      <strong>{order.orderNumber || "Order"}</strong>
+      <strong>
+        {order.id || order.orderNumber ? (
+          <Link className="account-order-link" href={`/account/orders/${encodeURIComponent(order.id || order.orderNumber!)}`}>
+            {order.orderNumber || "View order"}
+          </Link>
+        ) : "Order"}
+      </strong>
       <span>{formatDate(order.createdAt)}</span>
       <span className={`account-order-status${isCancelled(order) ? " account-order-status--cancelled" : ""}`}><i />{readableStatus(order)}</span>
       <strong>{formatMoney(order.total, order.currencyCode)}</strong>

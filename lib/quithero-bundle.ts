@@ -210,9 +210,13 @@ export function variantIsAvailable(variant?: BundleAwareVariant) {
   return getPurchasableStock(variant) > 0;
 }
 
+export function productStatusAllowsPurchase(status?: string) {
+  const normalizedStatus = status?.trim().toLowerCase().replaceAll(/[^a-z]/g, "") || "";
+  return !["soldout", "outofstock"].includes(normalizedStatus);
+}
+
 export function productIsAvailable(product: BundleAwareProduct) {
-  const status = product.status?.trim().toLowerCase().replaceAll(/[^a-z]/g, "") || "";
-  if (["soldout", "outofstock", "inactive", "archived", "disabled"].includes(status)) return false;
+  if (!productStatusAllowsPurchase(product.status)) return false;
 
   const productType = typeof product.productType === "string"
     ? product.productType

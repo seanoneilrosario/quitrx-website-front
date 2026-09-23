@@ -795,6 +795,17 @@
   border-top: 1px solid #eef2f0;
 }
 
+.account-order-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(27, 75, 85, 0.35);
+  text-underline-offset: 3px;
+}
+
+.account-order-link:hover {
+  text-decoration-color: currentColor;
+}
+
 .account-order-status {
   display: inline-flex;
   align-items: center;
@@ -815,6 +826,98 @@
 .account-order-status--cancelled i {
   background: #dc2626;
   box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.18);
+}
+
+.account-order-detail {
+  overflow: hidden;
+}
+
+.account-order-detail__message {
+  padding: 30px;
+  color: #425f63;
+}
+
+.account-order-detail__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  padding: 28px 30px;
+  border-bottom: 1px solid #e6efee;
+}
+
+.account-order-detail__summary > div {
+  display: grid;
+  gap: 8px;
+}
+
+.account-order-detail__summary span:not(.account-order-status) {
+  color: #6a8285;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.account-order-detail__items {
+  padding: 28px 30px;
+}
+
+.account-order-detail__items h2 {
+  margin: 0 0 16px;
+  color: #123540;
+  font-size: 20px;
+}
+
+.account-order-detail__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(90px, auto);
+  gap: 24px;
+  align-items: center;
+  padding: 18px 0;
+  border-top: 1px solid #eef2f0;
+}
+
+.account-order-detail__item > div {
+  display: grid;
+  gap: 4px;
+}
+
+.account-order-detail__item span,
+.account-order-detail__empty {
+  color: #637a7c;
+}
+
+.account-order-detail__item > strong:last-child {
+  text-align: right;
+}
+
+.account-order-detail__total {
+  display: flex;
+  justify-content: flex-end;
+  gap: 40px;
+  padding: 22px 30px 28px;
+  border-top: 1px solid #e6efee;
+  color: #123540;
+  font-size: 18px;
+}
+
+@media (max-width: 800px) {
+  .account-order-detail__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .account-order-detail__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .account-order-detail__item {
+    grid-template-columns: 1fr auto;
+  }
+
+  .account-order-detail__item > div {
+    grid-column: 1 / -1;
+  }
 }
 
 .account-banner {
