@@ -23,6 +23,12 @@ function readableStatus(order: QuitHeroOrder) {
     .replace(/^./, (letter) => letter.toUpperCase());
 }
 
+function isCancelled(order: QuitHeroOrder) {
+  return [order.fulfillmentStatus, order.status].some((status) =>
+    /^cancell?ed$/.test(status?.trim().toLowerCase() || ""),
+  );
+}
+
 export default function OrderHistoryTable() {
   const [orders, setOrders] = useState<QuitHeroOrder[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -49,7 +55,7 @@ export default function OrderHistoryTable() {
     {state === "ready" && orders.map((order) => <div className="account-order-table__row" key={order.id || order.orderNumber}>
       <strong>{order.orderNumber || "Order"}</strong>
       <span>{formatDate(order.createdAt)}</span>
-      <span className="account-order-status"><i />{readableStatus(order)}</span>
+      <span className={`account-order-status${isCancelled(order) ? " account-order-status--cancelled" : ""}`}><i />{readableStatus(order)}</span>
       <strong>{formatMoney(order.total, order.currencyCode)}</strong>
     </div>)}
   </div>;

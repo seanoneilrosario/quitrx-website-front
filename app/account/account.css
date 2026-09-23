@@ -812,6 +812,11 @@
   box-shadow: 0 0 0 4px rgba(243, 188, 87, 0.18);
 }
 
+.account-order-status--cancelled i {
+  background: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.18);
+}
+
 .account-banner {
   margin-top: 34px;
   padding: 28px 32px;
