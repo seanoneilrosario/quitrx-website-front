@@ -7,10 +7,24 @@
 
 @media (min-width: 700px) {
   .filters {
+    --filter-sticky-top: 70px;
     position: sticky;
-    top: 24px;
-    max-height: calc(100vh - 48px);
+    top: var(--filter-sticky-top);
+    max-height: calc(100vh - var(--filter-sticky-top) - 16px);
     overflow-y: auto;
+    transition: top 0.45s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  :global(body:has(.site-header:not(.site-header--scrolled))) .filters,
+  :global(body:has(.site-header--scroll-up)) .filters {
+    --filter-sticky-top: 175px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :global(body:has(.site-header:not(.site-header--scrolled))) .filters,
+  :global(body:has(.site-header--scroll-up)) .filters {
+    --filter-sticky-top: 210px;
   }
 }
 

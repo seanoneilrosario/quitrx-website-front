@@ -175,6 +175,20 @@ async function loadQuitHeroProductsPage(page: number, limit: number, search?: st
   return { products, totalPages };
 }
 
+async function hydrateBundleAvailability(products: QuitHeroProduct[]) {
+  return Promise.all(products.map(async (product) => {
+    if (!productHasTag(product, "bundle") || !product.id || !product.variants?.length) return product;
+
+    const variants = await Promise.all(product.variants.map(async (variant) => {
+      if (!variant.id) return variant;
+      const bundleVariant = await getQuitHeroBundleVariant(product.id!, variant.id).catch(() => undefined);
+      return bundleVariant ? { ...variant, ...bundleVariant } : variant;
+    }));
+
+    return { ...product, variants };
+  }));
+}
+
 export async function getQuitHeroCollectionPage(slug: string, page: number, limit: number): Promise<QuitHeroCollectionPage> {
   const normalizedPage = Math.max(1, Math.floor(page));
   const normalizedLimit = Math.max(1, Math.min(20, Math.floor(limit)));
@@ -191,7 +205,7 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
         slug,
         description: resolvedCollection.brand?.description,
       },
-      products: collectionProducts.slice(startIndex, startIndex + normalizedLimit),
+      products: await hydrateBundleAvailability(collectionProducts.slice(startIndex, startIndex + normalizedLimit)),
       pagination: {
         page: normalizedPage,
         limit: normalizedLimit,
@@ -268,7 +282,7 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
       slug,
       description: apiCollection?.description ?? assignment?.description,
     },
-    products,
+    products: await hydrateBundleAvailability(products),
     pagination: {
       page: normalizedPage,
       limit: normalizedLimit,
