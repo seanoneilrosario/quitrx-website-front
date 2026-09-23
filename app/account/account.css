@@ -772,8 +772,9 @@
 
 .account-order-table__row {
   display: grid;
-  grid-template-columns: 1.1fr 1fr 1fr 0.7fr;
-  min-width: 660px;
+  grid-template-columns: 1.1fr 1fr 1fr 0.7fr auto;
+  gap: 20px;
+  min-width: 820px;
   padding: 20px 30px;
   align-items: center;
 }
@@ -804,6 +805,26 @@
 
 .account-order-link:hover {
   text-decoration-color: currentColor;
+}
+
+.account-order-details-button {
+  display: inline-flex;
+  min-height: 38px;
+  padding: 8px 16px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #08666b;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.account-order-details-button:hover {
+  background: #064f54;
 }
 
 .account-order-status {

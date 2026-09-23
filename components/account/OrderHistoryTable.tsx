@@ -55,21 +55,22 @@ export default function OrderHistoryTable({ onOrdersLoaded }: OrderHistoryTableP
   }, [onOrdersLoaded]);
 
   return <div className="account-order-table">
-    <div className="account-order-table__row account-order-table__head"><span>Order</span><span>Date</span><span>Status</span><span>Total</span></div>
+    <div className="account-order-table__row account-order-table__head"><span>Order</span><span>Date</span><span>Status</span><span>Total</span><span>Details</span></div>
     {state === "loading" && <div className="account-order-table__empty">Loading your orders...</div>}
     {state === "error" && <div className="account-order-table__empty">We couldn&apos;t load your orders. Please try again.</div>}
     {state === "ready" && !orders.length && <div className="account-order-table__empty">You haven&apos;t placed any orders yet.</div>}
-    {state === "ready" && orders.map((order) => <div className="account-order-table__row" key={order.id || order.orderNumber}>
-      <strong>
-        {order.id || order.orderNumber ? (
-          <Link className="account-order-link" href={`/account/orders/${encodeURIComponent(order.id || order.orderNumber!)}`}>
-            {order.orderNumber || "View order"}
-          </Link>
-        ) : "Order"}
-      </strong>
-      <span>{formatDate(order.createdAt)}</span>
-      <span className={`account-order-status${isCancelled(order) ? " account-order-status--cancelled" : ""}`}><i />{readableStatus(order)}</span>
-      <strong>{formatMoney(order.total, order.currencyCode)}</strong>
-    </div>)}
+    {state === "ready" && orders.map((order) => {
+      const orderIdentifier = order.id || order.orderNumber;
+      const orderHref = orderIdentifier ? `/account/orders/${encodeURIComponent(orderIdentifier)}` : undefined;
+      return <div className="account-order-table__row" key={orderIdentifier}>
+        <strong>
+          {orderHref ? <Link className="account-order-link" href={orderHref}>{order.orderNumber || "View order"}</Link> : "Order"}
+        </strong>
+        <span>{formatDate(order.createdAt)}</span>
+        <span className={`account-order-status${isCancelled(order) ? " account-order-status--cancelled" : ""}`}><i />{readableStatus(order)}</span>
+        <strong>{formatMoney(order.total, order.currencyCode)}</strong>
+        {orderHref ? <Link className="account-order-details-button" href={orderHref}>View details</Link> : <span>—</span>}
+      </div>;
+    })}
   </div>;
 }
