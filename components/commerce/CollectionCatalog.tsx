@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
-import { variantIsAvailable } from "@/lib/quithero-bundle";
+import { productIsAvailable } from "@/lib/quithero-bundle";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { hasActiveScript } from "@/lib/script-access";
 import ProductCard from "./ProductCard";
@@ -174,7 +174,7 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
 
   const visibleProducts = useMemo(() => {
     const filtered = products.filter((product) => {
-      const inStock = product.variants?.some(variantIsAvailable) ?? true;
+      const inStock = productIsAvailable(product);
       const variantSizes = product.variants?.map((variant) => optionValues(variant, "size"));
       const variantColors = product.variants?.map((variant) => optionValues(variant, "color"));
       return (!brands.length || brands.includes(product.brand?.name || ""))

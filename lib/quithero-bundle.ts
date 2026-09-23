@@ -45,6 +45,13 @@ export type BundleAwareVariant = {
   bundleDropdowns?: unknown;
 };
 
+type BundleAwareProduct = {
+  status?: string;
+  productType?: string | { name?: string; slug?: string };
+  tags?: Array<string | { name?: string; slug?: string; tag?: { name?: string; slug?: string } }>;
+  variants?: BundleAwareVariant[];
+};
+
 export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] {
   if (!payload || typeof payload !== "object") return [];
   const dropdowns = (payload as Record<string, unknown>).bundleDropdowns;
@@ -201,4 +208,27 @@ export function getPurchasableStock(variant?: BundleAwareVariant) {
 export function variantIsAvailable(variant?: BundleAwareVariant) {
   if (!variant) return false;
   return getPurchasableStock(variant) > 0;
+}
+
+export function productIsAvailable(product: BundleAwareProduct) {
+  const status = product.status?.trim().toLowerCase().replaceAll(/[^a-z]/g, "") || "";
+  if (["soldout", "outofstock", "inactive", "archived", "disabled"].includes(status)) return false;
+
+  const productType = typeof product.productType === "string"
+    ? product.productType
+    : product.productType?.name || product.productType?.slug || "";
+  const tags = product.tags?.flatMap((tag) => typeof tag === "string"
+    ? [tag]
+    : [tag.name, tag.slug, tag.tag?.name, tag.tag?.slug].filter((value): value is string => Boolean(value))) ?? [];
+  const isBundle = [productType, ...tags].some((value) => value.trim().toLowerCase() === "bundle");
+
+  if (isBundle) {
+    return product.variants?.some((variant) => {
+      const hasBundleConfiguration = bundleComponentsFrom(variant).length > 0
+        || bundleDropdownsFrom(variant).length > 0;
+      return hasBundleConfiguration && variantIsAvailable(variant);
+    }) ?? false;
+  }
+
+  return product.variants?.some(variantIsAvailable) ?? false;
 }

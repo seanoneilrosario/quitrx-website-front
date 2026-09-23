@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { QuitHeroProduct } from "@/lib/quithero";
-import { variantIsAvailable } from "@/lib/quithero-bundle";
+import { productIsAvailable } from "@/lib/quithero-bundle";
 import ProductImage from "./ProductImage";
 import styles from "./collectionCatalog.module.css";
 
@@ -29,7 +29,7 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
       : `${formatter.format(minimumPrice)}–${formatter.format(maximumPrice!)}`;
   const productHandle = product.handle ?? product.slug;
   const productUrl = `/product/${encodeURIComponent(productHandle!)}`;
-  const isAvailable = product.variants?.some(variantIsAvailable) ?? false;
+  const isAvailable = productIsAvailable(product);
 
   return (
     <article className={styles.productCard}>

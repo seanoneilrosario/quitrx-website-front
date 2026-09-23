@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bundleComponentsFrom, bundleDropdownsFrom, bundleSlotsFrom, variantIsAvailable } from "./quithero-bundle";
+import { bundleComponentsFrom, bundleDropdownsFrom, bundleSlotsFrom, productIsAvailable, variantIsAvailable } from "./quithero-bundle";
 
 describe("bundleDropdownsFrom", () => {
   it("normalizes the current variant bundle dropdown structure", () => {
@@ -29,6 +29,27 @@ describe("bundleDropdownsFrom", () => {
     expect(variantIsAvailable({
       inventory: 0,
       bundleDropdowns: [{ name: "Device", options: [{ componentVariantId: "device", componentVariant: { inventory: 2 } }] }],
+    })).toBe(true);
+  });
+});
+
+describe("productIsAvailable", () => {
+  it("does not use misleading parent inventory when a bundle has no configuration", () => {
+    expect(productIsAvailable({
+      status: "ACTIVE",
+      productType: "Bundle",
+      variants: [{ inventory: 177 }],
+    })).toBe(false);
+  });
+
+  it("marks explicitly sold-out products unavailable", () => {
+    expect(productIsAvailable({ status: "SOLD_OUT", variants: [{ inventory: 10 }] })).toBe(false);
+  });
+
+  it("keeps configured bundles available when their components have stock", () => {
+    expect(productIsAvailable({
+      tags: ["Bundle"],
+      variants: [{ bundleComponents: [{ componentVariantId: "device", componentVariant: { inventory: 2 }, quantity: 1 }] }],
     })).toBe(true);
   });
 });
