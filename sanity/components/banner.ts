@@ -60,6 +60,13 @@ export const banner = defineType({
         }),
     }),
     defineField({
+      name: "link_open_in_new_tab",
+      title: "Open banner link in new tab",
+      type: "boolean",
+      initialValue: false,
+      hidden: ({ parent }) => !parent?.link,
+    }),
+    defineField({
       name: "description",
       title: "Supporting Text",
       type: "array",
@@ -90,6 +97,12 @@ export const banner = defineType({
                     title: "URL",
                     validation: (Rule) =>
                       Rule.uri({ allowRelative: true, scheme: ["http", "https"] }),
+                  },
+                  {
+                    name: "openInNewTab",
+                    type: "boolean",
+                    title: "Open in new tab",
+                    initialValue: true,
                   },
                 ],
               },
@@ -126,6 +139,13 @@ export const banner = defineType({
       to: [{type: 'page'}]
     }),
     defineField({
+      name: "button_open_in_new_tab",
+      title: "Open primary CTA in new tab",
+      type: "boolean",
+      initialValue: false,
+      hidden: ({ parent }) => !parent?.button_text,
+    }),
+    defineField({
       name: "secondary_button_text",
       title: "Secondary Button Text",
       type: "string",
@@ -151,6 +171,13 @@ export const banner = defineType({
       title: "Secondary Button Link",
       type: "string",
       description: "Enter an internal path such as /login or a full URL.",
+      hidden: ({ parent }) => !parent?.secondary_button_text,
+    }),
+    defineField({
+      name: "secondary_button_open_in_new_tab",
+      title: "Open secondary CTA in new tab",
+      type: "boolean",
+      initialValue: false,
       hidden: ({ parent }) => !parent?.secondary_button_text,
     }),
   ],

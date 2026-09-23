@@ -134,10 +134,14 @@ export interface COMPONENTS {
   doc_img? : string;
   front_image?: any;
   link?: string;
+  link_open_in_new_tab?: boolean;
   title_image?: string;
   layoutPosition?: string;
   leftDescription?: PortableTextBlock[];
   rightDescription?: PortableTextBlock[];
+  buttonText?: string;
+  buttonLink?: string;
+  buttonOpenInNewTab?: boolean;
   description?: PortableTextBlock[];
   disclaimer?: PortableTextBlock[];
   text?: PortableTextBlock[];
@@ -153,9 +157,11 @@ export interface COMPONENTS {
   button_text?: string;
   button_link?: string;
   button_style?: "button" | "link";
+  button_open_in_new_tab?: boolean;
   secondary_button_text?: string;
   secondary_button_style?: "button" | "link";
   secondary_button_link?: string;
+  secondary_button_open_in_new_tab?: boolean;
   background_image?: string;
   eyebrow_max_width?: number;
   paddingTop?: number;

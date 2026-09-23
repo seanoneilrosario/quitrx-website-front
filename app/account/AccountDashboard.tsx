@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import OrderHistoryTable from "@/components/account/OrderHistoryTable";
+import type { QuitHeroOrder } from "@/lib/quithero";
 
 function addressLines(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];
@@ -29,9 +30,33 @@ function formatDate(date?: string) {
   return new Intl.DateTimeFormat("en-AU", { day: "2-digit", month: "short", year: "numeric" }).format(parsed);
 }
 
+function isCancelled(order: QuitHeroOrder) {
+  return [order.fulfillmentStatus, order.status].some((status) =>
+    /^cancell?ed$/.test(status?.trim().toLowerCase() || ""),
+  );
+}
+
+function formatMoney(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-AU", { style: "currency", currency }).format(amount);
+}
+
 export default function AccountDashboard() {
   const router = useRouter();
   const { customer, loading } = useAccountCustomer();
+  const [orders, setOrders] = useState<QuitHeroOrder[] | null>(null);
+  const handleOrdersLoaded = useCallback((loadedOrders: QuitHeroOrder[]) => {
+    setOrders(loadedOrders);
+  }, []);
+  const orderSummary = useMemo(() => {
+    if (!orders) return null;
+    const includedOrders = orders.filter((order) => !isCancelled(order));
+    const totalSpent = includedOrders.reduce((total, order) => {
+      const amount = Number(order.total);
+      return Number.isFinite(amount) ? total + amount : total;
+    }, 0);
+    const currency = includedOrders.find((order) => order.currencyCode)?.currencyCode || "AUD";
+    return { count: orders.length, totalSpent, currency };
+  }, [orders]);
 
   useEffect(() => {
     if (!loading && !customer) router.replace("/account/login");
@@ -72,14 +97,17 @@ export default function AccountDashboard() {
 
       <article className="account-panel account-panel--orders">
         <div className="account-panel__heading"><div className="account-panel__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 13H6L5 8Z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg></div><h2>Orders</h2></div>
-        <div className="account-panel__content"><p><strong>{customer.numberOfOrders ?? 0}</strong> Orders</p>{customer.totalSpent !== undefined && <p>{`${customer.currencyCode ?? ""} ${customer.totalSpent}`.trim()} total spent</p>}</div>
+        <div className="account-panel__content">
+          <p><strong>{orderSummary?.count ?? "—"}</strong> Orders</p>
+          <p>{orderSummary ? formatMoney(orderSummary.totalSpent, orderSummary.currency) : "—"} total spent</p>
+        </div>
         <Link href="/account/orders" className="account-button account-button--primary account-button--compact">View Orders</Link>
       </article>
     </section>
 
     <section className="account-order-history">
       <div className="account-order-history__header"><span className="account-order-history__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><h2>Order History</h2></div>
-      <OrderHistoryTable />
+      <OrderHistoryTable onOrdersLoaded={handleOrdersLoaded} />
     </section>
     {hasActiveScriptTag && (
       <section className="account-banner">

@@ -44,6 +44,7 @@ const sectionRenderers: Record<
       back_image={component.back_image || ""}
       doc_img={component.doc_img || ""}
       link={component.link}
+      link_open_in_new_tab={component.link_open_in_new_tab}
       title_image={component.title_image || ""}
       description={component.description || []}
       disclaimer={component.disclaimer || []}
@@ -51,9 +52,11 @@ const sectionRenderers: Record<
       button_text={component.button_text || ""}
       button_url={component.button_url?.slug || ""}
       button_style={component.button_style || "link"}
+      button_open_in_new_tab={component.button_open_in_new_tab}
       secondary_button_text={component.secondary_button_text || ""}
       secondary_button_link={component.secondary_button_link || ""}
       secondary_button_style={component.secondary_button_style || "button"}
+      secondary_button_open_in_new_tab={component.secondary_button_open_in_new_tab}
       hide_separator={component.hide_separator}
     />
   ),
@@ -93,6 +96,9 @@ const sectionRenderers: Record<
       eyebrow={component.eyebrow || ""}
       title={component.title || ""}
       rightDescription={component.rightDescription || []}
+      buttonText={component.buttonText || ""}
+      buttonLink={component.buttonLink || ""}
+      buttonOpenInNewTab={component.buttonOpenInNewTab}
     />
   ),
   richtext_with_grouped_cta: (component, activeSection) => (

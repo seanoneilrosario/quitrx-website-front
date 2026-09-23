@@ -46,7 +46,20 @@ export default defineType({
               name: "answer",
               title: "Answer",
               type: "array",
-              of: [{ type: "block" }],
+              of: [{
+                type: "block",
+                marks: {
+                  annotations: [{
+                    name: "link",
+                    type: "object",
+                    title: "Link",
+                    fields: [
+                      defineField({ name: "href", type: "url", title: "URL", validation: (Rule) => Rule.uri({ allowRelative: true, scheme: ["http", "https"] }) }),
+                      defineField({ name: "openInNewTab", type: "boolean", title: "Open in new tab", initialValue: true }),
+                    ],
+                  }],
+                },
+              }],
             }),
           ],
           preview: {

@@ -29,7 +29,11 @@ function isCancelled(order: QuitHeroOrder) {
   );
 }
 
-export default function OrderHistoryTable() {
+interface OrderHistoryTableProps {
+  onOrdersLoaded?: (orders: QuitHeroOrder[]) => void;
+}
+
+export default function OrderHistoryTable({ onOrdersLoaded }: OrderHistoryTableProps) {
   const [orders, setOrders] = useState<QuitHeroOrder[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
 
@@ -38,14 +42,16 @@ export default function OrderHistoryTable() {
     fetch("/api/orders", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load orders.");
-        setOrders(await response.json() as QuitHeroOrder[]);
+        const loadedOrders = await response.json() as QuitHeroOrder[];
+        setOrders(loadedOrders);
+        onOrdersLoaded?.(loadedOrders);
         setState("ready");
       })
       .catch((error: unknown) => {
         if (!(error instanceof DOMException && error.name === "AbortError")) setState("error");
       });
     return () => controller.abort();
-  }, []);
+  }, [onOrdersLoaded]);
 
   return <div className="account-order-table">
     <div className="account-order-table__row account-order-table__head"><span>Order</span><span>Date</span><span>Status</span><span>Total</span></div>

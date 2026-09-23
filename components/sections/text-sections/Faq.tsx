@@ -10,7 +10,11 @@ import { FAQItem } from "@/components/global/components";
 const faqPortableTextComponents: PortableTextComponents = {
   marks: {
     link: ({ children, value }) => (
-      <a href={value?.href} target="_blank" rel="noopener noreferrer">
+      <a
+        href={value?.href}
+        target={value?.openInNewTab === false ? undefined : "_blank"}
+        rel={value?.openInNewTab === false ? undefined : "noopener noreferrer"}
+      >
         {children}
       </a>
     ),

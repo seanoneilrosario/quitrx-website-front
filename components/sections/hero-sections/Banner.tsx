@@ -12,7 +12,11 @@ import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
 const disclaimerComponents = {
   marks: {
     link: ({ children, value }: any) => (
-      <a href={value?.href} target="_blank" rel="noopener noreferrer">
+      <a
+        href={value?.href}
+        target={value?.openInNewTab === false ? undefined : "_blank"}
+        rel={value?.openInNewTab === false ? undefined : "noopener noreferrer"}
+      >
         {children}
       </a>
     ),
@@ -25,15 +29,18 @@ interface BannerProps {
   doc_img: any;
   title: string;
   link?: string;
+  link_open_in_new_tab?: boolean;
   title_image?: string;
   description: PortableTextBlock[];
   disclaimer: PortableTextBlock[];
   title_array: PortableTextBlock[];
   button_text?: string;
   button_url?: string;
+  button_open_in_new_tab?: boolean;
   button_style?: "button" | "link";
   secondary_button_text?: string;
   secondary_button_link?: string;
+  secondary_button_open_in_new_tab?: boolean;
   secondary_button_style?: "button" | "link";
   hide_separator: boolean;
 }
@@ -44,15 +51,18 @@ export function Banner({
   doc_img,
   title,
   link,
+  link_open_in_new_tab = false,
   title_image,
   description,
   disclaimer,
   title_array,
   button_text,
   button_url,
+  button_open_in_new_tab = false,
   button_style = "link",
   secondary_button_text,
   secondary_button_link,
+  secondary_button_open_in_new_tab = false,
   secondary_button_style = "button",
   hide_separator
 }: BannerProps) {
@@ -83,9 +93,10 @@ export function Banner({
     return () => controller.abort();
   }, [isLoginButton]);
 
-  const handleButtonClick = (url?: string) => {
+  const handleButtonClick = (url?: string, openInNewTab = false) => {
     if (url) {
-      window.location.assign(url);
+      if (openInNewTab) window.open(url, "_blank", "noopener,noreferrer");
+      else window.location.assign(url);
     }
   };
 
@@ -158,11 +169,14 @@ export function Banner({
                 <TreatmentCtaLink
                   className="banner-button banner-button--primary"
                   defaultLabel={button_text}
+                  openInNewTab={button_open_in_new_tab}
                 />
               ) : button_style === "link" ? (
                 <Link
                   href={button_url || "#"}
                   className="banner-button banner-button--primary"
+                  target={button_open_in_new_tab ? "_blank" : undefined}
+                  rel={button_open_in_new_tab ? "noopener noreferrer" : undefined}
                 >
                   {button_text}
                 </Link>
@@ -170,7 +184,7 @@ export function Banner({
                 <button
                   type="button"
                   className="banner-button banner-button--secondary"
-                  onClick={() => handleButtonClick(button_url)}
+                  onClick={() => handleButtonClick(button_url, button_open_in_new_tab)}
                 >
                   {button_text}
                 </button>
@@ -181,6 +195,8 @@ export function Banner({
                 <Link
                   href={secondaryButtonLink || "#"}
                   className={`banner-button ${secondary_button_style === "link" ? "banner-button--primary" : "banner-button--secondary"}`}
+                  target={secondary_button_open_in_new_tab ? "_blank" : undefined}
+                  rel={secondary_button_open_in_new_tab ? "noopener noreferrer" : undefined}
                 >
                   {secondary_button_text}
                 </Link>
@@ -188,7 +204,7 @@ export function Banner({
                 <button
                   type="button"
                   className="banner-button banner-button--secondary"
-                  onClick={() => handleButtonClick(secondaryButtonLink)}
+                  onClick={() => handleButtonClick(secondaryButtonLink, secondary_button_open_in_new_tab)}
                 >
                   {secondary_button_text}
                 </button>
@@ -251,7 +267,11 @@ export function Banner({
 
   if (link) {
     return (
-      <Link href={link}>
+      <Link
+        href={link}
+        target={link_open_in_new_tab ? "_blank" : undefined}
+        rel={link_open_in_new_tab ? "noopener noreferrer" : undefined}
+      >
         {content}
       </Link>
     );
