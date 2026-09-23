@@ -798,7 +798,7 @@
 
 .account-order-link {
   color: inherit;
-  text-decoration: underline;
+  text-decoration: none;
   text-decoration-color: rgba(27, 75, 85, 0.35);
   text-underline-offset: 3px;
 }
