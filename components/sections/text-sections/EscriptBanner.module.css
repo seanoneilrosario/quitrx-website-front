@@ -71,6 +71,7 @@
 }
 
 .button img {
+  order: -1;
   width: 28px;
   height: 28px;
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { PortableText } from "next-sanity";
 import { PortableTextBlock } from "@/components/global/components";
+import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
 
 import styles from "./EscriptBanner.module.css";
 
@@ -27,7 +27,6 @@ const EscriptBanner = ({
   icon,
   buttonIcon,
   buttonText,
-  buttonUrl,
   paddingTop = 40,
   paddingBottom = 40,
 }: EscriptBannerProps) => {
@@ -63,9 +62,9 @@ const EscriptBanner = ({
           </div>
 
           {/* {buttonText && buttonUrl && ( */}
-            <Link
-              href={`/${buttonUrl}`}
+            <TreatmentCtaLink
               className={styles.button}
+              defaultLabel={buttonText}
             >
               {buttonIcon && (
                 <Image
@@ -76,8 +75,7 @@ const EscriptBanner = ({
                 />
               )}
 
-              <span>{buttonText}</span>
-            </Link>
+            </TreatmentCtaLink>
           {/* )} */}
         </div>
       </div>

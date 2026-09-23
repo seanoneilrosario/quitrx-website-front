@@ -5,6 +5,15 @@
   align-items: start;
 }
 
+@media (min-width: 700px) {
+  .filters {
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+}
+
 .pagination {
   display: flex;
   justify-content: center;
