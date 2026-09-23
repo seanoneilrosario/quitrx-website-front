@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { PortableText } from "next-sanity";
 import { PortableTextBlock } from "@/components/global/components";
-import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 import styles from "./EscriptBanner.module.css";
 
@@ -30,6 +31,8 @@ const EscriptBanner = ({
   paddingTop = 40,
   paddingBottom = 40,
 }: EscriptBannerProps) => {
+  const { customer } = useAccountCustomer();
+
   return (
     <section
       className={styles.escriptBanner}
@@ -62,9 +65,9 @@ const EscriptBanner = ({
           </div>
 
           {/* {buttonText && buttonUrl && ( */}
-            <TreatmentCtaLink
+            <Link
+              href={customer ? "/upload-prescription" : "/account/login?next=/upload-prescription"}
               className={styles.button}
-              defaultLabel={buttonText}
             >
               {buttonIcon && (
                 <Image
@@ -74,8 +77,8 @@ const EscriptBanner = ({
                   height={30}
                 />
               )}
-
-            </TreatmentCtaLink>
+              <span>{buttonText}</span>
+            </Link>
           {/* )} */}
         </div>
       </div>
