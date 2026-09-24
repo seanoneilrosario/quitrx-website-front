@@ -133,7 +133,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           if ((await findQuitHeroCustomerByEmail(email))?.id) return true;
           return Response.redirect(new URL("/account/login?error=AccountNotFound", request.nextUrl));
         } catch {
-          return Response.redirect(new URL("/account/login?error=ServiceUnavailable", request.nextUrl));
+          // A transient QuitHero outage must not invalidate an otherwise valid session.
+          return true;
         }
       }
       return Response.redirect(new URL("/account/login", request.nextUrl));

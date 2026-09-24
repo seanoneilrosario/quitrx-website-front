@@ -27,7 +27,7 @@ function addressLines(address: QuitHeroAddress) {
 
 export default function ProfileForm() {
   const router = useRouter();
-  const { customer, loading, setCustomer } = useAccountCustomer();
+  const { customer, loading, error: accountError, setCustomer } = useAccountCustomer();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState("");
@@ -35,8 +35,8 @@ export default function ProfileForm() {
   const [editingId, setEditingId] = useState<string>();
 
   useEffect(() => {
-    if (!loading && !customer) router.replace("/account/login");
-  }, [customer, loading, router]);
+    if (!loading && !customer && !accountError) router.replace("/account/login");
+  }, [accountError, customer, loading, router]);
 
   async function refreshCustomer() {
     const response = await fetch("/api/account/me", { cache: "no-store" });
@@ -92,6 +92,7 @@ export default function ProfileForm() {
     } finally { setPending(""); }
   }
 
+  if (accountError) return <section className="account-card"><p className="account-load-message">{accountError}</p></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your profile...</p></section>;
   const addresses = customer.addresses?.length ? customer.addresses : customer.address ? [customer.address] : [];
 

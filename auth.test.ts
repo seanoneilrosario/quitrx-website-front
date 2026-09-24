@@ -56,10 +56,10 @@ it("allows existing customers and keeps the login route accessible", async () =>
   expect(mocks.lookup).not.toHaveBeenCalled();
 });
 
-it("does not grant account access when the customer service fails", async () => {
+it("keeps a valid session active when the customer service temporarily fails", async () => {
   mocks.lookup.mockRejectedValue(new Error("Service unavailable"));
   const result = await callbacks.authorized({ auth: { user: { email: "member@example.com" } }, request: request() });
-  expect((result as Response).headers.get("location")).toBe("https://example.com/account/login?error=ServiceUnavailable");
+  expect(result).toBe(true);
 });
 
 it("creates and links a customer for a new social login", async () => {

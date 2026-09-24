@@ -7,6 +7,7 @@ import type { QuitHeroCustomer } from "@/lib/quithero-customers";
 type AccountCustomerContextValue = {
   customer?: QuitHeroCustomer;
   loading: boolean;
+  error?: string;
   setCustomer: React.Dispatch<React.SetStateAction<QuitHeroCustomer | undefined>>;
 };
 
@@ -18,6 +19,8 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
   const [customer, setCustomer] = useState<QuitHeroCustomer>();
   const [loading, setLoading] = useState(true);
   const [loadedPathname, setLoadedPathname] = useState<string>();
+  const [unauthorized, setUnauthorized] = useState(false);
+  const [error, setError] = useState<string>();
 
   useEffect(() => {
     if (customer) return;
@@ -26,10 +29,24 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
 
     fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
-        setCustomer(response.ok ? await response.json() as QuitHeroCustomer : undefined);
+        if (response.ok) {
+          setCustomer(await response.json() as QuitHeroCustomer);
+          setUnauthorized(false);
+          setError(undefined);
+        } else if (response.status === 401) {
+          setCustomer(undefined);
+          setUnauthorized(true);
+          setError(undefined);
+        } else {
+          setUnauthorized(false);
+          setError("We couldn't load your account right now. Please try again shortly.");
+        }
       })
       .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) setCustomer(undefined);
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setUnauthorized(false);
+          setError("We couldn't load your account right now. Please try again shortly.");
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -49,11 +66,11 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
       pathname !== "/account/login" &&
       pathname !== "/account/auth-popup"
     );
-    if (!isLoadingCurrentPath && !customer && isProtectedAccountPage) router.replace("/account/login");
-  }, [customer, isLoadingCurrentPath, pathname, router]);
+    if (!isLoadingCurrentPath && unauthorized && isProtectedAccountPage) router.replace("/account/login");
+  }, [isLoadingCurrentPath, pathname, router, unauthorized]);
 
   return (
-    <AccountCustomerContext.Provider value={{ customer, loading: isLoadingCurrentPath, setCustomer }}>
+    <AccountCustomerContext.Provider value={{ customer, loading: isLoadingCurrentPath, error, setCustomer }}>
       {children}
     </AccountCustomerContext.Provider>
   );

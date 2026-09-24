@@ -42,7 +42,7 @@ function formatMoney(amount: number, currency: string) {
 
 export default function AccountDashboard() {
   const router = useRouter();
-  const { customer, loading } = useAccountCustomer();
+  const { customer, loading, error } = useAccountCustomer();
   const [orders, setOrders] = useState<QuitHeroOrder[] | null>(null);
   const handleOrdersLoaded = useCallback((loadedOrders: QuitHeroOrder[]) => {
     setOrders(loadedOrders);
@@ -59,9 +59,10 @@ export default function AccountDashboard() {
   }, [orders]);
 
   useEffect(() => {
-    if (!loading && !customer) router.replace("/account/login");
-  }, [customer, loading, router]);
+    if (!loading && !customer && !error) router.replace("/account/login");
+  }, [customer, error, loading, router]);
 
+  if (error) return <section className="account-card"><p className="account-load-message">{error}</p></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your account...</p></section>;
 
   const fullName = [customer.firstName?.trim(), customer.lastName?.trim()].filter(Boolean).join(" ");
