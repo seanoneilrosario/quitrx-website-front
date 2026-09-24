@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { productIsAvailable } from "@/lib/quithero-bundle";
@@ -44,6 +45,7 @@ function unique(values: Array<string | undefined>) {
 }
 
 export default function CollectionCatalog({ collectionSlug, initialPage }: { collectionSlug: string; initialPage?: CollectionPageResponse }) {
+  const queryClient = useQueryClient();
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
   const [products, setProducts] = useState<QuitHeroProduct[]>(initialPage?.products ?? []);
@@ -80,9 +82,15 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
     console.log("Pagination limit:", PAGE_SIZE);
     console.groupEnd();
 
-    const response = await fetch(requestUrl, { cache: "no-store", signal });
-    const payload = await response.json() as CollectionPageResponse & { error?: string };
-    if (!response.ok) throw new Error(payload.error || "Unable to load products.");
+    const payload = await queryClient.fetchQuery({
+      queryKey: ["api", requestUrl],
+      queryFn: async ({ signal: querySignal }) => {
+        const response = await fetch(requestUrl, { signal: signal ?? querySignal });
+        const data = await response.json() as CollectionPageResponse & { error?: string };
+        if (!response.ok) throw new Error(data.error || "Unable to load products.");
+        return data;
+      },
+    });
     console.groupCollapsed(`[Collection] Response page ${page}: ${collectionSlug}`);
     console.log("Raw products returned by the API:", payload.products);
     console.log("Number of products returned per request:", payload.products.length);
@@ -90,7 +98,7 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
     console.groupEnd();
 
     return payload;
-  }, [collectionSlug]);
+  }, [collectionSlug, queryClient]);
 
   const applyProductsPage = useCallback((payload: CollectionPageResponse, append: boolean) => {
     setCollection({ name: payload.collection.name, description: payload.collection.description ?? "" });

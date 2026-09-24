@@ -4,6 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
 type NavigationMenuItem = {
@@ -165,10 +166,17 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [cartStockError, setCartStockError] = useState("");
   const { customer: accountIdentity, loading: accountLoading } = useAccountCustomer();
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchLoaded, setSearchLoaded] = useState(false);
-  const [searchError, setSearchError] = useState("");
+  const { data: searchPayload, isLoading: searchLoading, isError: searchFailed } = useQuery({
+    queryKey: ["api", "/api/quithero-products"],
+    enabled: isSearchOpen,
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/quithero-products", { signal });
+      if (!response.ok) throw new Error("Unable to load products.");
+      return await response.json() as unknown;
+    },
+  });
+  const searchProducts = useMemo(() => parseSearchProducts(searchPayload), [searchPayload]);
+  const searchError = searchFailed ? "Product search is temporarily unavailable." : "";
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const lastScrollY = useRef(0);
@@ -207,33 +215,6 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
         return Number(rightName.includes(term)) - Number(leftName.includes(term));
       });
   }, [searchProducts, searchTerm]);
-  useEffect(() => {
-    if (!isSearchOpen || searchLoaded) return;
-    const controller = new AbortController();
-    let cancelled = false;
-    setSearchLoading(true);
-    setSearchError("");
-    fetch("/api/quithero-products", { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Unable to load products.");
-        const products = parseSearchProducts(await response.json());
-        if (!cancelled) setSearchProducts(products);
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        if (!cancelled) setSearchError("Product search is temporarily unavailable.");
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setSearchLoading(false);
-          setSearchLoaded(true);
-        }
-      });
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [isSearchOpen, searchLoaded]);
   useEffect(() => {
     const updateCart = (event?: Event) => {
       setCartItems(readCart());

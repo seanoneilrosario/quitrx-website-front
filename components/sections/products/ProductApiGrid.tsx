@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./ProductApiGrid.module.css";
@@ -122,10 +123,6 @@ export default function ProductApiGrid({
     : customer
       ? hasActiveScript(customer) ? "authenticated" : "missing-script"
       : "anonymous";
-  const [products, setProducts] = useState<ApiRecord[]>([]);
-  const [apiCollections, setApiCollections] = useState<ApiRecord[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
   const availableCollections = Array.isArray(collections) ? collections : [];
   const selectedCollections = availableCollections.length ? availableCollections : collection ? [collection] : [];
   const showingSelectedCollections = selectedCollections.length > 0;
@@ -136,29 +133,23 @@ export default function ProductApiGrid({
     : "";
   const skeletonCount = Math.max(4, Math.min(productLimit, 8));
 
-  useEffect(() => {
-    if (authStatus !== "authenticated" || showingSelectedCollections) return;
-    const controller = new AbortController();
-
-    const url = displayMode === "collections" ? "/api/quithero-collections" : `/api/quithero-products${collectionQuery}`;
-    fetch(url, { signal: controller.signal })
-      .then(async (response) => {
-        const payload: unknown = await response.json();
-        if (!response.ok) {
-          const message = getText(asRecord(payload) || {}, ["error"]);
-          throw new Error(message || "Unable to load products.");
-        }
-        if (displayMode === "collections") setApiCollections(getCollections(payload));
-        else setProducts(getProducts(payload));
-      })
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-        setError(requestError instanceof Error ? requestError.message : "Unable to load products.");
-      })
-      .finally(() => setLoading(false));
-
-    return () => controller.abort();
-  }, [authStatus, collectionQuery, displayMode, showingSelectedCollections]);
+  const url = displayMode === "collections" ? "/api/quithero-collections" : `/api/quithero-products${collectionQuery}`;
+  const { data: payload, error: queryError, isLoading: loading } = useQuery({
+    queryKey: ["api", url],
+    enabled: authStatus === "authenticated" && !showingSelectedCollections,
+    queryFn: async ({ signal }) => {
+      const response = await fetch(url, { signal });
+      const data: unknown = await response.json();
+      if (!response.ok) {
+        const message = getText(asRecord(data) || {}, ["error"]);
+        throw new Error(message || "Unable to load products.");
+      }
+      return data;
+    },
+  });
+  const products = displayMode === "products" ? getProducts(payload) : [];
+  const apiCollections = displayMode === "collections" ? getCollections(payload) : [];
+  const error = queryError instanceof Error ? queryError.message : "";
 
   const sectionStyle = {
     "--desktop-padding-top": `${desktopPaddingTop ?? paddingTop}px`,

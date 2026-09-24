@@ -7,6 +7,7 @@ import ThemeProvider, { type ThemeSettings } from "./ThemeProvider";
 import SiteChrome from "@/components/navigation/SiteChrome";
 import type { NavigationData, SearchPage } from "@/components/navigation/Header";
 import { AccountCustomerProvider } from "@/hooks/useAccountCustomer";
+import QueryProvider from "./QueryProvider";
 
 type WebsiteShellProps = {
   children: ReactNode;
@@ -31,13 +32,15 @@ export default function WebsiteShell({
   }
 
   return (
-    <ThemeProvider settings={settings}>
-      <AccountCustomerProvider>
-        <SiteChrome navigation={navigation} searchPages={searchPages}>
-          {children}
-        </SiteChrome>
-      </AccountCustomerProvider>
-      {liveContent}
-    </ThemeProvider>
+    <QueryProvider>
+      <ThemeProvider settings={settings}>
+        <AccountCustomerProvider>
+          <SiteChrome navigation={navigation} searchPages={searchPages}>
+            {children}
+          </SiteChrome>
+        </AccountCustomerProvider>
+        {liveContent}
+      </ThemeProvider>
+    </QueryProvider>
   );
 }
