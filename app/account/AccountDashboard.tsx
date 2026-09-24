@@ -7,6 +7,7 @@ import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import OrderHistoryTable from "@/components/account/OrderHistoryTable";
 import type { QuitHeroOrder } from "@/lib/quithero";
+import { hasActiveScript } from "@/lib/script-access";
 
 function addressLines(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];
@@ -42,7 +43,7 @@ function formatMoney(amount: number, currency: string) {
 
 export default function AccountDashboard() {
   const router = useRouter();
-  const { customer, loading, error } = useAccountCustomer();
+  const { customer, loading, error, refreshCustomer } = useAccountCustomer();
   const [orders, setOrders] = useState<QuitHeroOrder[] | null>(null);
   const handleOrdersLoaded = useCallback((loadedOrders: QuitHeroOrder[]) => {
     setOrders(loadedOrders);
@@ -62,16 +63,13 @@ export default function AccountDashboard() {
     if (!loading && !customer && !error) router.replace("/account/login");
   }, [customer, error, loading, router]);
 
-  if (error) return <section className="account-card"><p className="account-load-message">{error}</p></section>;
+  if (error && !customer) return <section className="account-card"><p className="account-load-message">{error}</p><button type="button" className="account-button account-button--compact" onClick={() => void refreshCustomer()}>Try again</button></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your account...</p></section>;
 
   const fullName = [customer.firstName?.trim(), customer.lastName?.trim()].filter(Boolean).join(" ");
   const headerName = fullName || customer.email?.trim() || "Customer";
   const addresses = addressLines(customer);
-  const hasActiveScriptTag = customer.tags?.some(
-    (tag) => tag.trim().toLowerCase() === "scriptactive",
-  ) ?? false;
-  const scriptIsActive = customer.scriptActive === true || hasActiveScriptTag;
+  const scriptIsActive = hasActiveScript(customer);
 
   if (customer.consultPurchase === false) {
     return <>
@@ -129,7 +127,7 @@ export default function AccountDashboard() {
       <div className="account-order-history__header"><span className="account-order-history__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><h2>Order History</h2></div>
       <OrderHistoryTable onOrdersLoaded={handleOrdersLoaded} />
     </section>
-    {customer.scriptActive === true && (
+    {scriptIsActive && (
       <section className="account-banner">
         <div className="account-banner__content">
           <span className="account-banner__icon" aria-hidden="true">

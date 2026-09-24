@@ -84,7 +84,7 @@ export default function ProfileForm() {
     } finally { setPending(""); }
   }
 
-  if (accountError) return <section className="account-card"><p className="account-load-message">{accountError}</p></section>;
+  if (accountError && !customer) return <section className="account-card"><p className="account-load-message">{accountError}</p></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your profile...</p></section>;
   const addresses = customer.addresses?.length ? customer.addresses : customer.address ? [customer.address] : [];
 

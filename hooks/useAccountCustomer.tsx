@@ -82,6 +82,7 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
       initialized.current = true;
       const cachedCustomer = readCustomerData();
       if (cachedCustomer) {
+        const cacheNeedsRefresh = customerDataNeedsRefresh();
         fetch("/api/account/session", { cache: "no-store" })
           .then(async (response) => {
             const session = response.ok
@@ -93,6 +94,7 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
               setUnauthorized(false);
               setError(undefined);
               setLoading(false);
+              if (cacheNeedsRefresh) void refreshCustomer();
               return;
             }
             clearCustomerData();

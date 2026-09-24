@@ -6,6 +6,7 @@ import Image from "next/image";
 import styles from "./ProductApiGrid.module.css";
 import ProductImage from "@/components/commerce/ProductImage";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { hasActiveScript } from "@/lib/script-access";
 
 type ApiRecord = Record<string, unknown>;
 
@@ -89,10 +90,6 @@ function getCollectionEntries(products: ApiRecord[]): Array<[string, ApiRecord]>
   return products.length ? [["all-products", products[0]], ...entries] : entries;
 }
 
-function hasScriptAccess(account: ApiRecord) {
-  return account.scriptActive === true;
-}
-
 function ProductGridSkeleton({ count }: { count: number }) {
   return (
     <div className={styles.grid} aria-hidden="true">
@@ -123,7 +120,7 @@ export default function ProductApiGrid({
   const authStatus = customerLoading
     ? "loading"
     : customer
-      ? hasScriptAccess(customer as ApiRecord) ? "authenticated" : "missing-script"
+      ? hasActiveScript(customer) ? "authenticated" : "missing-script"
       : "anonymous";
   const [products, setProducts] = useState<ApiRecord[]>([]);
   const [apiCollections, setApiCollections] = useState<ApiRecord[]>([]);
