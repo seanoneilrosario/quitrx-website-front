@@ -11,11 +11,10 @@ export default async function LoginPage({ searchParams }: {
   const redirectTo = typeof next === "string" && next.startsWith("/") && !next.startsWith("//")
     ? next
     : "/account";
-  let loginError = error === "AccountNotFound"
-    ? "No account found with these details. Please contact us for help getting started."
-    : error === "ServiceUnavailable"
+  let accountNotFound = error === "AccountNotFound";
+  let loginError = error === "ServiceUnavailable"
       ? "We couldn't check your account right now. Please try again shortly."
-      : error
+      : error && !accountNotFound
         ? "We couldn't sign you in. Please try again or contact us for help."
         : undefined;
   const session = await auth();
@@ -25,11 +24,11 @@ export default async function LoginPage({ searchParams }: {
   if (email) {
     try {
       customer = await findQuitHeroCustomerByEmail(email);
-      if (!customer?.id) loginError = "No account found with these details. Please contact us for help getting started.";
+      if (!customer?.id) accountNotFound = true;
     } catch {
       loginError = "We couldn't check your account right now. Please try again shortly.";
     }
   }
   if (customer?.id) redirect(redirectTo);
-  return <LoginPopup redirectTo={redirectTo} loginError={loginError} googleEnabled={Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)} facebookEnabled={Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET)} />;
+  return <LoginPopup redirectTo={redirectTo} loginError={loginError} accountNotFound={accountNotFound} googleEnabled={Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)} facebookEnabled={Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET)} />;
 }

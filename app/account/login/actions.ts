@@ -22,6 +22,7 @@ type EmailCodeChallenge = {
 export type CustomerAccessState = {
   step?: "code";
   email?: string;
+  accountNotFound?: boolean;
   error?: string;
   message?: string;
 };
@@ -116,7 +117,7 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
   try {
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
     if (!customer) {
-      return { error: "No account found with that email address. Check your email, or contact us for help getting started." };
+      return { accountNotFound: true };
     }
 
     await sendLoginCode(normalizedEmail, code);

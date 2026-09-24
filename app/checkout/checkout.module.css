@@ -32,10 +32,14 @@
 .shippingOptions input { width: 16px; height: 16px; accent-color: #08717c; }
 .shippingOptions span { display: grid; gap: 3px; }
 .shippingOptions small { color: #819394; font-weight: 400; }
-.paymentPlaceholder { display: flex; gap: 15px; align-items: center; padding: 18px; border: 1px dashed #aac4c0; border-radius: 8px; background: #f7fbfa; }
-.paymentPlaceholder > span { display: grid; flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; background: #dff7eb; color: #08717c; place-items: center; }
-.paymentPlaceholder strong { font-size: 13px; }
-.paymentPlaceholder p { margin: 4px 0 0; color: #72898a; font-size: 12px; line-height: 1.5; }
+.paymentOptions { display: grid; overflow: hidden; border: 1px solid #bdd1ce; border-radius: 8px; }
+.paymentOptions label { display: grid; grid-template-columns: 20px 1fr; gap: 12px; align-items: center; padding: 16px; cursor: pointer; }
+.paymentOptions label + label { border-top: 1px solid #d8e4e1; }
+.paymentOptions label.selectedOption { background: #effbf5; box-shadow: inset 3px 0 #50d995; }
+.paymentOptions input { width: 16px; height: 16px; accent-color: #08717c; }
+.paymentOptions span { display: grid; gap: 4px; }
+.paymentOptions strong { font-size: 13px; }
+.paymentOptions small { color: #72898a; font-weight: 400; line-height: 1.5; }
 .submitButton { display: flex; min-height: 58px; align-items: center; justify-content: center; gap: 15px; border: 0; border-radius: 9px; background: #70fac6; color: #075d67; font-size: 16px; font-weight: 800; cursor: pointer; transition: background-color .18s, transform .18s; }
 .submitButton:hover { background: #58edb4; transform: translateY(-1px); }
 .submitButton span { font-size: 21px; }

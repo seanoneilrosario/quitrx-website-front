@@ -41,6 +41,7 @@ function readPaymentStatus() {
 
 export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
+  const [paymentMethod, setPaymentMethod] = useState<"eway" | "paypal">("eway");
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submissionLock = useRef(false);
@@ -104,7 +105,7 @@ export default function CheckoutPage() {
     setNotice("");
     try {
       const formData = new FormData(event.currentTarget);
-      const response = await fetch("/api/payments/eway", {
+      const response = await fetch(`/api/payments/${paymentMethod}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -218,14 +219,20 @@ export default function CheckoutPage() {
                   <span>4</span>
                   <div><h2>Payment</h2><p>Payment details are encrypted and secure.</p></div>
                 </div>
-                <div className={styles.paymentPlaceholder}>
-                  <span aria-hidden="true">◇</span>
-                  <div><strong>Pay securely with eWAY</strong><p>You&apos;ll be redirected to eWAY to enter your card details securely.</p></div>
+                <div className={styles.paymentOptions}>
+                  <label className={paymentMethod === "eway" ? styles.selectedOption : ""}>
+                    <input type="radio" name="paymentMethod" checked={paymentMethod === "eway"} onChange={() => setPaymentMethod("eway")} />
+                    <span><strong>Credit or debit card via eWAY</strong><small>You&apos;ll enter your card details securely on eWAY.</small></span>
+                  </label>
+                  <label className={paymentMethod === "paypal" ? styles.selectedOption : ""}>
+                    <input type="radio" name="paymentMethod" checked={paymentMethod === "paypal"} onChange={() => setPaymentMethod("paypal")} />
+                    <span><strong>PayPal</strong><small>You&apos;ll be redirected to PayPal to approve your payment.</small></span>
+                  </label>
                 </div>
               </section>
 
               {displayedNotice && <p className={styles.notice} role="status">{displayedNotice}</p>}
-              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>{isSubmitting ? "Connecting to eWAY…" : "Pay securely with eWAY"} <span aria-hidden="true">→</span></button>
+              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>{isSubmitting ? `Connecting to ${paymentMethod === "paypal" ? "PayPal" : "eWAY"}…` : `Pay securely with ${paymentMethod === "paypal" ? "PayPal" : "eWAY"}`} <span aria-hidden="true">→</span></button>
               <p className={styles.terms}>By continuing, you agree to our <Link href="/terms-and-conditions">terms</Link> and <Link href="/privacy-policy">privacy policy</Link>.</p>
             </form>
           )}

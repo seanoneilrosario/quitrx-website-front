@@ -17,9 +17,17 @@ AUTH_FACEBOOK_SECRET=your_facebook_app_secret
 RESEND_API_KEY=your_resend_api_key
 EMAIL_FROM=QuitRx <login@your-verified-domain.com>
 EMAIL_LOGIN_ENABLED=true
+EWAY_API_KEY=your_eway_api_key
+EWAY_PASSWORD=your_eway_password
+EWAY_ENVIRONMENT=sandbox
+PAYPAL_CLIENT_ID=your_paypal_client_id
+PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+PAYPAL_ENVIRONMENT=sandbox
 ```
 
 Do not prefix these variables with `NEXT_PUBLIC_`; API keys and OAuth secrets must never be included in browser code.
+
+Use `sandbox` while testing eWAY and PayPal. Set each gateway's environment to `production` only after replacing its credentials with the corresponding live credentials.
 
 The reusable customer synchronization service is in `lib/quithero-customers.ts`. Once the authentication provider has verified a login and returned the authenticated user, its server-side success callback should await the non-strict wrapper before redirecting:
 
