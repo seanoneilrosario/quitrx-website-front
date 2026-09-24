@@ -123,6 +123,16 @@ describe("QuitHero customer synchronization", () => {
     expect(customer?.email).toBe("USER@EXAMPLE.COM");
   });
 
+  it("sets a timeout signal on QuitHero requests", async () => {
+    fetchMock.mockResolvedValueOnce(response([]));
+
+    await findQuitHeroCustomerByEmail("user@example.com");
+
+    expect(fetchMock.mock.calls[0][1]).toEqual(
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("creates a customer for empty and unexpected search responses", async () => {
     fetchMock
       .mockResolvedValueOnce(response({ unexpected: "shape" }))

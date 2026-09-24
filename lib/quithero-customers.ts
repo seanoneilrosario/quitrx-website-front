@@ -74,6 +74,7 @@ type QuitHeroSearchResponse =
   | Record<string, unknown>;
 
 const DEFAULT_API_BASE_URL = "https://retail-api.quithero.com.au";
+const QUITHERO_REQUEST_TIMEOUT_MS = 10_000;
 
 const customerSyncs = new Map<
   string,
@@ -190,6 +191,7 @@ async function quitHeroRequest<T>(
         "x-api-key": getApiKey(),
         ...init.headers,
       },
+      signal: init.signal ?? AbortSignal.timeout(QUITHERO_REQUEST_TIMEOUT_MS),
       cache: "no-store",
     },
   );

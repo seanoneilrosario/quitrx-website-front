@@ -30,6 +30,7 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
   const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState<string>();
   const initialized = useRef(false);
+  const lastRequestedPath = useRef<string | undefined>(undefined);
   const requestInFlight = useRef<Promise<QuitHeroCustomer | undefined> | undefined>(undefined);
 
   const setCustomer = useCallback((nextCustomer?: QuitHeroCustomer) => {
@@ -104,6 +105,7 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
               return;
             }
             clearCustomerData();
+            lastRequestedPath.current = pathname;
             void refreshCustomer();
           })
           .catch(() => {
@@ -112,12 +114,21 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
           });
         return;
       }
+      lastRequestedPath.current = pathname;
       void refreshCustomer();
       return;
     }
 
     if (customerDataNeedsRefresh()) void refreshCustomer();
-    else if (!customer && unauthorized && pathname !== "/account/login") void refreshCustomer();
+    else if (
+      !customer &&
+      unauthorized &&
+      pathname !== "/account/login" &&
+      lastRequestedPath.current !== pathname
+    ) {
+      lastRequestedPath.current = pathname;
+      void refreshCustomer();
+    }
   }, [customer, pathname, refreshCustomer, unauthorized]);
 
   useEffect(() => {
