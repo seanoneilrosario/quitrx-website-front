@@ -438,8 +438,10 @@
 }
 
 .account-assessment-card {
-  min-height: 440px;
-  padding: clamp(38px, 5vw, 70px);
+  width: min(100%, 900px);
+  min-height: 368px;
+  box-sizing: border-box;
+  padding: clamp(32px, 4vw, 44px);
   display: flex;
   flex-direction: column;
   justify-content: center;
