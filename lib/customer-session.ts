@@ -75,5 +75,11 @@ export async function getCustomerSession() {
 
 export async function clearCustomerSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(CUSTOMER_SESSION_COOKIE);
+  const sessionCookiePattern = /^(?:__Secure-)?(?:authjs|next-auth)\.session-token(?:\.\d+)?$/;
+
+  for (const cookie of cookieStore.getAll()) {
+    if (cookie.name === CUSTOMER_SESSION_COOKIE || sessionCookiePattern.test(cookie.name)) {
+      cookieStore.delete(cookie.name);
+    }
+  }
 }
