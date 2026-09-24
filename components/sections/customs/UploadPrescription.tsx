@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { useAccountCustomer, useCustomerDataInvalidation } from "@/hooks/useAccountCustomer";
 import { buildQuitRxFormUrl } from "@/lib/quitRxFormUrls";
 import "./UploadPrescription.css";
 import "./FormBackButton.css";
@@ -16,6 +16,7 @@ type UploadPrescriptionProps = {
 };
 
 export default function UploadPrescription({ title }: UploadPrescriptionProps) {
+  useCustomerDataInvalidation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { customer, loading } = useAccountCustomer();
 

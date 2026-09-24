@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { useAccountCustomer, useCustomerDataInvalidation } from "@/hooks/useAccountCustomer";
 import { buildQuitRxFormUrl } from "@/lib/quitRxFormUrls";
 import "./EscriptRequest.css";
 import "./FormBackButton.css";
@@ -10,6 +10,7 @@ import FormBackButton from "./FormBackButton";
 const FORM_ID = "Zc9s8aLGPTVQntvZrepRaqSCsgNugnAh0z_ApC8x2XY";
 
 export default function RenewalForm() {
+  useCustomerDataInvalidation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { customer, loading } = useAccountCustomer();
 

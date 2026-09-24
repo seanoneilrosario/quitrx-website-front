@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers";
+import type { QuitHeroAddress } from "@/lib/quithero-customers";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 function AddressFields({ address }: { address?: QuitHeroAddress }) {
@@ -27,7 +27,7 @@ function addressLines(address: QuitHeroAddress) {
 
 export default function ProfileForm() {
   const router = useRouter();
-  const { customer, loading, error: accountError, setCustomer } = useAccountCustomer();
+  const { customer, loading, error: accountError, refreshCustomer } = useAccountCustomer();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState("");
@@ -37,14 +37,6 @@ export default function ProfileForm() {
   useEffect(() => {
     if (!loading && !customer && !accountError) router.replace("/account/login");
   }, [accountError, customer, loading, router]);
-
-  async function refreshCustomer() {
-    const response = await fetch("/api/account/me", { cache: "no-store" });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.error || "Unable to refresh your account.");
-    setCustomer(data as QuitHeroCustomer);
-    router.refresh();
-  }
 
   async function request(url: string, method: "POST" | "PATCH", body?: object) {
     const response = await fetch(url, {

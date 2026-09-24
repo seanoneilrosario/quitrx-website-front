@@ -1,14 +1,23 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { QuitHeroCustomer } from "@/lib/quithero-customers";
+import {
+  clearCustomerData,
+  customerDataNeedsRefresh,
+  markCustomerDataStale,
+  readCustomerData,
+  saveCustomerData,
+} from "@/lib/customer-cache";
 
 type AccountCustomerContextValue = {
   customer?: QuitHeroCustomer;
   loading: boolean;
   error?: string;
-  setCustomer: React.Dispatch<React.SetStateAction<QuitHeroCustomer | undefined>>;
+  setCustomer: (customer?: QuitHeroCustomer) => void;
+  refreshCustomer: () => Promise<QuitHeroCustomer | undefined>;
+  invalidateCustomer: () => void;
 };
 
 const AccountCustomerContext = createContext<AccountCustomerContextValue | undefined>(undefined);
@@ -16,49 +25,97 @@ const AccountCustomerContext = createContext<AccountCustomerContextValue | undef
 export function AccountCustomerProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [customer, setCustomer] = useState<QuitHeroCustomer>();
+  const [customer, setCustomerState] = useState<QuitHeroCustomer>();
   const [loading, setLoading] = useState(true);
-  const [loadedPathname, setLoadedPathname] = useState<string>();
   const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState<string>();
+  const initialized = useRef(false);
+  const requestInFlight = useRef<Promise<QuitHeroCustomer | undefined> | undefined>(undefined);
 
-  useEffect(() => {
-    if (customer) return;
+  const setCustomer = useCallback((nextCustomer?: QuitHeroCustomer) => {
+    setCustomerState(nextCustomer);
+    if (nextCustomer) saveCustomerData(nextCustomer);
+    else clearCustomerData();
+  }, []);
 
-    const controller = new AbortController();
+  const refreshCustomer = useCallback(async () => {
+    if (requestInFlight.current) return requestInFlight.current;
 
-    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
+    const request = fetch("/api/account/me", { cache: "no-store" })
       .then(async (response) => {
         if (response.ok) {
-          setCustomer(await response.json() as QuitHeroCustomer);
+          const nextCustomer = await response.json() as QuitHeroCustomer;
+          setCustomer(nextCustomer);
           setUnauthorized(false);
           setError(undefined);
-        } else if (response.status === 401) {
+          return nextCustomer;
+        }
+        if (response.status === 401) {
           setCustomer(undefined);
           setUnauthorized(true);
           setError(undefined);
-        } else {
-          setUnauthorized(false);
-          setError("We couldn't load your account right now. Please try again shortly.");
+          return;
         }
+        setUnauthorized(false);
+        setError("We couldn't load your account right now. Please try again shortly.");
       })
-      .catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          setUnauthorized(false);
-          setError("We couldn't load your account right now. Please try again shortly.");
-        }
+      .catch(() => {
+        setUnauthorized(false);
+        setError("We couldn't load your account right now. Please try again shortly.");
+        return undefined;
       })
       .finally(() => {
-        if (!controller.signal.aborted) {
-          setLoadedPathname(pathname);
-          setLoading(false);
-        }
+        requestInFlight.current = undefined;
+        setLoading(false);
       });
 
-    return () => controller.abort();
-  }, [customer, pathname]);
+    requestInFlight.current = request;
+    return request;
+  }, [setCustomer]);
 
-  const isLoadingCurrentPath = !customer && (loading || loadedPathname !== pathname);
+  const invalidateCustomer = useCallback(() => {
+    markCustomerDataStale();
+  }, []);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      const cachedCustomer = readCustomerData();
+      if (cachedCustomer) {
+        fetch("/api/account/session", { cache: "no-store" })
+          .then(async (response) => {
+            const session = response.ok
+              ? await response.json() as { email?: string }
+              : undefined;
+            const cachedEmail = cachedCustomer.email?.trim().toLowerCase();
+            if (session?.email?.trim().toLowerCase() === cachedEmail) {
+              setCustomerState(cachedCustomer);
+              setUnauthorized(false);
+              setError(undefined);
+              setLoading(false);
+              return;
+            }
+            clearCustomerData();
+            if (response.status === 401) {
+              setUnauthorized(true);
+              setLoading(false);
+            } else {
+              void refreshCustomer();
+            }
+          })
+          .catch(() => {
+            setError("We couldn't check your session right now. Please try again shortly.");
+            setLoading(false);
+          });
+        return;
+      }
+      void refreshCustomer();
+      return;
+    }
+
+    if (customerDataNeedsRefresh()) void refreshCustomer();
+    else if (!customer && unauthorized && pathname !== "/account/login") void refreshCustomer();
+  }, [customer, pathname, refreshCustomer, unauthorized]);
 
   useEffect(() => {
     const isProtectedAccountPage = pathname === "/account" || (
@@ -66,11 +123,11 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
       pathname !== "/account/login" &&
       pathname !== "/account/auth-popup"
     );
-    if (!isLoadingCurrentPath && unauthorized && isProtectedAccountPage) router.replace("/account/login");
-  }, [isLoadingCurrentPath, pathname, router, unauthorized]);
+    if (!loading && unauthorized && isProtectedAccountPage) router.replace("/account/login");
+  }, [loading, pathname, router, unauthorized]);
 
   return (
-    <AccountCustomerContext.Provider value={{ customer, loading: isLoadingCurrentPath, error, setCustomer }}>
+    <AccountCustomerContext.Provider value={{ customer, loading, error, setCustomer, refreshCustomer, invalidateCustomer }}>
       {children}
     </AccountCustomerContext.Provider>
   );
@@ -80,4 +137,12 @@ export function useAccountCustomer() {
   const context = useContext(AccountCustomerContext);
   if (!context) throw new Error("useAccountCustomer must be used inside AccountCustomerProvider.");
   return context;
+}
+
+export function useCustomerDataInvalidation() {
+  const { invalidateCustomer } = useAccountCustomer();
+
+  useEffect(() => {
+    invalidateCustomer();
+  }, [invalidateCustomer]);
 }

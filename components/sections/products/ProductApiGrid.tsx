@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import styles from "./ProductApiGrid.module.css";
 import ProductImage from "@/components/commerce/ProductImage";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 type ApiRecord = Record<string, unknown>;
 
@@ -118,7 +119,12 @@ export default function ProductApiGrid({
   collection,
   collections = [],
 }: ProductApiGridProps) {
-  const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "missing-script" | "anonymous">("loading");
+  const { customer, loading: customerLoading } = useAccountCustomer();
+  const authStatus = customerLoading
+    ? "loading"
+    : customer
+      ? hasScriptAccess(customer as ApiRecord) ? "authenticated" : "missing-script"
+      : "anonymous";
   const [products, setProducts] = useState<ApiRecord[]>([]);
   const [apiCollections, setApiCollections] = useState<ApiRecord[]>([]);
   const [error, setError] = useState("");
@@ -132,27 +138,6 @@ export default function ProductApiGrid({
     ? `?${selectedCollectionSlugs.map((slug) => `collection=${encodeURIComponent(slug)}`).join("&")}`
     : "";
   const skeletonCount = Math.max(4, Math.min(productLimit, 8));
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) {
-          setAuthStatus("anonymous");
-          return;
-        }
-
-        const account = asRecord(await response.json()) || {};
-        setAuthStatus(hasScriptAccess(account) ? "authenticated" : "missing-script");
-      })
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-        setAuthStatus("anonymous");
-      });
-
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     if (authStatus !== "authenticated" || showingSelectedCollections) return;

@@ -6,8 +6,8 @@ import { PortableTextBlock } from "@/components/global/components";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
 import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 const disclaimerComponents = {
   marks: {
@@ -68,9 +68,8 @@ export function Banner({
 }: BannerProps) {
   const titleBlocks = Array.isArray(title_array) ? title_array : [];
   const isLoginButton = secondary_button_text?.trim().toLowerCase() === "login";
-  const [authStatus, setAuthStatus] = useState<"loading" | "authenticated" | "anonymous">(
-    isLoginButton ? "loading" : "anonymous",
-  );
+  const { customer, loading: customerLoading } = useAccountCustomer();
+  const authStatus = customerLoading ? "loading" : customer ? "authenticated" : "anonymous";
   const secondaryButtonLink = isLoginButton
     ? secondary_button_link || "/account/login"
     : secondary_button_link;
@@ -78,20 +77,6 @@ export function Banner({
   const isTreatmentButton = ["apply free", "get started"].some((label) =>
     normalizedButtonText.startsWith(label),
   );
-
-  useEffect(() => {
-    if (!isLoginButton) return;
-
-    const controller = new AbortController();
-    fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
-      .then((response) => setAuthStatus(response.ok ? "authenticated" : "anonymous"))
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setAuthStatus("anonymous");
-      });
-
-    return () => controller.abort();
-  }, [isLoginButton]);
 
   const handleButtonClick = (url?: string, openInNewTab = false) => {
     if (url) {
