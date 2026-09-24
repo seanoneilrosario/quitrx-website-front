@@ -59,6 +59,7 @@
 
 .account-sidebar nav a,
 .account-nav-status,
+.account-nav-disabled,
 .account-signout {
   display: flex;
   align-items: center;
@@ -68,6 +69,11 @@
   color: #e3f0ed;
   text-decoration: none;
   font-size: 15px;
+}
+
+.account-nav-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .account-sidebar nav a:hover,

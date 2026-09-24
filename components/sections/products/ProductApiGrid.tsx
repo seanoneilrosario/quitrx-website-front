@@ -89,11 +89,7 @@ function getCollectionEntries(products: ApiRecord[]): Array<[string, ApiRecord]>
 }
 
 function hasScriptAccess(account: ApiRecord) {
-  if (account.scriptActive === true) return true;
-
-  return Array.isArray(account.tags) && account.tags.some(
-    (tag) => typeof tag === "string" && ["script", "scriptactive"].includes(tag.trim().toLowerCase()),
-  );
+  return account.scriptActive === true;
 }
 
 function ProductGridSkeleton({ count }: { count: number }) {

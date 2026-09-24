@@ -7,7 +7,7 @@ import { defineQuery } from "next-sanity";
 import { SanityDocument } from "sanity";
 
 import Pages from "@/components/pages/Page";
-import RequestScriptAccessGuard from "@/components/account/RequestScriptAccessGuard";
+import ActiveScriptAccessGuard from "@/components/account/ActiveScriptAccessGuard";
 import { client } from "@/sanity/lib/client";
 import { sanityFetch } from "@/sanity/lib/live";
 import { ALLPAGE_QUERY, PAGE_QUERY } from "@/sanity/lib/queries";
@@ -141,8 +141,8 @@ export default async function Page({
 
   const content = <Pages page={page} />;
 
-  return slug === "request-script"
-    ? <RequestScriptAccessGuard>{content}</RequestScriptAccessGuard>
+  return ["pharmacy", "request-script"].includes(slug)
+    ? <ActiveScriptAccessGuard>{content}</ActiveScriptAccessGuard>
     : content;
 }
 

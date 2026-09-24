@@ -129,7 +129,7 @@ export default function AccountDashboard() {
       <div className="account-order-history__header"><span className="account-order-history__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></span><h2>Order History</h2></div>
       <OrderHistoryTable onOrdersLoaded={handleOrdersLoaded} />
     </section>
-    {customer.scriptActive === false && (
+    {customer.scriptActive === true && (
       <section className="account-banner">
         <div className="account-banner__content">
           <span className="account-banner__icon" aria-hidden="true">

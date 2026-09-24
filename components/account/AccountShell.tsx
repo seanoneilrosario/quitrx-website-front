@@ -71,7 +71,15 @@ export default function AccountShell({ children }: { children: React.ReactNode }
         </div>
         <nav aria-label="Account navigation">
           {navigation.map(([href, label, icon]) => {
-            if (href === "/request-script" && (customerLoading || identity?.scriptActive !== false)) return null;
+            const requiresActiveScript = href === "/pharmacy" || href === "/request-script";
+            if (requiresActiveScript && (customerLoading || identity?.scriptActive !== true)) {
+              return (
+                <div key={href} className="account-nav-disabled" aria-disabled="true">
+                  <Icon name={icon} />
+                  <span>{label}</span>
+                </div>
+              );
+            }
 
             if (!href) {
               return (
