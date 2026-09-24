@@ -40,7 +40,7 @@ function Icon({ name }: { name: string }) {
 
 export default function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { customer: identity } = useAccountCustomer();
+  const { customer: identity, loading: customerLoading } = useAccountCustomer();
   const [menuOpen, setMenuOpen] = useState(false);
   const accountName = identity?.firstName?.trim()
     || identity?.email?.split("@")[0]?.trim();
@@ -71,6 +71,8 @@ export default function AccountShell({ children }: { children: React.ReactNode }
         </div>
         <nav aria-label="Account navigation">
           {navigation.map(([href, label, icon]) => {
+            if (href === "/request-script" && (customerLoading || identity?.scriptActive !== false)) return null;
+
             if (!href) {
               return (
                 <div key={label} className="account-nav-status">

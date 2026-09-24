@@ -20,18 +20,12 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
   const [loadedPathname, setLoadedPathname] = useState<string>();
 
   useEffect(() => {
+    if (customer) return;
+
     const controller = new AbortController();
 
     fetch("/api/account/me", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
-        const isProtectedAccountPage = pathname === "/account" || (
-          pathname.startsWith("/account/") &&
-          pathname !== "/account/login" &&
-          pathname !== "/account/auth-popup"
-        );
-        if (response.status === 401 && isProtectedAccountPage) {
-          router.replace("/account/login");
-        }
         setCustomer(response.ok ? await response.json() as QuitHeroCustomer : undefined);
       })
       .catch((error: unknown) => {
@@ -45,9 +39,18 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
       });
 
     return () => controller.abort();
-  }, [pathname, router]);
+  }, [customer, pathname]);
 
-  const isLoadingCurrentPath = loading || loadedPathname !== pathname;
+  const isLoadingCurrentPath = !customer && (loading || loadedPathname !== pathname);
+
+  useEffect(() => {
+    const isProtectedAccountPage = pathname === "/account" || (
+      pathname.startsWith("/account/") &&
+      pathname !== "/account/login" &&
+      pathname !== "/account/auth-popup"
+    );
+    if (!isLoadingCurrentPath && !customer && isProtectedAccountPage) router.replace("/account/login");
+  }, [customer, isLoadingCurrentPath, pathname, router]);
 
   return (
     <AccountCustomerContext.Provider value={{ customer, loading: isLoadingCurrentPath, setCustomer }}>
