@@ -31,7 +31,7 @@ const EscriptBanner = ({
   paddingTop = 40,
   paddingBottom = 40,
 }: EscriptBannerProps) => {
-  const { customer } = useAccountCustomer();
+  const { customer, loading } = useAccountCustomer();
 
   return (
     <section
@@ -65,7 +65,7 @@ const EscriptBanner = ({
           </div>
 
           {/* {buttonText && buttonUrl && ( */}
-            <Link
+            {!loading && <Link
               href={customer ? "/upload-prescription" : "/account/login?next=/upload-prescription"}
               className={styles.button}
             >
@@ -78,7 +78,7 @@ const EscriptBanner = ({
                 />
               )}
               <span>{buttonText}</span>
-            </Link>
+            </Link>}
           {/* )} */}
         </div>
       </div>

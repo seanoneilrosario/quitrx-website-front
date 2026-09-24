@@ -163,7 +163,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartStockError, setCartStockError] = useState("");
-  const { customer: accountIdentity } = useAccountCustomer();
+  const { customer: accountIdentity, loading: accountLoading } = useAccountCustomer();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -347,10 +347,14 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                   {cartCount > 0 && <span className="site-header__cart-count">{cartCount}</span>}
                 </button>
               </div>
-              <Link className="site-header__account site-header__desktop" href={isAuthenticated ? "/account" : "/account/login"}>
-                {isAuthenticated && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2.5a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5V21"/></svg>}
-                <span>{isAuthenticated ? accountName ? `Hi, ${accountName}` : "Hi" : "Login"}</span>
-              </Link>
+              {accountLoading ? (
+                <span className="site-header__account site-header__desktop" aria-busy="true" aria-label="Restoring account session" />
+              ) : (
+                <Link className="site-header__account site-header__desktop" href={isAuthenticated ? "/account" : "/account/login"}>
+                  {isAuthenticated && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2.5a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5V21"/></svg>}
+                  <span>{isAuthenticated ? accountName ? `Hi, ${accountName}` : "Hi" : "Login"}</span>
+                </Link>
+              )}
               <button
                 className="svg-icon-search"
                 type="button"
@@ -456,9 +460,13 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
               ))}
             </nav>
             <div className="site-nav__footer">
-                <Link className="site-header__account site-header__mobile" href={isAuthenticated ? "/account" : "/account/login"} aria-label={isAuthenticated ? accountName ? `Open ${accountName}'s account` : "Open my account" : "Log in"}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                </Link>
+                {accountLoading ? (
+                  <span className="site-header__account site-header__mobile" aria-busy="true" aria-label="Restoring account session" />
+                ) : (
+                  <Link className="site-header__account site-header__mobile" href={isAuthenticated ? "/account" : "/account/login"} aria-label={isAuthenticated ? accountName ? `Open ${accountName}'s account` : "Open my account" : "Log in"}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </Link>
+                )}
             </div>
           </div>
         </div>

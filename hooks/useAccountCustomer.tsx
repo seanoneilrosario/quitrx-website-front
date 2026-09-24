@@ -85,9 +85,15 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
         const cacheNeedsRefresh = customerDataNeedsRefresh();
         fetch("/api/account/session", { cache: "no-store" })
           .then(async (response) => {
-            const session = response.ok
-              ? await response.json() as { email?: string }
-              : undefined;
+            if (response.status === 401) {
+              clearCustomerData();
+              setUnauthorized(true);
+              setLoading(false);
+              return;
+            }
+            if (!response.ok) throw new Error("Session validation failed.");
+
+            const session = await response.json() as { email?: string };
             const cachedEmail = cachedCustomer.email?.trim().toLowerCase();
             if (session?.email?.trim().toLowerCase() === cachedEmail) {
               setCustomerState(cachedCustomer);
@@ -98,12 +104,7 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
               return;
             }
             clearCustomerData();
-            if (response.status === 401) {
-              setUnauthorized(true);
-              setLoading(false);
-            } else {
-              void refreshCustomer();
-            }
+            void refreshCustomer();
           })
           .catch(() => {
             setError("We couldn't check your session right now. Please try again shortly.");
