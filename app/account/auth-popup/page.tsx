@@ -30,17 +30,6 @@ export default function AuthPopupCompletePage() {
 
   useEffect(() => {
     if (needsEmail !== false) return;
-
-    if (window.opener) {
-      window.opener.postMessage(
-        { type: "quitrx:auth-success" },
-        window.location.origin,
-      );
-
-      window.close();
-      return;
-    }
-
     router.replace("/account");
     router.refresh();
   }, [needsEmail, router]);
@@ -66,13 +55,8 @@ export default function AuthPopupCompletePage() {
         return;
       }
 
-      if (window.opener) {
-        window.opener.postMessage({ type: "quitrx:auth-success" }, window.location.origin);
-        window.close();
-      } else {
-        router.replace("/account");
-        router.refresh();
-      }
+      router.replace("/account");
+      router.refresh();
     } catch {
       setError("Unable to link your Facebook account.");
     } finally {

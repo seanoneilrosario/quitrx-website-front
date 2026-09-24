@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState } from "react";
 import { accessCustomerAccount, type CustomerAccessState } from "./actions";
 
 const initialState: CustomerAccessState = {};
@@ -20,66 +19,7 @@ export default function LoginPopup({
   loginError?: string;
 }) {
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
-  const [socialError, setSocialError] = useState<string>();
-  const socialPopup = useRef<Window | null>(null);
-  const displayedLoginError = state.error ?? socialError ?? loginError;
-  const router = useRouter();
-
-  useEffect(() => {
-    if (loginError && window.opener && !window.opener.closed) {
-      window.opener.postMessage(
-        { type: "quitrx:auth-error", message: loginError },
-        window.location.origin,
-      );
-      window.close();
-    }
-  }, [loginError]);
-
-  useEffect(() => {
-    const handleAuthSuccess = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin || event.source !== socialPopup.current) {
-        return;
-      }
-
-      if (event.data?.type === "quitrx:auth-error" && typeof event.data.message === "string") {
-        setSocialError(event.data.message);
-        socialPopup.current?.close();
-        socialPopup.current = null;
-        return;
-      }
-      if (event.data?.type !== "quitrx:auth-success") return;
-
-      router.replace(redirectTo);
-      router.refresh();
-    };
-
-    window.addEventListener("message", handleAuthSuccess);
-
-    return () => window.removeEventListener("message", handleAuthSuccess);
-  }, [redirectTo, router]);
-
-  const openSocialPopup = (
-    event: React.MouseEvent<HTMLAnchorElement>,
-    provider: "google" | "facebook",
-  ) => {
-    const width = 730;
-    const height = 760;
-    const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2);
-    const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2);
-
-    const popup = window.open(
-      event.currentTarget.href,
-      `quitrx-${provider}-login`,
-      `popup=yes,width=${width},height=${height},left=${left},top=${top}`,
-    );
-
-    if (popup) {
-      socialPopup.current = popup;
-      setSocialError(undefined);
-      event.preventDefault();
-      popup.focus();
-    }
-  };
+  const displayedLoginError = state.error ?? loginError;
 
   return (
     <div className="customer-login" role="presentation">
@@ -114,7 +54,6 @@ export default function LoginPopup({
             // eslint-disable-next-line @next/next/no-html-link-for-pages
             <a
               href="/api/account/google"
-              onClick={(event) => openSocialPopup(event, "google")}
               aria-label="Continue with Google"
             >
               <span className="google-mark">G</span>
@@ -133,7 +72,6 @@ export default function LoginPopup({
             // eslint-disable-next-line @next/next/no-html-link-for-pages
             <a
               href="/api/account/facebook"
-              onClick={(event) => openSocialPopup(event, "facebook")}
               aria-label="Continue with Facebook"
             >
               <span className="facebook-mark">f</span>
