@@ -5,6 +5,7 @@ import {
   findQuitHeroCustomerByOAuth,
   linkQuitHeroCustomerOAuth,
   findQuitHeroCustomerByEmail,
+  syncQuitHeroCustomer,
 } from "@/lib/quithero-customers";
 import {
   CUSTOMER_SESSION_COOKIE,
@@ -70,12 +71,12 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
       }
 
-      // Login requires an existing customer; never recreate deleted accounts.
+      // Create a QuitHero customer when a verified social login is new.
       if (user.email) {
-        const customer = await findQuitHeroCustomerByEmail(user.email);
-        if (!customer?.id) return "/account/login?error=AccountNotFound";
+        const customer = await syncQuitHeroCustomer(user);
+        if (!customer?.id) return false;
 
-        if (customer?.id && providerAccountId) {
+        if (providerAccountId) {
           await linkQuitHeroCustomerOAuth(
             customer.id,
             provider,

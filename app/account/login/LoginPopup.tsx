@@ -13,31 +13,17 @@ export default function LoginPopup({
   googleEnabled,
   facebookEnabled,
   loginError,
-  accountNotFound = false,
 }: {
   redirectTo: string;
   googleEnabled: boolean;
   facebookEnabled: boolean;
   loginError?: string;
-  accountNotFound?: boolean;
 }) {
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
   const [socialError, setSocialError] = useState<string>();
   const socialPopup = useRef<Window | null>(null);
   const displayedLoginError = state.error ?? socialError ?? loginError;
   const router = useRouter();
-
-  useEffect(() => {
-    if (!accountNotFound && !state.accountNotFound) return;
-
-    if (window.opener && !window.opener.closed) {
-      window.opener.location.href = "/intake-form";
-      window.close();
-      return;
-    }
-
-    router.replace("/intake-form");
-  }, [accountNotFound, router, state.accountNotFound]);
 
   useEffect(() => {
     if (loginError && window.opener && !window.opener.closed) {

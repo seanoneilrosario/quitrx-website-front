@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   lookup: vi.fn(),
   oauth: vi.fn(),
   link: vi.fn(),
+  sync: vi.fn(),
   cookie: vi.fn(),
 }));
 vi.mock("next-auth", () => ({ default: (config: unknown) => ({ auth: config }) }));
@@ -11,6 +12,7 @@ vi.mock("@/lib/quithero-customers", () => ({
   findQuitHeroCustomerByEmail: mocks.lookup,
   findQuitHeroCustomerByOAuth: mocks.oauth,
   linkQuitHeroCustomerOAuth: mocks.link,
+  syncQuitHeroCustomer: mocks.sync,
 }));
 vi.mock("@/lib/customer-session", () => ({
   CUSTOMER_SESSION_COOKIE: "session",
@@ -60,7 +62,12 @@ it("does not grant account access when the customer service fails", async () => 
   expect((result as Response).headers.get("location")).toBe("https://example.com/account/login?error=ServiceUnavailable");
 });
 
-it("returns missing social-login customers to login without linking them", async () => {
-  expect(await callbacks.signIn({ user: { email: "deleted@example.com" }, account: { provider: "google", providerAccountId: "google-1" } })).toBe("/account/login?error=AccountNotFound");
-  expect(mocks.link).not.toHaveBeenCalled();
+it("creates and links a customer for a new social login", async () => {
+  mocks.sync.mockResolvedValue({ id: "customer-1", email: "new@example.com" });
+  const user = { email: "new@example.com" };
+
+  expect(await callbacks.signIn({ user, account: { provider: "google", providerAccountId: "google-1" } })).toBe(true);
+  expect(mocks.sync).toHaveBeenCalledWith(user);
+  expect(mocks.link).toHaveBeenCalledWith("customer-1", "google", "google-1");
+  expect(user).toMatchObject({ id: "customer-1" });
 });
