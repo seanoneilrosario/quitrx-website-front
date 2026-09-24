@@ -21,6 +21,7 @@ type AccountCustomerContextValue = {
 };
 
 const AccountCustomerContext = createContext<AccountCustomerContextValue | undefined>(undefined);
+const ACCOUNT_REQUEST_TIMEOUT_MS = 12_000;
 
 export function AccountCustomerProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -42,7 +43,10 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
   const refreshCustomer = useCallback(async () => {
     if (requestInFlight.current) return requestInFlight.current;
 
-    const request = fetch("/api/account/me", { cache: "no-store" })
+    const request = fetch("/api/account/me", {
+      cache: "no-store",
+      signal: AbortSignal.timeout(ACCOUNT_REQUEST_TIMEOUT_MS),
+    })
       .then(async (response) => {
         if (response.ok) {
           const nextCustomer = await response.json() as QuitHeroCustomer;
@@ -84,7 +88,10 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
       const cachedCustomer = readCustomerData();
       if (cachedCustomer) {
         const cacheNeedsRefresh = customerDataNeedsRefresh();
-        fetch("/api/account/session", { cache: "no-store" })
+        fetch("/api/account/session", {
+          cache: "no-store",
+          signal: AbortSignal.timeout(ACCOUNT_REQUEST_TIMEOUT_MS),
+        })
           .then(async (response) => {
             if (response.status === 401) {
               clearCustomerData();

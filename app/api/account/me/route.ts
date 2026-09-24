@@ -4,12 +4,19 @@ import { getCustomerSession } from "@/lib/customer-session";
 import { findQuitHeroCustomerByEmail, updateQuitHeroCustomer } from "@/lib/quithero-customers";
 
 async function customerEmail() {
-  const session = await auth();
   const customerSession = await getCustomerSession();
+  if (customerSession?.email) {
+    return {
+      user: undefined,
+      email: customerSession.email,
+    };
+  }
+
+  const session = await auth();
 
   return {
     user: session?.user,
-    email: session?.user?.email ?? customerSession?.email,
+    email: session?.user?.email,
   };
 }
 
