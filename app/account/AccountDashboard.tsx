@@ -41,9 +41,16 @@ function formatMoney(amount: number, currency: string) {
   return new Intl.NumberFormat("en-AU", { style: "currency", currency }).format(amount);
 }
 
-export default function AccountDashboard() {
+export default function AccountDashboard({ initialCustomer }: { initialCustomer?: QuitHeroCustomer }) {
   const router = useRouter();
-  const { customer, loading, error, refreshCustomer } = useAccountCustomer();
+  const {
+    customer: loadedCustomer,
+    loading,
+    error,
+    refreshCustomer,
+    setCustomer,
+  } = useAccountCustomer();
+  const customer = loadedCustomer ?? initialCustomer;
   const [orders, setOrders] = useState<QuitHeroOrder[] | null>(null);
   const handleOrdersLoaded = useCallback((loadedOrders: QuitHeroOrder[]) => {
     setOrders(loadedOrders);
@@ -62,6 +69,10 @@ export default function AccountDashboard() {
   useEffect(() => {
     if (!loading && !customer && !error) router.replace("/account/login");
   }, [customer, error, loading, router]);
+
+  useEffect(() => {
+    if (initialCustomer && !loadedCustomer) setCustomer(initialCustomer);
+  }, [initialCustomer, loadedCustomer, setCustomer]);
 
   if (error && !customer) return <section className="account-card"><p className="account-load-message">{error}</p><button type="button" className="account-button account-button--compact" onClick={() => void refreshCustomer()}>Try again</button></section>;
   if (!customer) return <section className="account-card"><p className="account-load-message">Loading your account...</p></section>;
