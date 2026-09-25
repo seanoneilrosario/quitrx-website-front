@@ -22,7 +22,9 @@ type Params = {
   slug: string;
 };
 
-export const revalidate = 300;
+// These CMS pages include a personalized layout that reads session cookies.
+// Disable static HTML generation; explicit fetch/query caches remain enabled.
+export const revalidate = 0;
 
 const pageQuery = defineQuery(PAGE_QUERY);
 
