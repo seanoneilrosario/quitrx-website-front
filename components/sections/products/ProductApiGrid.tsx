@@ -126,7 +126,8 @@ export default function ProductApiGrid({
       : "anonymous";
   const availableCollections = Array.isArray(collections) ? collections : [];
   const selectedCollections = availableCollections.length ? availableCollections : collection ? [collection] : [];
-  const showingSelectedCollections = displayMode === "collections" && selectedCollections.length > 0;
+  // Explicit CMS selections are collection cards, regardless of legacy displayMode.
+  const showingSelectedCollections = selectedCollections.length > 0;
   const selectedCollectionSlugs = selectedCollections
     .flatMap((item) => item.slug ? [item.slug] : []);
   const skeletonCount = Math.max(4, Math.min(productLimit, 8));
