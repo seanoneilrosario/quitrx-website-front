@@ -203,6 +203,10 @@
   text-decoration: underline;
 }
 
+.comparison-card {
+  margin: 0 24px;
+}
+
 @media (max-width: 767px) {
   .comparison-heading {
     margin-bottom: 28px;
@@ -210,10 +214,7 @@
 
   .comparison-card {
     border-radius: 22px;
-    margin: 0 24px;
   }
-
-
 
   .comparison-card__audience {
     padding: 7px 12px;
