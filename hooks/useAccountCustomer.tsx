@@ -30,6 +30,7 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
   const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState<string>();
   const initialized = useRef(false);
+  const previousPathname = useRef(pathname);
   const requestInFlight = useRef<Promise<QuitHeroCustomer | undefined> | undefined>(undefined);
 
   const setCustomer = useCallback((nextCustomer?: QuitHeroCustomer) => {
@@ -78,6 +79,8 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
   }, []);
 
   useEffect(() => {
+    const pathnameChanged = previousPathname.current !== pathname;
+    previousPathname.current = pathname;
     if (!initialized.current) {
       initialized.current = true;
       const cachedCustomer = readCustomerData();
@@ -114,7 +117,9 @@ export function AccountCustomerProvider({ children }: { children: React.ReactNod
     }
 
     if (customerDataNeedsRefresh()) void refreshCustomer();
-    else if (!customer && unauthorized && pathname !== "/account/login") void refreshCustomer();
+    // Retry after navigation (including returning from login), not just because
+    // the initial request reported an unauthenticated session.
+    else if (pathnameChanged && !customer && unauthorized && pathname !== "/account/login") void refreshCustomer();
   }, [customer, pathname, refreshCustomer, unauthorized]);
 
   useEffect(() => {

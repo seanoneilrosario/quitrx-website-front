@@ -13,6 +13,7 @@
     "@sanity/icons": "^3.7.4",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^5.26.0",
+    "@tanstack/react-query": "^5.103.2",
     "motion": "^12.40.0",
     "next": "16.2.6",
     "next-auth": "^5.0.0-beta.32",
@@ -21,6 +22,7 @@
     "react-dom": "19.2.4",
     "sanitize-html": "^2.17.7",
     "sanity": "^5.26.0",
+    "socket.io-client": "^4.8.3",
     "styled-components": "^6.4.2",
     "swiper": "^14.0.7"
   },
