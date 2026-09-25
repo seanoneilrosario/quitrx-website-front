@@ -146,8 +146,8 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
     if (!infiniteScrollReady || !trigger || isFetching || error || !canLoadMore) return;
 
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) void loadMore();
-    }, { rootMargin: "300px" });
+      if (entry.isIntersecting && entry.intersectionRatio >= 1) void loadMore();
+    }, { rootMargin: "0px", threshold: 1 });
 
     observer.observe(trigger);
     return () => observer.disconnect();
