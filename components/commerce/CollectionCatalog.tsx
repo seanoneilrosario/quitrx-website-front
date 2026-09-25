@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
 import Link from "next/link";
@@ -14,6 +14,7 @@ import styles from "./collectionCatalog.module.css";
 import storeStyles from "@/app/store.module.css";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
+const DISPLAY_PAGE_SIZE = 20;
 
 function variantPrices(product: QuitHeroProduct) {
   return (product.variants ?? []).flatMap((variant) => {
@@ -59,18 +60,11 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
   const [availability, setAvailability] = useState("all");
   const [sort, setSort] = useState<Sort>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [infiniteScrollReady, setInfiniteScrollReady] = useState(false);
+  const [displayPage, setDisplayPage] = useState({ key: "", count: DISPLAY_PAGE_SIZE });
   const [lockedProductName, setLockedProductName] = useState<string>();
-  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
-
-  useEffect(() => {
-    const enableInfiniteScroll = () => setInfiniteScrollReady(true);
-    window.addEventListener("scroll", enableInfiniteScroll, { passive: true, once: true });
-    return () => window.removeEventListener("scroll", enableInfiniteScroll);
-  }, []);
 
   useEffect(() => {
     if (!lockedProductName) return;
@@ -101,7 +95,7 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
     colors: unique(products.flatMap((product) => product.variants?.map((variant) => optionValues(variant, "color")) ?? [])),
   }), [products]);
 
-  const visibleProducts = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     const filtered = products.filter((product) => {
       const inStock = productIsAvailable(product);
       const variantSizes = product.variants?.map((variant) => optionValues(variant, "size"));
@@ -121,21 +115,23 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
       return 0;
     });
   }, [availability, brands, colors, maxPrice, products, sizes, sort]);
-  const loadMore = useCallback(() => {
-    if (!isFetching && hasNextPage) void fetchNextPage({ cancelRefetch: false });
-  }, [fetchNextPage, hasNextPage, isFetching]);
+  const displayKey = JSON.stringify([collectionSlug, brands, sizes, colors, maxPrice, availability, sort]);
+  const displayCount = displayPage.key === displayKey ? displayPage.count : DISPLAY_PAGE_SIZE;
+  const visibleProducts = filteredProducts.slice(0, displayCount);
+  const hasHiddenProducts = displayCount < filteredProducts.length;
+  const canLoadMore = hasHiddenProducts || hasNextPage;
 
-  useEffect(() => {
-    const trigger = loadMoreTriggerRef.current;
-    if (!infiniteScrollReady || !trigger || isFetching || error || !hasNextPage) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) loadMore();
-    }, { rootMargin: "300px" });
-
-    observer.observe(trigger);
-    return () => observer.disconnect();
-  }, [error, hasNextPage, infiniteScrollReady, isFetching, loadMore]);
+  const loadMore = async () => {
+    if (isFetching) return;
+    if (hasHiddenProducts) {
+      setDisplayPage({ key: displayKey, count: displayCount + DISPLAY_PAGE_SIZE });
+    } else if (hasNextPage) {
+      const result = await fetchNextPage({ cancelRefetch: false });
+      if (!result.isError) {
+        setDisplayPage({ key: displayKey, count: visibleProducts.length + DISPLAY_PAGE_SIZE });
+      }
+    }
+  };
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
@@ -223,7 +219,7 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
               <option value="name-desc">Name: Z–A</option>
             </select>
           </label>
-          <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"}</span>
+          <span>{filteredProducts.length} product{filteredProducts.length === 1 ? "" : "s"}</span>
         </div>
         <div className={styles.productGrid} aria-busy={productsLoading && !products.length}>
           {productsLoading && !products.length ? <CollectionProductSkeletons /> : visibleProducts.map((product, index) => (
@@ -243,9 +239,11 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
             else void refetch();
           }}>Try again</button>
         </div>}
-        {(hasNextPage || productsLoading) && <div ref={loadMoreTriggerRef} className={styles.pagination} aria-live="polite">
-          {productsLoading && <span>Loading...</span>}
-          <span>{products.length} product{products.length === 1 ? "" : "s"} loaded</span>
+        {(canLoadMore || productsLoading || visibleProducts.length > 0) && <div className={styles.pagination} aria-live="polite">
+          {canLoadMore && <button type="button" className={styles.loadMoreButton} disabled={isFetching} onClick={() => void loadMore()}>
+            {isFetchingNextPage ? "Loading..." : "Load More"}
+          </button>}
+          <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"} shown</span>
         </div>}
       </section>
 
