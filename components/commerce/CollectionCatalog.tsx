@@ -259,9 +259,8 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
             else void refetch();
           }}>Try again</button>
         </div>}
-        {(canLoadMore || productsLoading) && <div ref={loadMoreTriggerRef} className={styles.pagination} aria-live="polite">
+        {(canLoadMore || productsLoading) && <div ref={loadMoreTriggerRef} className={styles.pagination} style={{ minHeight: 1 }} aria-live="polite">
           {productsLoading && <span>Loading...</span>}
-          <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"} loaded</span>
         </div>}
       </section>
 
