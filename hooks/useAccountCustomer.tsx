@@ -18,11 +18,17 @@ type AccountCustomerContextValue = {
 
 const AccountCustomerContext = createContext<AccountCustomerContextValue | undefined>(undefined);
 
-export function AccountCustomerProvider({ children }: { children: React.ReactNode }) {
+export function AccountCustomerProvider({ children, initialCustomer }: {
+  children: React.ReactNode;
+  initialCustomer?: QuitHeroCustomer | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data, isPending, isFetching, error: queryError, refetch } = useQuery(accountCustomerQuery);
+  const { data, isPending, isFetching, error: queryError, refetch } = useQuery({
+    ...accountCustomerQuery,
+    initialData: initialCustomer,
+  });
   const customer = data ?? undefined;
   const previousPath = useRef(pathname);
   const loading = isPending || (!customer && isFetching);

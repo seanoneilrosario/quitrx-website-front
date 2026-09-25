@@ -9,8 +9,10 @@ import type { NavigationData, SearchPage } from "@/components/navigation/Header"
 import { AccountCustomerProvider } from "@/hooks/useAccountCustomer";
 import QueryProvider from "./QueryProvider";
 import RealtimeConnection from "./RealtimeConnection";
+import type { QuitHeroCustomer } from "@/lib/quithero-customers";
 
 type WebsiteShellProps = {
+  initialCustomer?: QuitHeroCustomer | null;
   children: ReactNode;
   liveContent: ReactNode;
   settings?: ThemeSettings;
@@ -19,6 +21,7 @@ type WebsiteShellProps = {
 };
 
 export default function WebsiteShell({
+  initialCustomer,
   children,
   liveContent,
   settings,
@@ -35,7 +38,7 @@ export default function WebsiteShell({
   return (
     <QueryProvider>
       <ThemeProvider settings={settings}>
-        <AccountCustomerProvider>
+        <AccountCustomerProvider initialCustomer={initialCustomer}>
           {/* <RealtimeConnection /> */}
           <SiteChrome navigation={navigation} searchPages={searchPages}>
             {children}

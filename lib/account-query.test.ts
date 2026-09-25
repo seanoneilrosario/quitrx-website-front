@@ -1,10 +1,26 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import { accountCustomerQuery } from "./account-query";
+import type { QuitHeroCustomer } from "./quithero-customers";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("account API query", () => {
+  it("renders seeded account data without a duplicate browser request", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new QueryClient();
+    const observer = new QueryObserver(client, {
+      ...accountCustomerQuery,
+      initialData: { id: "one", firstName: "Levi" } as QuitHeroCustomer | null,
+    });
+    const unsubscribe = observer.subscribe(() => {});
+    try {
+      expect(observer.getCurrentResult().data?.firstName).toBe("Levi");
+      expect(observer.getCurrentResult().isPending).toBe(false);
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally { unsubscribe(); client.clear(); }
+  });
   it("deduplicates account requests and reuses fresh data", async () => {
     const fetchMock = vi.fn().mockImplementation(async () => Response.json({ id: "customer-1" }));
     vi.stubGlobal("fetch", fetchMock);

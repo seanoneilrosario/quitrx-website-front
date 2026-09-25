@@ -64,6 +64,12 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Realtime data
 
+The root layout resolves the signed-in account and seeds the account query for
+the first render, so the header greeting is present before hydration. This makes
+the storefront request-rendered and waits for the account lookup on full reloads;
+the fresh seeded query avoids a duplicate browser request. Anonymous visits do
+not request customer data from the upstream API.
+
 API queries share a five-minute freshness window and a thirty-minute inactive
 cache. Public catalog queries are persisted in session storage using TanStack's
 `PersistQueryClientProvider`, so a reload reuses fresh responses without extending

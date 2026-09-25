@@ -6,6 +6,7 @@ import { defineQuery } from "next-sanity";
 import { DisableDraftMode } from "@/components/global/DisableDraftMode";
 import type { ThemeSettings } from "@/components/global/ThemeProvider";
 import WebsiteShell from "@/components/global/WebsiteShell";
+import { getInitialAccount } from "@/lib/account-data";
 import type {
   NavigationData,
   SearchPage,
@@ -83,10 +84,12 @@ export default async function RootLayout({
 }) {
   const { isEnabled } = await draftMode();
 
-  const [navigation, settings, searchPages] = await Promise.all([
+  const [navigation, settings, searchPages, initialCustomer] = await Promise.all([
     getNavigation(),
     getSettings(),
     getSearchPages(),
+    // On an upstream failure, let the existing client query retry normally.
+    getInitialAccount().catch(() => undefined),
   ]);
 
   return (
@@ -97,6 +100,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <WebsiteShell
+          initialCustomer={initialCustomer}
           settings={settings as ThemeSettings | undefined}
           navigation={navigation as NavigationData | null}
           searchPages={searchPages as SearchPage[]}
