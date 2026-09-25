@@ -8,7 +8,7 @@ function storageAvailable() {
 }
 
 export function readCustomerData(): QuitHeroCustomer | undefined {
-  if (!storageAvailable() || sessionStorage.getItem(CUSTOMER_DATA_STALE_KEY)) return;
+  if (!storageAvailable()) return;
 
   try {
     const value: unknown = JSON.parse(sessionStorage.getItem(CUSTOMER_DATA_KEY) ?? "null");

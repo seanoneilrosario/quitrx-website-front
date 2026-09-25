@@ -4,7 +4,6 @@ import Google from "next-auth/providers/google";
 import {
   findQuitHeroCustomerByOAuth,
   linkQuitHeroCustomerOAuth,
-  findQuitHeroCustomerByEmail,
   syncQuitHeroCustomer,
 } from "@/lib/quithero-customers";
 import {
@@ -128,15 +127,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         request.cookies.get(CUSTOMER_SESSION_COOKIE)?.value,
       );
       const email = session?.user?.email ?? emailSession?.email;
-      if (email) {
-        try {
-          if ((await findQuitHeroCustomerByEmail(email))?.id) return true;
-          return Response.redirect(new URL("/account/login?error=AccountNotFound", request.nextUrl));
-        } catch {
-          // A transient QuitHero outage must not invalidate an otherwise valid session.
-          return true;
-        }
-      }
+      if (email) return true;
       return Response.redirect(new URL("/account/login", request.nextUrl));
     },
   },

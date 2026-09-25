@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { QuitHeroOrder } from "@/lib/quithero";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 function formatDate(value?: string) {
   if (!value) return "Not available";
@@ -21,23 +22,20 @@ function readableStatus(value?: string) {
 }
 
 export default function OrderDetails({ orderId }: { orderId: string }) {
-  const [order, setOrder] = useState<QuitHeroOrder>();
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`/api/orders/${encodeURIComponent(orderId)}`, { cache: "no-store", signal: controller.signal })
-      .then(async (response) => {
-        const payload = await response.json() as QuitHeroOrder & { error?: string };
-        if (!response.ok) throw new Error(payload.error || "Unable to load this order.");
-        setOrder(payload);
-      })
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-        setError(requestError instanceof Error ? requestError.message : "Unable to load this order.");
-      });
-    return () => controller.abort();
-  }, [orderId]);
+  const { customer } = useAccountCustomer();
+  const customerKey = customer?.id ?? customer?.email;
+  const url = `/api/orders/${encodeURIComponent(orderId)}`;
+  const { data: order, error: queryError } = useQuery({
+    queryKey: ["api", url, customerKey],
+    enabled: Boolean(customerKey),
+    queryFn: async ({ signal }) => {
+      const response = await fetch(url, { signal });
+      const payload = await response.json() as QuitHeroOrder & { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Unable to load this order.");
+      return payload;
+    },
+  });
+  const error = queryError instanceof Error ? queryError.message : "";
 
   if (error) return <section className="account-card account-order-detail__message" role="alert">{error}</section>;
   if (!order) return <section className="account-card account-order-detail__message">Loading order details...</section>;

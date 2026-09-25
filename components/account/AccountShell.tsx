@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { logoutAccount } from "@/app/account/actions";
-import { clearCustomerData } from "@/lib/customer-cache";
+import { hasActiveScript } from "@/lib/script-access";
 
 const navigation = [
   ["/account", "Account Status", "user"],
@@ -41,10 +41,11 @@ function Icon({ name }: { name: string }) {
 
 export default function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { customer: identity, loading: customerLoading } = useAccountCustomer();
+  const { customer: identity, loading: customerLoading, setCustomer } = useAccountCustomer();
   const [menuOpen, setMenuOpen] = useState(false);
   const accountName = identity?.firstName?.trim()
     || identity?.email?.split("@")[0]?.trim();
+  const scriptIsActive = hasActiveScript(identity);
 
   if (pathname === "/account/login" || pathname === "/account/auth-popup") {
     return <main className="account-login-page">{children}</main>;
@@ -73,7 +74,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
         <nav aria-label="Account navigation">
           {navigation.map(([href, label, icon]) => {
             const requiresActiveScript = href === "/pharmacy" || href === "/request-script";
-            if (requiresActiveScript && (customerLoading || identity?.scriptActive !== true)) {
+            if (requiresActiveScript && (customerLoading || !scriptIsActive)) {
               return (
                 <div key={href} className="account-nav-disabled" aria-disabled="true">
                   <Icon name={icon} />
@@ -100,7 +101,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
             );
           })}
         </nav>
-        <form className="account-signout-form" action={logoutAccount} onSubmit={clearCustomerData}>
+        <form className="account-signout-form" action={logoutAccount} onSubmit={() => setCustomer(undefined)}>
           <button type="submit" className="account-signout">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M15 16L20 12L15 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

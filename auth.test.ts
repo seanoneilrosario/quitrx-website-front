@@ -34,18 +34,17 @@ const request = (path = "/account") => ({
 
 beforeEach(() => vi.resetAllMocks());
 
-it("redirects a deleted customer with an existing OAuth session to login", async () => {
-  const result = await callbacks.authorized({
+it("allows a valid OAuth session without duplicating the customer API lookup", async () => {
+  expect(await callbacks.authorized({
     auth: { user: { email: "deleted@example.com" } }, request: request(),
-  });
-  expect(result).toBeInstanceOf(Response);
-  expect((result as Response).headers.get("location")).toBe("https://example.com/account/login?error=AccountNotFound");
+  })).toBe(true);
+  expect(mocks.lookup).not.toHaveBeenCalled();
 });
 
-it("checks SMS sessions against the database too", async () => {
+it("allows a valid signed customer session without duplicating the customer API lookup", async () => {
   mocks.cookie.mockReturnValue({ email: "deleted@example.com" });
-  expect(await callbacks.authorized({ auth: null, request: request() })).toBeInstanceOf(Response);
-  expect(mocks.lookup).toHaveBeenCalledWith("deleted@example.com");
+  expect(await callbacks.authorized({ auth: null, request: request() })).toBe(true);
+  expect(mocks.lookup).not.toHaveBeenCalled();
 });
 
 it("allows existing customers and keeps the login route accessible", async () => {
@@ -54,12 +53,6 @@ it("allows existing customers and keeps the login route accessible", async () =>
   mocks.lookup.mockClear();
   expect(await callbacks.authorized({ auth: null, request: request("/account/login") })).toBe(true);
   expect(mocks.lookup).not.toHaveBeenCalled();
-});
-
-it("keeps a valid session active when the customer service temporarily fails", async () => {
-  mocks.lookup.mockRejectedValue(new Error("Service unavailable"));
-  const result = await callbacks.authorized({ auth: { user: { email: "member@example.com" } }, request: request() });
-  expect(result).toBe(true);
 });
 
 it("creates and links a customer for a new social login", async () => {

@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { catalogListQuery } from "@/lib/catalog-queries";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./ProductApiGrid.module.css";
 import ProductImage from "@/components/commerce/ProductImage";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { hasActiveScript } from "@/lib/script-access";
 
 type ApiRecord = Record<string, unknown>;
 
@@ -89,10 +92,6 @@ function getCollectionEntries(products: ApiRecord[]): Array<[string, ApiRecord]>
   return products.length ? [["all-products", products[0]], ...entries] : entries;
 }
 
-function hasScriptAccess(account: ApiRecord) {
-  return account.scriptActive === true;
-}
-
 function ProductGridSkeleton({ count }: { count: number }) {
   return (
     <div className={styles.grid} aria-hidden="true">
@@ -123,45 +122,22 @@ export default function ProductApiGrid({
   const authStatus = customerLoading
     ? "loading"
     : customer
-      ? hasScriptAccess(customer as ApiRecord) ? "authenticated" : "missing-script"
+      ? hasActiveScript(customer) ? "authenticated" : "missing-script"
       : "anonymous";
-  const [products, setProducts] = useState<ApiRecord[]>([]);
-  const [apiCollections, setApiCollections] = useState<ApiRecord[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
   const availableCollections = Array.isArray(collections) ? collections : [];
   const selectedCollections = availableCollections.length ? availableCollections : collection ? [collection] : [];
-  const showingSelectedCollections = selectedCollections.length > 0;
+  const showingSelectedCollections = displayMode === "collections" && selectedCollections.length > 0;
   const selectedCollectionSlugs = selectedCollections
     .flatMap((item) => item.slug ? [item.slug] : []);
-  const collectionQuery = selectedCollectionSlugs.length
-    ? `?${selectedCollectionSlugs.map((slug) => `collection=${encodeURIComponent(slug)}`).join("&")}`
-    : "";
   const skeletonCount = Math.max(4, Math.min(productLimit, 8));
 
-  useEffect(() => {
-    if (authStatus !== "authenticated" || showingSelectedCollections) return;
-    const controller = new AbortController();
-
-    const url = displayMode === "collections" ? "/api/quithero-collections" : `/api/quithero-products${collectionQuery}`;
-    fetch(url, { signal: controller.signal })
-      .then(async (response) => {
-        const payload: unknown = await response.json();
-        if (!response.ok) {
-          const message = getText(asRecord(payload) || {}, ["error"]);
-          throw new Error(message || "Unable to load products.");
-        }
-        if (displayMode === "collections") setApiCollections(getCollections(payload));
-        else setProducts(getProducts(payload));
-      })
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-        setError(requestError instanceof Error ? requestError.message : "Unable to load products.");
-      })
-      .finally(() => setLoading(false));
-
-    return () => controller.abort();
-  }, [authStatus, collectionQuery, displayMode, showingSelectedCollections]);
+  const { data: payload, error: queryError, isLoading: loading } = useQuery({
+    ...catalogListQuery(displayMode, selectedCollectionSlugs),
+    enabled: authStatus === "authenticated" && !showingSelectedCollections,
+  });
+  const products = displayMode === "products" ? getProducts(payload) : [];
+  const apiCollections = displayMode === "collections" ? getCollections(payload) : [];
+  const error = queryError instanceof Error ? queryError.message : "";
 
   const sectionStyle = {
     "--desktop-padding-top": `${desktopPaddingTop ?? paddingTop}px`,

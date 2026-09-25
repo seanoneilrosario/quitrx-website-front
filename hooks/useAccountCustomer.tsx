@@ -1,15 +1,11 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import type { QuitHeroCustomer } from "@/lib/quithero-customers";
-import {
-  clearCustomerData,
-  customerDataNeedsRefresh,
-  markCustomerDataStale,
-  readCustomerData,
-  saveCustomerData,
-} from "@/lib/customer-cache";
+import { accountCustomerQuery } from "@/lib/account-query";
+import { clearCustomerData, saveCustomerData } from "@/lib/customer-cache";
 
 type AccountCustomerContextValue = {
   customer?: QuitHeroCustomer;
@@ -25,111 +21,61 @@ const AccountCustomerContext = createContext<AccountCustomerContextValue | undef
 export function AccountCustomerProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [customer, setCustomerState] = useState<QuitHeroCustomer>();
-  const [loading, setLoading] = useState(true);
-  const [unauthorized, setUnauthorized] = useState(false);
-  const [error, setError] = useState<string>();
-  const initialized = useRef(false);
-  const previousPathname = useRef(pathname);
-  const requestInFlight = useRef<Promise<QuitHeroCustomer | undefined> | undefined>(undefined);
+  const queryClient = useQueryClient();
+  const { data, isPending, isFetching, error: queryError, refetch } = useQuery(accountCustomerQuery);
+  const customer = data ?? undefined;
+  const previousPath = useRef(pathname);
+  const loading = isPending || (!customer && isFetching);
+  const error = queryError ? "We couldn't load your account right now. Please try again shortly." : undefined;
 
   const setCustomer = useCallback((nextCustomer?: QuitHeroCustomer) => {
-    setCustomerState(nextCustomer);
-    if (nextCustomer) saveCustomerData(nextCustomer);
-    else clearCustomerData();
-  }, []);
+    // Cancel a previous session's request before writing a login/logout update.
+    void queryClient.cancelQueries({ queryKey: accountCustomerQuery.queryKey });
+    queryClient.setQueryData(accountCustomerQuery.queryKey, nextCustomer ?? null);
+  }, [queryClient]);
 
   const refreshCustomer = useCallback(async () => {
-    if (requestInFlight.current) return requestInFlight.current;
-
-    const request = fetch("/api/account/me", { cache: "no-store" })
-      .then(async (response) => {
-        if (response.ok) {
-          const nextCustomer = await response.json() as QuitHeroCustomer;
-          setCustomer(nextCustomer);
-          setUnauthorized(false);
-          setError(undefined);
-          return nextCustomer;
-        }
-        if (response.status === 401) {
-          setCustomer(undefined);
-          setUnauthorized(true);
-          setError(undefined);
-          return;
-        }
-        setUnauthorized(false);
-        setError("We couldn't load your account right now. Please try again shortly.");
-      })
-      .catch(() => {
-        setUnauthorized(false);
-        setError("We couldn't load your account right now. Please try again shortly.");
-        return undefined;
-      })
-      .finally(() => {
-        requestInFlight.current = undefined;
-        setLoading(false);
-      });
-
-    requestInFlight.current = request;
-    return request;
-  }, [setCustomer]);
+    const result = await refetch();
+    return result.isError ? undefined : result.data ?? undefined;
+  }, [refetch]);
 
   const invalidateCustomer = useCallback(() => {
-    markCustomerDataStale();
-  }, []);
+    void queryClient.invalidateQueries({ queryKey: accountCustomerQuery.queryKey });
+  }, [queryClient]);
 
   useEffect(() => {
-    const pathnameChanged = previousPathname.current !== pathname;
-    previousPathname.current = pathname;
-    if (!initialized.current) {
-      initialized.current = true;
-      const cachedCustomer = readCustomerData();
-      if (cachedCustomer) {
-        fetch("/api/account/session", { cache: "no-store" })
-          .then(async (response) => {
-            const session = response.ok
-              ? await response.json() as { email?: string }
-              : undefined;
-            const cachedEmail = cachedCustomer.email?.trim().toLowerCase();
-            if (session?.email?.trim().toLowerCase() === cachedEmail) {
-              setCustomerState(cachedCustomer);
-              setUnauthorized(false);
-              setError(undefined);
-              setLoading(false);
-              return;
-            }
-            clearCustomerData();
-            if (response.status === 401) {
-              setUnauthorized(true);
-              setLoading(false);
-            } else {
-              void refreshCustomer();
-            }
-          })
-          .catch(() => {
-            setError("We couldn't check your session right now. Please try again shortly.");
-            setLoading(false);
-          });
-        return;
-      }
+    if (data === undefined) return;
+    if (data) saveCustomerData(data);
+    else clearCustomerData();
+
+    // Remove private queries belonging to a previous account, including on logout.
+    const customerKey = data?.id ?? data?.email;
+    const filters = {
+      predicate: (query: { queryKey: readonly unknown[] }) => query.queryKey[0] === "api"
+        && typeof query.queryKey[1] === "string"
+        && (query.queryKey[1] === "/api/orders" || query.queryKey[1].startsWith("/api/orders/"))
+        && query.queryKey[2] !== customerKey,
+    };
+    void queryClient.cancelQueries(filters);
+    queryClient.removeQueries(filters);
+  }, [data, queryClient]);
+
+  useEffect(() => {
+    const changed = previousPath.current !== pathname;
+    const returningFromLogin = previousPath.current === "/account/login" || previousPath.current === "/account/auth-popup";
+    previousPath.current = pathname;
+    // Server-action login can change the session without remounting the shell.
+    if (changed && returningFromLogin && pathname !== "/account/login") {
       void refreshCustomer();
       return;
     }
-
-    if (customerDataNeedsRefresh()) void refreshCustomer();
-    // Retry after navigation (including returning from login), not just because
-    // the initial request reported an unauthenticated session.
-    else if (pathnameChanged && !customer && unauthorized && pathname !== "/account/login") void refreshCustomer();
-  }, [customer, pathname, refreshCustomer, unauthorized]);
-
-  useEffect(() => {
-    const isProtectedAccountPage = pathname === "/account" || (
-      pathname.startsWith("/account/") &&
-      pathname !== "/account/login" &&
-      pathname !== "/account/auth-popup"
+    const protectedPage = pathname === "/account" || (
+      pathname.startsWith("/account/")
+      && pathname !== "/account/login"
+      && pathname !== "/account/auth-popup"
     );
-    if (!loading && unauthorized && isProtectedAccountPage) router.replace("/account/login");
-  }, [loading, pathname, router, unauthorized]);
+    if (!loading && !queryError && data === null && protectedPage) router.replace("/account/login");
+  }, [customer, data, loading, pathname, queryError, refreshCustomer, router]);
 
   return (
     <AccountCustomerContext.Provider value={{ customer, loading, error, setCustomer, refreshCustomer, invalidateCustomer }}>
@@ -146,8 +92,7 @@ export function useAccountCustomer() {
 
 export function useCustomerDataInvalidation() {
   const { invalidateCustomer } = useAccountCustomer();
-
-  useEffect(() => {
-    invalidateCustomer();
-  }, [invalidateCustomer]);
+  // Recheck after leaving an external form that may have changed the account,
+  // rather than refetching as soon as the form mounts.
+  useEffect(() => () => { invalidateCustomer(); }, [invalidateCustomer]);
 }

@@ -4,43 +4,27 @@ import { useEffect, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AuthPopupCompletePage() {
   const router = useRouter();
-  const [needsEmail, setNeedsEmail] = useState<boolean | null>(null);
+  const { data: session, error: sessionError } = useQuery({
+    queryKey: ["api", "/api/auth/session"],
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/auth/session", { cache: "no-store", signal });
+      if (!response.ok) throw new Error("Unable to check your login.");
+      return await response.json() as { user?: { needsCustomerEmail?: boolean } };
+    },
+    staleTime: 0,
+    gcTime: 0,
+  });
+  const needsEmail = session === undefined ? null : Boolean(session?.user?.needsCustomerEmail);
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function checkSession() {
-      try {
-        const response = await fetch("/api/auth/session", { cache: "no-store" });
-        if (!response.ok) throw new Error();
-
-        const session = await response.json();
-        setNeedsEmail(Boolean(session?.user?.needsCustomerEmail));
-      } catch {
-        setError("Unable to check your login.");
-      }
-    }
-
-    void checkSession();
-  }, []);
-
-  useEffect(() => {
     if (needsEmail !== false) return;
-
-    if (window.opener) {
-      window.opener.postMessage(
-        { type: "quitrx:auth-success" },
-        window.location.origin,
-      );
-
-      window.close();
-      return;
-    }
-
     router.replace("/account");
     router.refresh();
   }, [needsEmail, router]);
@@ -66,13 +50,8 @@ export default function AuthPopupCompletePage() {
         return;
       }
 
-      if (window.opener) {
-        window.opener.postMessage({ type: "quitrx:auth-success" }, window.location.origin);
-        window.close();
-      } else {
-        router.replace("/account");
-        router.refresh();
-      }
+      router.replace("/account");
+      router.refresh();
     } catch {
       setError("Unable to link your Facebook account.");
     } finally {
@@ -87,7 +66,7 @@ export default function AuthPopupCompletePage() {
           <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage"><Image src="/images/quitrx-logo-light.png" width={174} height={71} alt="QuitRx" priority /></Link>
           <div className="customer-login__copy">
             <h1>Signing in</h1>
-            <p>{error || "Please wait..."}</p>
+            <p>{error || sessionError?.message || "Please wait..."}</p>
           </div>
         </section>
       </main>

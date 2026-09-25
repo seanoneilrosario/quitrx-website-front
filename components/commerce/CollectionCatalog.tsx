@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { productIsAvailable } from "@/lib/quithero-bundle";
@@ -12,13 +14,6 @@ import styles from "./collectionCatalog.module.css";
 import storeStyles from "@/app/store.module.css";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
-const PAGE_SIZE = 10;
-
-type CollectionPageResponse = {
-  collection: { name: string; slug: string; description?: string };
-  products: QuitHeroProduct[];
-  pagination: { page: number; limit: number; totalPages: number; hasNextPage: boolean };
-};
 
 function variantPrices(product: QuitHeroProduct) {
   return (product.variants ?? []).flatMap((variant) => {
@@ -44,16 +39,20 @@ function unique(values: Array<string | undefined>) {
 }
 
 export default function CollectionCatalog({ collectionSlug, initialPage }: { collectionSlug: string; initialPage?: CollectionPageResponse }) {
+
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
-  const [products, setProducts] = useState<QuitHeroProduct[]>(initialPage?.products ?? []);
-  const [collection, setCollection] = useState(initialPage
-    ? { name: initialPage.collection.name, description: initialPage.collection.description ?? "" }
-    : { name: collectionSlug.replaceAll("-", " "), description: "" });
-  const [currentApiPage, setCurrentApiPage] = useState(initialPage?.pagination.page ?? 0);
-  const [hasNextPage, setHasNextPage] = useState(initialPage?.pagination.hasNextPage ?? false);
-  const [productsLoading, setProductsLoading] = useState(!initialPage);
-  const [productsError, setProductsError] = useState("");
+  const { data, error, isPending, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } = useInfiniteQuery({
+    ...collectionProductsQuery(collectionSlug),
+    initialData: initialPage ? { pages: [initialPage], pageParams: [1] } : undefined,
+  });
+  const products = useMemo(() => {
+    const allProducts = data?.pages.flatMap((page) => page.products) ?? [];
+    return Array.from(new Map(allProducts.map((product) => [product.id ?? product.slug, product])).values());
+  }, [data]);
+  const collection = data?.pages[0]?.collection ?? { name: collectionSlug.replaceAll("-", " "), description: "" };
+  const productsLoading = isPending || isFetchingNextPage;
+  const productsError = error?.message ?? "";
   const [brands, setBrands] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
@@ -63,79 +62,9 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
   const [infiniteScrollReady, setInfiniteScrollReady] = useState(false);
   const [lockedProductName, setLockedProductName] = useState<string>();
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
-  const requestInFlightRef = useRef(!initialPage);
-  const prefetchedPageRef = useRef<{ page: number; promise: Promise<CollectionPageResponse | undefined> } | undefined>(undefined);
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
-
-  const fetchProductsPage = useCallback(async (page: number, signal?: AbortSignal) => {
-    const query = new URLSearchParams({ collectionPage: collectionSlug, page: String(page), limit: String(PAGE_SIZE) });
-    const requestUrl = `/api/quithero-products?${query}`;
-    console.groupCollapsed(`[Collection] Request page ${page}: ${collectionSlug}`);
-    console.log("Collection being loaded:", collectionSlug);
-    console.log("API request URL:", requestUrl);
-    console.log("Query params being sent:", Object.fromEntries(query.entries()));
-    console.log("Current page:", page);
-    console.log("Pagination limit:", PAGE_SIZE);
-    console.groupEnd();
-
-    const response = await fetch(requestUrl, { cache: "no-store", signal });
-    const payload = await response.json() as CollectionPageResponse & { error?: string };
-    if (!response.ok) throw new Error(payload.error || "Unable to load products.");
-    console.groupCollapsed(`[Collection] Response page ${page}: ${collectionSlug}`);
-    console.log("Raw products returned by the API:", payload.products);
-    console.log("Number of products returned per request:", payload.products.length);
-    console.log("Pagination response:", payload.pagination);
-    console.groupEnd();
-
-    return payload;
-  }, [collectionSlug]);
-
-  const applyProductsPage = useCallback((payload: CollectionPageResponse, append: boolean) => {
-    setCollection({ name: payload.collection.name, description: payload.collection.description ?? "" });
-    setProducts((existing) => {
-      const combined = append ? [...existing, ...payload.products] : payload.products;
-      const uniqueProducts = Array.from(new Map(combined.map((product) => [product.id ?? product.slug, product])).values());
-      console.log("Final products loaded in the collection:", uniqueProducts);
-      return uniqueProducts;
-    });
-    setCurrentApiPage(payload.pagination.page);
-    const hasMoreMatchingProducts = payload.pagination.hasNextPage && payload.products.length > 0;
-    setHasNextPage(hasMoreMatchingProducts);
-    if (append && !payload.products.length) {
-      console.log(`[Collection] No more matching products for ${collectionSlug}; hiding Load more.`);
-    }
-  }, [collectionSlug]);
-
-  const loadProductsPage = useCallback(async (page: number, append: boolean, signal?: AbortSignal) => {
-    applyProductsPage(await fetchProductsPage(page, signal), append);
-  }, [applyProductsPage, fetchProductsPage]);
-
-  useEffect(() => {
-    if (initialPage) return;
-
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-      loadProductsPage(1, false, controller.signal)
-        .catch((error: unknown) => {
-          if (!(error instanceof DOMException && error.name === "AbortError")) {
-            console.error(`[Collection] Failed to load ${collectionSlug}:`, error);
-            setProductsError(error instanceof Error ? error.message : "Unable to load products.");
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            requestInFlightRef.current = false;
-            setProductsLoading(false);
-          }
-        });
-    }, 0);
-    return () => {
-      window.clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, [collectionSlug, initialPage, loadProductsPage]);
 
   useEffect(() => {
     const enableInfiniteScroll = () => setInfiniteScrollReady(true);
@@ -192,56 +121,21 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
       return 0;
     });
   }, [availability, brands, colors, maxPrice, products, sizes, sort]);
-  useEffect(() => {
-    console.log(`[Collection] Final products displayed for ${collectionSlug}:`, visibleProducts);
-  }, [collectionSlug, visibleProducts]);
-
-  const loadMore = useCallback(async () => {
-    if (requestInFlightRef.current || productsLoading || !hasNextPage) return;
-    requestInFlightRef.current = true;
-    setProductsLoading(true);
-    setProductsError("");
-    try {
-      const nextPage = currentApiPage + 1;
-      const prefetched = prefetchedPageRef.current?.page === nextPage
-        ? await prefetchedPageRef.current.promise
-        : undefined;
-      prefetchedPageRef.current = undefined;
-      applyProductsPage(prefetched ?? await fetchProductsPage(nextPage), true);
-    } catch (error) {
-      console.error(`[Collection] Failed to load page ${currentApiPage + 1}:`, error);
-      setProductsError(error instanceof Error ? error.message : "Unable to load products.");
-    } finally {
-      requestInFlightRef.current = false;
-      setProductsLoading(false);
-    }
-  }, [applyProductsPage, currentApiPage, fetchProductsPage, hasNextPage, productsLoading]);
-
-  useEffect(() => {
-    if (productsLoading || !hasNextPage || currentApiPage < 1) return;
-    const nextPage = currentApiPage + 1;
-    if (prefetchedPageRef.current?.page === nextPage) return;
-
-    prefetchedPageRef.current = {
-      page: nextPage,
-      promise: fetchProductsPage(nextPage).catch((error: unknown) => {
-        console.error(`[Collection] Failed to prefetch page ${nextPage}:`, error);
-        return undefined;
-      }),
-    };
-  }, [currentApiPage, fetchProductsPage, hasNextPage, productsLoading]);
+  const loadMore = useCallback(() => {
+    if (!isFetching && hasNextPage) void fetchNextPage({ cancelRefetch: false });
+  }, [fetchNextPage, hasNextPage, isFetching]);
 
   useEffect(() => {
     const trigger = loadMoreTriggerRef.current;
-    if (!infiniteScrollReady || !trigger || productsLoading || !hasNextPage) return;
+    if (!infiniteScrollReady || !trigger || isFetching || error || !hasNextPage) return;
 
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) void loadMore();
-    });
+      if (entry.isIntersecting) loadMore();
+    }, { rootMargin: "300px" });
 
     observer.observe(trigger);
     return () => observer.disconnect();
-  }, [hasNextPage, infiniteScrollReady, loadMore, productsLoading]);
+  }, [error, hasNextPage, infiniteScrollReady, isFetching, loadMore]);
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
@@ -341,8 +235,14 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
             />
           ))}
         </div>
-        {!productsLoading && !visibleProducts.length && <p className={styles.empty}>No products match these filters.</p>}
-        {productsError && <p className={styles.empty} role="alert">{productsError}</p>}
+        {!productsLoading && !productsError && !visibleProducts.length && <p className={styles.empty}>No products match these filters.</p>}
+        {productsError && <div className={styles.empty} role="alert">
+          <p>{productsError}</p>
+          <button type="button" disabled={isFetching} onClick={() => {
+            if (data && hasNextPage) loadMore();
+            else void refetch();
+          }}>Try again</button>
+        </div>}
         {(hasNextPage || productsLoading) && <div ref={loadMoreTriggerRef} className={styles.pagination} aria-live="polite">
           {productsLoading && <span>Loading...</span>}
           <span>{products.length} product{products.length === 1 ? "" : "s"} loaded</span>

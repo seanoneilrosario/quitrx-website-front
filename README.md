@@ -62,6 +62,42 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Realtime data
+
+API queries share a five-minute freshness window and a thirty-minute inactive
+cache. Public catalog queries are persisted in session storage using TanStack's
+`PersistQueryClientProvider`, so a reload reuses fresh responses without extending
+their original fetch timestamp. Search and product grids share the same query
+options; collection filters are sorted and deduplicated for consistent cache keys.
+
+Account and order queries are shared in memory but are not persisted across
+reloads. Login completion, successful edits, external-form departure, and realtime
+changes can invalidate data before its freshness window expires. OAuth completion
+always checks the current session. Server-rendered content still uses Next.js
+caching, and payment/profile writes remain explicit requests to their existing
+endpoints.
+
+The storefront uses the shared TanStack Query provider for account, OAuth session,
+product, collection, search, and order API reads. Account data comes from
+`/api/account/me` using `useQuery`; refreshes and invalidation update that shared
+cache. Session storage is not used as the source of authenticated account state.
+Collection pages use `useInfiniteQuery` with a cache per collection and a server-loaded
+first page. Product detail pages seed `useQuery` with server-loaded details and
+refresh through `/api/quithero-products/[slug]`, including bundle choices and
+related products. Product and collection grids also fetch through `useQuery`.
+`RealtimeConnection` mounts inside the account provider and connects
+once a signed-in customer is available. It disconnects on logout or unmount.
+
+`NEXT_PUBLIC_REALTIME_URL` optionally overrides the default Socket.IO namespace,
+`https://retail-api.quithero.com.au/realtime`. The server must allow the storefront
+origin with credentials. See the [Socket.IO React guide](https://socket.io/how-to/use-with-react).
+
+Customer events refresh the matching account through `/api/account/me`.
+`order.updated` invalidates the current customer's order list and detail queries;
+active queries refetch immediately and inactive queries refresh when opened.
+Connections also reconcile account and order data after reconnecting. Event
+payloads are never inserted directly into account or order caches.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

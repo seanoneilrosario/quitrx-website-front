@@ -5,6 +5,17 @@
   align-items: start;
 }
 
+.filters,
+.options {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar,
+.options::-webkit-scrollbar {
+  display: none;
+}
+
 @media (min-width: 700px) {
   .filters {
     --filter-sticky-top: 70px;

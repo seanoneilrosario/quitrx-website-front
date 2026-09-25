@@ -18,8 +18,10 @@ export default function TreatmentCtaLink({
   children,
   openInNewTab = false,
 }: TreatmentCtaLinkProps) {
-  const { customer } = useAccountCustomer();
+  const { customer, loading } = useAccountCustomer();
   const canShop = hasActiveScript(customer);
+
+  if (loading) return <span className={className} aria-busy="true" />;
 
   return (
     <Link

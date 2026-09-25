@@ -4,6 +4,8 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { catalogListQuery } from "@/lib/catalog-queries";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
 type NavigationMenuItem = {
@@ -57,7 +59,7 @@ type SearchProduct = {
 const CART_KEY = "quitrx-cart";
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === "object" ? value as Record<string, unknown> : undefined;
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : undefined;
 }
 
 function textValue(record: Record<string, unknown>, keys: string[]) {
@@ -103,7 +105,9 @@ function productKeywords(product: Record<string, unknown>) {
 
 function parseSearchProducts(payload: unknown): SearchProduct[] {
   const record = asRecord(payload);
-  const items = Array.isArray(payload) ? payload : record?.products || record?.data || record?.items;
+  const items = Array.isArray(payload)
+    ? payload
+    : record?.products || record?.data || record?.items;
   if (!Array.isArray(items)) return [];
 
   return items.flatMap((item) => {
@@ -112,14 +116,16 @@ function parseSearchProducts(payload: unknown): SearchProduct[] {
     const id = textValue(product, ["id", "_id"]);
     const name = textValue(product, ["name", "title", "productName"]);
     if (!id || !name) return [];
-    return [{
-      id,
-      name,
-      handle: textValue(product, ["handle", "slug"]),
-      description: textValue(product, ["shortDescription", "description", "seoDescription"]),
-      image: productImage(product),
-      searchKeywords: productKeywords(product),
-    }];
+    return [
+      {
+        id,
+        name,
+        handle: textValue(product, ["handle", "slug"]),
+        description: textValue(product, ["shortDescription", "description", "seoDescription"]),
+        image: productImage(product),
+        searchKeywords: productKeywords(product),
+      },
+    ];
   });
 }
 
@@ -133,19 +139,16 @@ function readCart(): CartItem[] {
 }
 
 function cartMoney(value?: number | string) {
-  const amount = typeof value === "number" ? value : Number(String(value || "").replace(/[^0-9.-]/g, ""));
-  return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(Number.isFinite(amount) ? amount : 0);
+  const amount =
+    typeof value === "number" ? value : Number(String(value || "").replace(/[^0-9.-]/g, ""));
+  return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(
+    Number.isFinite(amount) ? amount : 0,
+  );
 }
-const fallbackMenu: NavigationMenuItem[] = [
-  { title: "About", href: "/about" },
-];
+const fallbackMenu: NavigationMenuItem[] = [{ title: "About", href: "/about" }];
 const MARQUEE_TEXT = "Welcome to the NEW QuitRX. Advancing the way Australians quit.";
 const MARQUEE_REPEAT = 4;
-const BODY_TEMPLATE_CLASSES = [
-  "template-index",
-  "template-page",
-  "template-admin",
-];
+const BODY_TEMPLATE_CLASSES = ["template-index", "template-page", "template-admin"];
 function getHref(item: NavigationMenuItem, isHome: boolean) {
   const base = item.href || item.link || "";
   const anchor = item.anchor ? `#${item.anchor.replace(/^#/, "")}` : "";
@@ -165,23 +168,26 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [cartStockError, setCartStockError] = useState("");
   const { customer: accountIdentity, loading: accountLoading, error: accountError } = useAccountCustomer();
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchLoaded, setSearchLoaded] = useState(false);
-  const [searchError, setSearchError] = useState("");
+  const {
+    data: searchPayload,
+    isLoading: searchLoading,
+    isError: searchFailed,
+  } = useQuery({
+    ...catalogListQuery(),
+    enabled: isSearchOpen,
+  });
+  const searchProducts = useMemo(() => parseSearchProducts(searchPayload), [searchPayload]);
+  const searchError = searchFailed ? "Product search is temporarily unavailable." : "";
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const lastScrollY = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const menuItems = navigation?.header_menu?.length
-    ? navigation.header_menu
-    : fallbackMenu;
+  const menuItems = navigation?.header_menu?.length ? navigation.header_menu : fallbackMenu;
   const accountName = accountIdentity?.firstName?.trim();
   const isAuthenticated = Boolean(accountIdentity?.email?.trim());
   const accountPending = !isAuthenticated && (accountLoading || Boolean(accountError));
-  const accountHref = isAuthenticated || accountPending ? "/account" : "/account/login";
-  
-  const pathname = usePathname()
+
+  const pathname = usePathname();
   const isHome = pathname === "/";
   const isAdmin = pathname.startsWith("/admin");
   const isCheckoutPage = pathname === "/checkout";
@@ -191,7 +197,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     if (!term) return [];
 
     return searchPages.filter((page) =>
-      `${page.title || ""} ${page.metaDescription || ""}`.toLowerCase().includes(term)
+      `${page.title || ""} ${page.metaDescription || ""}`.toLowerCase().includes(term),
     );
   }, [searchPages, searchTerm]);
   const productSearchResults = useMemo(() => {
@@ -209,33 +215,6 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
         return Number(rightName.includes(term)) - Number(leftName.includes(term));
       });
   }, [searchProducts, searchTerm]);
-  useEffect(() => {
-    if (!isSearchOpen || searchLoaded) return;
-    const controller = new AbortController();
-    let cancelled = false;
-    setSearchLoading(true);
-    setSearchError("");
-    fetch("/api/quithero-products", { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Unable to load products.");
-        const products = parseSearchProducts(await response.json());
-        if (!cancelled) setSearchProducts(products);
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        if (!cancelled) setSearchError("Product search is temporarily unavailable.");
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setSearchLoading(false);
-          setSearchLoaded(true);
-        }
-      });
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [isSearchOpen, searchLoaded]);
   useEffect(() => {
     const updateCart = (event?: Event) => {
       setCartItems(readCart());
@@ -299,12 +278,16 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     };
   }, [isAdmin, isHome, isAccountPage, isCheckoutPage]);
   if (pathname.includes("/admin") || isCheckoutPage) {
-    return null
+    return null;
   }
-  const selectedLogo = !isHome && navigation?.header_logo2 ? navigation.header_logo2 : navigation?.headerLogo
+  const selectedLogo =
+    !isHome && navigation?.header_logo2 ? navigation.header_logo2 : navigation?.headerLogo;
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartSubtotal = cartItems.reduce((total, item) => {
-    const amount = typeof item.price === "number" ? item.price : Number(String(item.price || "").replace(/[^0-9.-]/g, ""));
+    const amount =
+      typeof item.price === "number"
+        ? item.price
+        : Number(String(item.price || "").replace(/[^0-9.-]/g, ""));
     return total + (Number.isFinite(amount) ? amount : 0) * item.quantity;
   }, 0);
 
@@ -315,11 +298,17 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   }
   function increaseCartItem(item: CartItem) {
     if (item.quantity >= (item.availableStock ?? 0)) {
-      setCartStockError(`Only ${item.availableStock ?? 0} units of ${item.productName} are available.`);
+      setCartStockError(
+        `Only ${item.availableStock ?? 0} units of ${item.productName} are available.`,
+      );
       return;
     }
     setCartStockError("");
-    saveCart(cartItems.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry));
+    saveCart(
+      cartItems.map((entry) =>
+        entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry,
+      ),
+    );
   }
   return (
     <Fragment>
@@ -340,19 +329,64 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
         <div className="site-header__bar">
           <div className="site-header__inner">
             <div className="mobile_nav_icons">
-               <div className="cart-button">
-                <button className="site-header__cart site-header__mobile" type="button" onClick={() => setIsCartOpen(true)}>
-                  My Cart {cartCount > 0 && <span className="site-header__cart-count">{cartCount}</span>}
+              <div className="cart-button">
+                <button
+                  className="site-header__cart site-header__mobile"
+                  type="button"
+                  onClick={() => setIsCartOpen(true)}
+                >
+                  My Cart{" "}
+                  {cartCount > 0 && <span className="site-header__cart-count">{cartCount}</span>}
                 </button>
-                <button className="site-header__cart site-header__desktop" type="button" aria-label={`Open cart with ${cartCount} items`} onClick={() => setIsCartOpen(true)}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" className="icon icon-cart-empty" viewBox="0 0 40 40"><path fill="currentColor" fillRule="evenodd" d="M15.75 11.8h-3.16l-.77 11.6a5 5 0 0 0 4.99 5.34h7.38a5 5 0 0 0 4.99-5.33L28.4 11.8zm0 1h-2.22l-.71 10.67a4 4 0 0 0 3.99 4.27h7.38a4 4 0 0 0 4-4.27l-.72-10.67h-2.22v.63a4.75 4.75 0 1 1-9.5 0zm8.5 0h-7.5v.63a3.75 3.75 0 1 0 7.5 0z"></path></svg>
+                <button
+                  className="site-header__cart site-header__desktop"
+                  type="button"
+                  aria-label={`Open cart with ${cartCount} items`}
+                  onClick={() => setIsCartOpen(true)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    className="icon icon-cart-empty"
+                    viewBox="0 0 40 40"
+                  >
+                    <path
+                      fill="currentColor"
+                      fillRule="evenodd"
+                      d="M15.75 11.8h-3.16l-.77 11.6a5 5 0 0 0 4.99 5.34h7.38a5 5 0 0 0 4.99-5.33L28.4 11.8zm0 1h-2.22l-.71 10.67a4 4 0 0 0 3.99 4.27h7.38a4 4 0 0 0 4-4.27l-.72-10.67h-2.22v.63a4.75 4.75 0 1 1-9.5 0zm8.5 0h-7.5v.63a3.75 3.75 0 1 0 7.5 0z"
+                    ></path>
+                  </svg>
                   {cartCount > 0 && <span className="site-header__cart-count">{cartCount}</span>}
                 </button>
               </div>
-              <Link className="site-header__account site-header__desktop" href={accountHref} aria-busy={accountLoading}>
-                {isAuthenticated && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2.5a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5V21"/></svg>}
-                <span>{isAuthenticated ? accountName ? `Hi, ${accountName}` : "Hi" : accountPending ? "My Account" : "Login"}</span>
-              </Link>
+              {accountPending ? (
+                <span
+                  className="site-header__account site-header__desktop"
+                  aria-busy="true"
+                  aria-label="Restoring account session"
+                />
+              ) : (
+                <Link
+                  className="site-header__account site-header__desktop"
+                  href={isAuthenticated ? "/account" : "/account/login"}
+                >
+                  {isAuthenticated && (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="7" r="4" />
+                      <path d="M4.5 21v-2.5a5 5 0 0 1 5-5h5a5 5 0 0 1 5 5V21" />
+                    </svg>
+                  )}
+                  <span>
+                    {isAuthenticated ? (accountName ? `Hi, ${accountName}` : "Hi") : "Login"}
+                  </span>
+                </Link>
+              )}
               <button
                 className="svg-icon-search"
                 type="button"
@@ -364,36 +398,43 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                   setIsSearchOpen(true);
                 }}
               >
-                <svg fill="none" className="icon icon-search" viewBox="0 0 18 19"><path fill="currentColor" fillRule="evenodd" d="M11.03 11.68A5.784 5.784 0 1 1 2.85 3.5a5.784 5.784 0 0 1 8.18 8.18m.26 1.12a6.78 6.78 0 1 1 .72-.7l5.4 5.4a.5.5 0 1 1-.71.7z" clipRule="evenodd"></path></svg>
+                <svg fill="none" className="icon icon-search" viewBox="0 0 18 19">
+                  <path
+                    fill="currentColor"
+                    fillRule="evenodd"
+                    d="M11.03 11.68A5.784 5.784 0 1 1 2.85 3.5a5.784 5.784 0 0 1 8.18 8.18m.26 1.12a6.78 6.78 0 1 1 .72-.7l5.4 5.4a.5.5 0 1 1-.71.7z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
               </button>
             </div>
             {/* <Link className="site-header__consultations" href="/contact">
               Consultations
             </Link> */}
-              <Link className="site-header__logo" href="/" aria-label="Home">
-                {selectedLogo ? (
-                  <Image
-                    src={selectedLogo}
-                    alt={navigation?.headerLogoAlt || navigation?.title || "QuitRx"}
-                    width={280}
-                    height={80}
-                    priority
-                  />
-                ) : (
-                  <span>QuitRx</span>
-                )}
-              </Link>
+            <Link className="site-header__logo" href="/" aria-label="Home">
+              {selectedLogo ? (
+                <Image
+                  src={selectedLogo}
+                  alt={navigation?.headerLogoAlt || navigation?.title || "QuitRx"}
+                  width={280}
+                  height={80}
+                  priority
+                />
+              ) : (
+                <span>QuitRx</span>
+              )}
+            </Link>
             <nav className="site-header__desktop-nav" aria-label="Primary navigation">
               {menuItems.map((item) => {
-                  return (
-                    <Link
-                      key={`${item.title}-${getHref(item, isHome)}`}
-                      href={getHref(item, isHome)}
-                      onClick={() => setIsOpen(false)}
-                    >
-                      {item.title}
-                    </Link>
-                  )
+                return (
+                  <Link
+                    key={`${item.title}-${getHref(item, isHome)}`}
+                    href={getHref(item, isHome)}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.title}
+                  </Link>
+                );
               })}
             </nav>
             <button
@@ -409,18 +450,21 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
             </button>
           </div>
         </div>
-        <div className={`site-nav ${isOpen ? "site-nav--open" : ""}`} onClick={() => setIsOpen(false)}>
+        <div
+          className={`site-nav ${isOpen ? "site-nav--open" : ""}`}
+          onClick={() => setIsOpen(false)}
+        >
           <div className="site-nav__panel" onClick={(event) => event.stopPropagation()}>
             <div className="site-nav__header">
               <Link className="site-nav__logo" href="/" onClick={() => setIsOpen(false)}>
-                {(!isHome && navigation?.header_logo2) ? (
+                {!isHome && navigation?.header_logo2 ? (
                   <Image
                     src={navigation.header_logo2}
                     alt={navigation.headerLogoAlt || navigation.title || "QuitRx"}
                     width={90}
                     height={90}
                   />
-                ) : (navigation?.headerLogoMenu || navigation?.headerLogo) ? (
+                ) : navigation?.headerLogoMenu || navigation?.headerLogo ? (
                   <Image
                     src={navigation.headerLogoMenu || navigation.headerLogo || ""}
                     alt={
@@ -458,124 +502,233 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
               ))}
             </nav>
             <div className="site-nav__footer">
-                <Link className="site-header__account site-header__mobile" href={accountHref} aria-busy={accountLoading} aria-label={isAuthenticated ? accountName ? `Open ${accountName}'s account` : "Open my account" : accountPending ? "Open my account" : "Log in"}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              {accountPending ? (
+                <span
+                  className="site-header__account site-header__mobile"
+                  aria-busy="true"
+                  aria-label="Restoring account session"
+                />
+              ) : (
+                <Link
+                  className="site-header__account site-header__mobile"
+                  href={isAuthenticated ? "/account" : "/account/login"}
+                  aria-label={
+                    isAuthenticated
+                      ? accountName
+                        ? `Open ${accountName}'s account`
+                        : "Open my account"
+                      : "Log in"
+                  }
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
                 </Link>
+              )}
             </div>
           </div>
         </div>
       </header>
-        <div
-          id="site-search-dialog"
-          className={`site-search ${isSearchOpen ? "site-search--open" : ""}`}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Search the site"
-          onClick={() => setIsSearchOpen(false)}
-        >
-          <div className="site-search__panel" onClick={(event) => event.stopPropagation()}>
-            <div className="site-search__field">
-              <label className="site-search__label" htmlFor="site-search-input">Search pages</label>
-              <input
-                id="site-search-input"
-                className="site-search__input"
-                type="search"
-                value={searchTerm}
-                placeholder="Search"
-                ref={searchInputRef}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-              <svg className="site-search__icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="10.5" cy="10.5" r="6.5" />
-                <path d="m16 16 5 5" />
-              </svg>
-            </div>
-            <button
-              type="button"
-              className="site-search__close"
-              aria-label="Close search"
-              onClick={() => setIsSearchOpen(false)}
-            >
-              <span />
-              <span />
-            </button>
-            <div className="site-search__results" aria-live="polite">
-              {searchTerm.trim() && !searchLoading && pageSearchResults.length === 0 && productSearchResults.length === 0 && <p>No results found.</p>}
-              {searchLoading && <p>Loading products…</p>}
-              {searchError && <p>{searchError}</p>}
-              {pageSearchResults.map((page) => {
-                const href = page._type === "home" ? "/" : `/${page.slug}`;
-                return (
-                  <Link key={page._id} href={href} onClick={() => setIsSearchOpen(false)}>
-                    <strong>{page.title || "Untitled page"}</strong>
-                  </Link>
-                );
-              })}
-              {productSearchResults.filter((product) => product.handle).map((product) => (
+      <div
+        id="site-search-dialog"
+        className={`site-search ${isSearchOpen ? "site-search--open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search the site"
+        onClick={() => setIsSearchOpen(false)}
+      >
+        <div className="site-search__panel" onClick={(event) => event.stopPropagation()}>
+          <div className="site-search__field">
+            <label className="site-search__label" htmlFor="site-search-input">
+              Search pages
+            </label>
+            <input
+              id="site-search-input"
+              className="site-search__input"
+              type="search"
+              value={searchTerm}
+              placeholder="Search"
+              ref={searchInputRef}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+            <svg className="site-search__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m16 16 5 5" />
+            </svg>
+          </div>
+          <button
+            type="button"
+            className="site-search__close"
+            aria-label="Close search"
+            onClick={() => setIsSearchOpen(false)}
+          >
+            <span />
+            <span />
+          </button>
+          <div className="site-search__results" aria-live="polite">
+            {searchTerm.trim() &&
+              !searchLoading &&
+              pageSearchResults.length === 0 &&
+              productSearchResults.length === 0 && <p>No results found.</p>}
+            {searchLoading && <p>Loading products…</p>}
+            {searchError && <p>{searchError}</p>}
+            {pageSearchResults.map((page) => {
+              const href = page._type === "home" ? "/" : `/${page.slug}`;
+              return (
+                <Link key={page._id} href={href} onClick={() => setIsSearchOpen(false)}>
+                  <strong>{page.title || "Untitled page"}</strong>
+                </Link>
+              );
+            })}
+            {productSearchResults
+              .filter((product) => product.handle)
+              .map((product) => (
                 <Link
                   key={product.id}
                   href={`/product/${encodeURIComponent(product.handle!)}`}
                   className="site-search__product"
                   onClick={() => setIsSearchOpen(false)}
                 >
-                  {product.image && <Image src={product.image} width={72} height={72} alt="" sizes="72px" />}
+                  {product.image && (
+                    <Image src={product.image} width={72} height={72} alt="" sizes="72px" />
+                  )}
                   <strong>{product.name}</strong>
                 </Link>
               ))}
-            </div>
           </div>
         </div>
-        <div className={`cart-drawer ${isCartOpen ? "cart-drawer--open" : ""}`} aria-hidden={!isCartOpen}>
-          <button className="cart-drawer__backdrop" type="button" aria-label="Close cart" onClick={() => setIsCartOpen(false)} />
-          <aside className="cart-drawer__panel" role="dialog" aria-modal="true" aria-label="Shopping cart">
-            <div className="cart-drawer__header">
-              <h2>Your cart <span>({cartCount})</span></h2>
-              <button type="button" aria-label="Close cart" onClick={() => setIsCartOpen(false)}>&times;</button>
+      </div>
+      <div
+        className={`cart-drawer ${isCartOpen ? "cart-drawer--open" : ""}`}
+        aria-hidden={!isCartOpen}
+      >
+        <button
+          className="cart-drawer__backdrop"
+          type="button"
+          aria-label="Close cart"
+          onClick={() => setIsCartOpen(false)}
+        />
+        <aside
+          className="cart-drawer__panel"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Shopping cart"
+        >
+          <div className="cart-drawer__header">
+            <h2>
+              Your cart <span>({cartCount})</span>
+            </h2>
+            <button type="button" aria-label="Close cart" onClick={() => setIsCartOpen(false)}>
+              &times;
+            </button>
+          </div>
+          {cartItems.length === 0 ? (
+            <div className="cart-drawer__empty">
+              <p>Your cart is empty.</p>
+              <button type="button" onClick={() => setIsCartOpen(false)}>
+                Continue shopping
+              </button>
             </div>
-            {cartItems.length === 0 ? (
-              <div className="cart-drawer__empty"><p>Your cart is empty.</p><button type="button" onClick={() => setIsCartOpen(false)}>Continue shopping</button></div>
-            ) : (
-              <>
-                <div className="cart-drawer__items">
-                  {cartItems.map((item) => (
-                    <article className="cart-drawer__item" key={item.key}>
-                      <div className="cart-drawer__image"><Image src={item.image || DEFAULT_PRODUCT_IMAGE} width={86} height={100} alt="" sizes="86px" /></div>
-                      <div className="cart-drawer__details">
-                        <strong>{item.productName}</strong>
-                        <span>{item.variantName}</span>
-                        <span>{cartMoney(item.price)}</span>
-                        {item.bundleComponents?.length ? (
-                          <ol className="cart-drawer__bundle" aria-label="Bundle contents">
-                            {item.bundleComponents.map((component, index) => (
-                              <li key={`${component.productName}-${component.variantName}-${index}`}>
-                                <span>{component.productName}</span>
-                                {component.variantName !== "Default" && <span> - {component.variantName}</span>}
-                                {component.quantity > 1 && <span> &times; {component.quantity}</span>}
-                              </li>
-                            ))}
-                          </ol>
-                        ) : null}
-                        <div className="cart-drawer__quantity">
-                          <button type="button" aria-label={`Decrease ${item.productName} quantity`} onClick={() => saveCart(item.quantity === 1 ? cartItems.filter((entry) => entry.key !== item.key) : cartItems.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity - 1 } : entry))}>−</button>
-                          <span>{item.quantity}</span>
-                          <button type="button" disabled={item.quantity >= (item.availableStock ?? 0)} aria-label={`Increase ${item.productName} quantity`} onClick={() => increaseCartItem(item)}>+</button>
-                        </div>
+          ) : (
+            <>
+              <div className="cart-drawer__items">
+                {cartItems.map((item) => (
+                  <article className="cart-drawer__item" key={item.key}>
+                    <div className="cart-drawer__image">
+                      <Image
+                        src={item.image || DEFAULT_PRODUCT_IMAGE}
+                        width={86}
+                        height={100}
+                        alt=""
+                        sizes="86px"
+                      />
+                    </div>
+                    <div className="cart-drawer__details">
+                      <strong>{item.productName}</strong>
+                      <span>{item.variantName}</span>
+                      <span>{cartMoney(item.price)}</span>
+                      {item.bundleComponents?.length ? (
+                        <ol className="cart-drawer__bundle" aria-label="Bundle contents">
+                          {item.bundleComponents.map((component, index) => (
+                            <li key={`${component.productName}-${component.variantName}-${index}`}>
+                              <span>{component.productName}</span>
+                              {component.variantName !== "Default" && (
+                                <span> - {component.variantName}</span>
+                              )}
+                              {component.quantity > 1 && <span> &times; {component.quantity}</span>}
+                            </li>
+                          ))}
+                        </ol>
+                      ) : null}
+                      <div className="cart-drawer__quantity">
+                        <button
+                          type="button"
+                          aria-label={`Decrease ${item.productName} quantity`}
+                          onClick={() =>
+                            saveCart(
+                              item.quantity === 1
+                                ? cartItems.filter((entry) => entry.key !== item.key)
+                                : cartItems.map((entry) =>
+                                    entry.key === item.key
+                                      ? { ...entry, quantity: entry.quantity - 1 }
+                                      : entry,
+                                  ),
+                            )
+                          }
+                        >
+                          −
+                        </button>
+                        <span>{item.quantity}</span>
+                        <button
+                          type="button"
+                          disabled={item.quantity >= (item.availableStock ?? 0)}
+                          aria-label={`Increase ${item.productName} quantity`}
+                          onClick={() => increaseCartItem(item)}
+                        >
+                          +
+                        </button>
                       </div>
-                      <button className="cart-drawer__remove" type="button" onClick={() => saveCart(cartItems.filter((entry) => entry.key !== item.key))}>Remove</button>
-                    </article>
-                  ))}
+                    </div>
+                    <button
+                      className="cart-drawer__remove"
+                      type="button"
+                      onClick={() => saveCart(cartItems.filter((entry) => entry.key !== item.key))}
+                    >
+                      Remove
+                    </button>
+                  </article>
+                ))}
+              </div>
+              <div className="cart-drawer__footer">
+                {cartStockError && <p role="alert">{cartStockError}</p>}
+                <div>
+                  <span>Subtotal</span>
+                  <strong>{cartMoney(cartSubtotal)}</strong>
                 </div>
-                <div className="cart-drawer__footer">
-                  {cartStockError && <p role="alert">{cartStockError}</p>}
-                  <div><span>Subtotal</span><strong>{cartMoney(cartSubtotal)}</strong></div>
-                  <p>Shipping and payment are confirmed at checkout.</p>
-                  <Link href="/cart" onClick={() => setIsCartOpen(false)}>View cart</Link>
-                  <Link className="cart-drawer__checkout" href="/checkout" onClick={() => setIsCartOpen(false)}>Continue to checkout</Link>
-                </div>
-              </>
-            )}
-          </aside>
-        </div>
+                <p>Shipping and payment are confirmed at checkout.</p>
+                <Link href="/cart" onClick={() => setIsCartOpen(false)}>
+                  View cart
+                </Link>
+                <Link
+                  className="cart-drawer__checkout"
+                  href="/checkout"
+                  onClick={() => setIsCartOpen(false)}
+                >
+                  Continue to checkout
+                </Link>
+              </div>
+            </>
+          )}
+        </aside>
+      </div>
     </Fragment>
   );
 }
