@@ -519,7 +519,7 @@
 .cart-drawer__items { flex: 1; padding: 4px 24px; overflow-y: auto; }
 .cart-drawer__item { position: relative; display: grid; grid-template-columns: 86px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid #e4ecea; }
 .cart-drawer__image { display: grid; width: 86px; height: 100px; overflow: hidden; border-radius: 10px; background: #f3f6f5; place-items: center; }
-.cart-drawer__image img { width: 100%; height: 100%; object-fit: contain; }
+.cart-drawer__image img { mix-blend-mode: multiply; width: 100%; height: 100%; object-fit: contain; }
 .cart-drawer__details { display: grid; gap: 5px; align-content: start; padding-right: 54px; }
 .cart-drawer__details > span { color: #6c8183; font-size: 13px; }
 .cart-drawer__bundle { display: grid; gap: 5px; margin: 4px 0 2px; padding-left: 18px; color: #6c8183; font-size: 13px; line-height: 1.4; }
