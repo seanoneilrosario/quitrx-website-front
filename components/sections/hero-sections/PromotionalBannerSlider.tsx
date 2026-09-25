@@ -50,36 +50,6 @@ export default function PromotionalBannerSlider({
   if (loading || !customer || !slideCount) return null;
 
   const safeActiveIndex = activeIndex % slideCount;
-  const currentSlide = visibleSlides[safeActiveIndex];
-  const href = getHref(currentSlide);
-  const media = (
-    <div
-      className={`promotional-banner-slider__media${
-        currentSlide.mobileImage
-          ? " promotional-banner-slider__media--has-mobile"
-          : ""
-      }`}
-    >
-      <Image
-        className="promotional-banner-slider__desktop-image"
-        src={currentSlide.image!}
-        alt={currentSlide.alt || "Promotional banner"}
-        width={1920}
-        height={640}
-        sizes="100vw"
-      />
-      {currentSlide.mobileImage && (
-        <Image
-          className="promotional-banner-slider__mobile-image"
-          src={currentSlide.mobileImage}
-          alt={currentSlide.alt || "Promotional banner"}
-          width={768}
-          height={768}
-          sizes="100vw"
-        />
-      )}
-    </div>
-  );
 
   const goToPrevious = () => {
     setActiveIndex((current) => (current - 1 + slideCount) % slideCount);
@@ -96,19 +66,65 @@ export default function PromotionalBannerSlider({
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="promotional-banner-slider__slide">
-        {href ? (
-          <Link
-            href={href}
-            className="promotional-banner-slider__link"
-            target={currentSlide.openInNewTab ? "_blank" : undefined}
-            rel={currentSlide.openInNewTab ? "noreferrer" : undefined}
-          >
-            {media}
-          </Link>
-        ) : (
-          media
-        )}
+      <div
+        className="promotional-banner-slider__track"
+        style={{ transform: `translateX(-${safeActiveIndex * 100}%)` }}
+      >
+        {visibleSlides.map((slide, index) => {
+          const href = getHref(slide);
+          const media = (
+            <div
+              className={`promotional-banner-slider__media${
+                slide.mobileImage
+                  ? " promotional-banner-slider__media--has-mobile"
+                  : ""
+              }`}
+            >
+              <Image
+                className="promotional-banner-slider__desktop-image"
+                src={slide.image!}
+                alt={slide.alt || "Promotional banner"}
+                width={1920}
+                height={640}
+                sizes="100vw"
+                priority={index === 0}
+              />
+              {slide.mobileImage && (
+                <Image
+                  className="promotional-banner-slider__mobile-image"
+                  src={slide.mobileImage}
+                  alt={slide.alt || "Promotional banner"}
+                  width={768}
+                  height={768}
+                  sizes="100vw"
+                  priority={index === 0}
+                />
+              )}
+            </div>
+          );
+
+          return (
+            <div
+              className="promotional-banner-slider__slide"
+              key={slide._key || `${slide.image}-${index}`}
+              aria-hidden={index !== safeActiveIndex}
+            >
+              {href ? (
+                <Link
+                  href={href}
+                  className="promotional-banner-slider__link"
+                  target={slide.openInNewTab ? "_blank" : undefined}
+                  rel={slide.openInNewTab ? "noreferrer" : undefined}
+                  tabIndex={index === safeActiveIndex ? undefined : -1}
+                >
+                  {media}
+                </Link>
+              ) : (
+                media
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {slideCount > 1 && (

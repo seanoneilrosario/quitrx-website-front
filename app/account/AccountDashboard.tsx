@@ -130,7 +130,6 @@ export default function AccountDashboard({ initialCustomer }: { initialCustomer?
           <p><strong>{orderSummary?.count ?? "—"}</strong> Orders</p>
           <p>{orderSummary ? formatMoney(orderSummary.totalSpent, orderSummary.currency) : "—"} total spent</p>
         </div>
-        <Link href="/account/orders" className="account-button account-button--primary account-button--compact">View Orders</Link>
       </article>
     </section>
 

@@ -455,41 +455,6 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
           onClick={() => setIsOpen(false)}
         >
           <div className="site-nav__panel" onClick={(event) => event.stopPropagation()}>
-            <div className="site-nav__header">
-              <Link className="site-nav__logo" href="/" onClick={() => setIsOpen(false)}>
-                {!isHome && navigation?.header_logo2 ? (
-                  <Image
-                    src={navigation.header_logo2}
-                    alt={navigation.headerLogoAlt || navigation.title || "QuitRx"}
-                    width={90}
-                    height={90}
-                  />
-                ) : navigation?.headerLogoMenu || navigation?.headerLogo ? (
-                  <Image
-                    src={navigation.headerLogoMenu || navigation.headerLogo || ""}
-                    alt={
-                      navigation.headerLogoMenuAlt ||
-                      navigation.headerLogoAlt ||
-                      navigation.title ||
-                      "QuitRx"
-                    }
-                    width={90}
-                    height={90}
-                  />
-                ) : (
-                  <span>QuitRx</span>
-                )}
-              </Link>
-              {/* <button
-                className="site-nav__close"
-                type="button"
-                aria-label="Close navigation menu"
-                onClick={() => setIsOpen(false)}
-              >
-                <span />
-                <span />
-              </button> */}
-            </div>
             <nav className="site-nav__menu" aria-label="Primary navigation">
               {menuItems.map((item) => (
                 <Link
