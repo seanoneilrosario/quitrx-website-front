@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
 import Link from "next/link";
@@ -61,10 +61,18 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
   const [sort, setSort] = useState<Sort>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [displayPage, setDisplayPage] = useState({ key: "", count: DISPLAY_PAGE_SIZE });
+  const [infiniteScrollReady, setInfiniteScrollReady] = useState(false);
+  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const [lockedProductName, setLockedProductName] = useState<string>();
   const priceCeiling = useMemo(() => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)), [products]);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all");
+
+  useEffect(() => {
+    const enableInfiniteScroll = () => setInfiniteScrollReady(true);
+    window.addEventListener("scroll", enableInfiniteScroll, { passive: true, once: true });
+    return () => window.removeEventListener("scroll", enableInfiniteScroll);
+  }, []);
 
   useEffect(() => {
     if (!lockedProductName) return;
@@ -121,7 +129,7 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
   const hasHiddenProducts = displayCount < filteredProducts.length;
   const canLoadMore = hasHiddenProducts || hasNextPage;
 
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     if (isFetching) return;
     if (hasHiddenProducts) {
       setDisplayPage({ key: displayKey, count: displayCount + DISPLAY_PAGE_SIZE });
@@ -131,7 +139,19 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
         setDisplayPage({ key: displayKey, count: visibleProducts.length + DISPLAY_PAGE_SIZE });
       }
     }
-  };
+  }, [isFetching, hasHiddenProducts, displayKey, displayCount, hasNextPage, fetchNextPage, visibleProducts.length]);
+
+  useEffect(() => {
+    const trigger = loadMoreTriggerRef.current;
+    if (!infiniteScrollReady || !trigger || isFetching || error || !canLoadMore) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) void loadMore();
+    }, { rootMargin: "300px" });
+
+    observer.observe(trigger);
+    return () => observer.disconnect();
+  }, [error, canLoadMore, infiniteScrollReady, isFetching, loadMore]);
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
@@ -239,11 +259,9 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
             else void refetch();
           }}>Try again</button>
         </div>}
-        {(canLoadMore || productsLoading || visibleProducts.length > 0) && <div className={styles.pagination} aria-live="polite">
-          {canLoadMore && <button type="button" className={styles.loadMoreButton} disabled={isFetching} onClick={() => void loadMore()}>
-            {isFetchingNextPage ? "Loading..." : "Load More"}
-          </button>}
-          <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"} shown</span>
+        {(canLoadMore || productsLoading) && <div ref={loadMoreTriggerRef} className={styles.pagination} aria-live="polite">
+          {productsLoading && <span>Loading...</span>}
+          <span>{visibleProducts.length} product{visibleProducts.length === 1 ? "" : "s"} loaded</span>
         </div>}
       </section>
 
