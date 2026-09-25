@@ -2,9 +2,10 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import type { QuitHeroCollectionPage } from "./quithero";
 import type { ProductDetailData } from "./product-detail-data";
 import { API_STALE_TIME } from "./query-cache";
+import { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 
 export type CollectionPageResponse = QuitHeroCollectionPage;
-export const COLLECTION_PAGE_SIZE = 10;
+export { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 
 async function getCatalogData<T>(url: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(url, { signal });

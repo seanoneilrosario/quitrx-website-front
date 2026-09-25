@@ -6,7 +6,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 function page(number: number, hasNextPage: boolean, products = [{ id: `product-${number}` }]): CollectionPageResponse {
   return { collection: { slug: "brand-a", name: "Brand A" }, products,
-    pagination: { page: number, limit: 10, totalPages: 2, hasNextPage } };
+    pagination: { page: number, limit: 100, totalPages: 2, hasNextPage } };
 }
 
 describe("catalog API queries", () => {
@@ -27,7 +27,7 @@ describe("catalog API queries", () => {
       expect(observer.getCurrentResult().hasNextPage).toBe(false);
       await observer.fetchNextPage();
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0][0]).toContain("collectionPage=brand-a&page=2&limit=10");
+      expect(fetchMock.mock.calls[0][0]).toContain("collectionPage=brand-a&page=2&limit=100");
     } finally { unsubscribe(); client.clear(); }
   });
 

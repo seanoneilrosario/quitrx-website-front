@@ -15,10 +15,10 @@ describe("all-products pagination", () => {
       products: [{ id: "one", name: "Product one" }], pagination: { totalPages: 50 },
     }));
     vi.stubGlobal("fetch", fetchMock);
-    const result = await getQuitHeroCollectionPage("all-products", 1, 10);
+    const result = await getQuitHeroCollectionPage("all-products", 1, 100);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toMatch(/\/products\?page=1&limit=10$/);
-    expect(result.pagination).toEqual({ page: 1, limit: 10, totalPages: 50, hasNextPage: true });
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/products\?page=1&limit=100$/);
+    expect(result.pagination).toEqual({ page: 1, limit: 100, totalPages: 50, hasNextPage: true });
     expect(result.products).toHaveLength(1);
   });
 

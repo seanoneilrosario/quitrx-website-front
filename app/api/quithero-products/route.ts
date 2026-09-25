@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { COLLECTION_PAGE_SIZE } from "@/lib/catalog-pagination";
 import { getFastQuitHeroCollectionPage, getQuitHeroCollection, getQuitHeroProducts } from "@/lib/quithero";
 
 export async function GET(request: Request) {
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
     const collectionSlug = searchParams.get("collectionPage")?.trim();
     if (collectionSlug) {
       const page = Number(searchParams.get("page") ?? 1);
-      const limit = Number(searchParams.get("limit") ?? 20);
+      const limit = Number(searchParams.get("limit") ?? COLLECTION_PAGE_SIZE);
       if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1) {
         return NextResponse.json({ error: "Invalid pagination parameters." }, { status: 400 });
       }
