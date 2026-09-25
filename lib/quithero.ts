@@ -192,6 +192,21 @@ async function hydrateBundleAvailability(products: QuitHeroProduct[]) {
 export async function getQuitHeroCollectionPage(slug: string, page: number, limit: number): Promise<QuitHeroCollectionPage> {
   const normalizedPage = Math.max(1, Math.floor(page));
   const normalizedLimit = Math.max(1, Math.min(20, Math.floor(limit)));
+  // All products needs no collection matching. Fetch only the requested page
+  // instead of downloading every catalog page before slicing ten products.
+  if (slug === "all-products") {
+    const { products, totalPages } = await loadQuitHeroProductsPage(normalizedPage, normalizedLimit);
+    return {
+      collection: { name: "All Products", slug },
+      products: await hydrateBundleAvailability(products),
+      pagination: {
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages,
+        hasNextPage: normalizedPage < totalPages,
+      },
+    };
+  }
   const resolvedCollection = await getQuitHeroCollection(slug);
 
   if (resolvedCollection) {
