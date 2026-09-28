@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "../components/navigation/navigation.css";
-@import "../components/sections/hero-sections/hero-sections.css";
+@import "../components/sections/hero/hero-sections.css";
 
 @font-face {
   font-family: 'Quicksand';

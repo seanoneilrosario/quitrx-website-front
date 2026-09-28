@@ -6,9 +6,17 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   try {
     const { slug } = await params;
     const product = await getQuitHeroProductWhenReady(slug);
-    if (!product) return NextResponse.json({ error: "Product not found." }, { status: 404 });
-    return NextResponse.json(await getProductDetailData(product));
+    if (!product) return NextResponse.json(
+      { error: "Product not found." },
+      { status: 404, headers: { "cache-control": "no-store" } },
+    );
+    return NextResponse.json(await getProductDetailData(product), {
+      headers: { "cache-control": "no-store" },
+    });
   } catch {
-    return NextResponse.json({ error: "Unable to load this product." }, { status: 502 });
+    return NextResponse.json(
+      { error: "Unable to load this product." },
+      { status: 502, headers: { "cache-control": "no-store" } },
+    );
   }
 }

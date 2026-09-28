@@ -413,7 +413,9 @@ async function loadQuitHeroProduct(handle: string) {
   if (match) return match;
 
   // Preserve support for unusual slugs that cannot be derived from the product name.
-  const catalog = await getQuitHeroProducts();
+  // Use a fresh catalog here. A cached catalog can still contain a product
+  // that was deleted after the cache was populated.
+  const catalog = await loadQuitHeroProducts();
   return catalog.find((product) => product.handle === handle || product.slug === handle);
 }
 
@@ -425,11 +427,13 @@ const getCachedQuitHeroProduct = unstable_cache(loadQuitHeroProduct, ["quithero-
 export const getQuitHeroProduct = cache(getCachedQuitHeroProduct);
 
 export const getQuitHeroProductWhenReady = cache(async function getQuitHeroProductWhenReady(handle: string) {
-  const cachedProduct = await getQuitHeroProduct(handle);
-  if (cachedProduct) return cachedProduct;
+  // Product routes must reflect dashboard deletions immediately. React's
+  // request cache still deduplicates metadata/page lookups in one render.
+  const freshProduct = await loadQuitHeroProduct(handle);
+  if (freshProduct) return freshProduct;
 
-  // A newly synced product can be missing from the short-lived product cache.
-  // Check fresh API data before treating the URL as a genuine 404.
+  // A newly synced product can take a moment to appear in search results.
+  // Check once more before treating the URL as a genuine 404.
   await delay(750);
   return loadQuitHeroProduct(handle);
 });

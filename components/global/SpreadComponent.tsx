@@ -1,31 +1,31 @@
 "use client";
 
 import { JSX, useMemo } from "react";
-import { Banner } from "../sections/hero-sections/Banner";
-import VideoHeroBanner from "../sections/hero-sections/VideoHeroBanner";
+import { Banner } from "../sections/hero/Banner";
+import VideoHeroBanner from "../sections/hero/VideoHeroBanner";
 import ImageGrid from "../sections/images/ImageGrid";
-import RichtextWithCta from "../sections/text-sections/RichtextWithCta";
-import RichtextWithGroupedCTA from "../sections/text-sections/RichtextWithGroupedCTA";
-import TwoColumnLayout from "../sections/text-sections/TwoColumnLayout";
+import RichtextWithCta from "../sections/text/RichtextWithCta";
+import RichtextWithGroupedCTA from "../sections/text/RichtextWithGroupedCTA";
+import TwoColumnLayout from "../sections/text/TwoColumnLayout";
 import { COMPONENTS, SectionType } from "./components";
-import HeadingWithLink from "../sections/text-sections/HeadingWithLink";
+import HeadingWithLink from "../sections/text/HeadingWithLink";
 import MultiRow from "../sections/images/MultiRow";
 import ContactSection from "../sections/contact/ContactSection";
-import Richtext from "../sections/text-sections/Richtext";
-import TextBlocks from "../sections/text-sections/TextBlocks";
-import EscriptBanner from "../sections/text-sections/EscriptBanner";
-import TextBlocksIcon from "../sections/text-sections/TextBlocksIcon";
+import Richtext from "../sections/text/Richtext";
+import TextBlocks from "../sections/text/TextBlocks";
+import EscriptBanner from "../sections/text/EscriptBanner";
+import TextBlocksIcon from "../sections/text/TextBlocksIcon";
 import TextImage from "../sections/images/TextImage";
-import Faq from "../sections/text-sections/Faq";
-import SupportForm from "../sections/customs/SupportForm";
-import FloatingCTA from "../sections/text-sections/floatingCTA";
-import RichtextImage from "../sections/text-sections/RichtextWithImage";
-import PromotionalBannerSlider from "../sections/hero-sections/PromotionalBannerSlider";
+import Faq from "../sections/text/Faq";
+import SupportForm from "../sections/forms/SupportForm";
+import FloatingCTA from "../sections/text/floatingCTA";
+import RichtextImage from "../sections/text/RichtextWithImage";
+import PromotionalBannerSlider from "../sections/hero/PromotionalBannerSlider";
 import BrandGrid from "../sections/images/BrandGrid";
 import ProductApiGrid from "../sections/products/ProductApiGrid";
-import IntakeForm from "../sections/customs/IntakeForm";
-import UploadPrescription from "../sections/customs/UploadPrescription";
-import EscriptRequest from "../sections/customs/EscriptRequest";
+import IntakeForm from "../sections/forms/IntakeForm";
+import UploadPrescription from "../sections/forms/UploadPrescription";
+import EscriptRequest from "../sections/forms/EscriptRequest";
 
 const sectionRenderers: Record<
   SectionType,
