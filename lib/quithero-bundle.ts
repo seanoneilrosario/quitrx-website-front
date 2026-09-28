@@ -47,10 +47,18 @@ export type BundleAwareVariant = {
 
 type BundleAwareProduct = {
   status?: string;
+  sourceSystem?: string;
   productType?: string | { name?: string; slug?: string };
   tags?: Array<string | { name?: string; slug?: string; tag?: { name?: string; slug?: string } }>;
   variants?: BundleAwareVariant[];
 };
+
+export function productIsVisible(product: Pick<BundleAwareProduct, "status" | "sourceSystem">) {
+  const status = product.status?.trim().toLowerCase();
+  // Dashboard-created products are archived when removed. Synced source
+  // products may legitimately use ARCHIVED while remaining on the storefront.
+  return status !== "archived" || Boolean(product.sourceSystem?.trim());
+}
 
 export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] {
   if (!payload || typeof payload !== "object") return [];

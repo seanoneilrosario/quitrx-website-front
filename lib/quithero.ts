@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { client } from "@/sanity/lib/client";
-import { bundleComponentsFrom } from "./quithero-bundle";
+import { bundleComponentsFrom, productIsVisible } from "./quithero-bundle";
 import { FREQUENTLY_BOUGHT_TOGETHER_QUERY } from "./frequently-bought-together";
 import type { FrequentlyBoughtTogetherDocument } from "./frequently-bought-together";
 import type { QuitHeroProduct, QuitHeroVariant } from "./quithero-types";
@@ -117,14 +117,14 @@ async function quitHeroFetch<T>(path: string): Promise<T> {
 }
 
 function productsFrom(payload: QuitHeroProductsResponse) {
-  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload)) return payload.filter(productIsVisible);
 
   const products = payload.products ?? payload.data ?? payload.items;
   if (!Array.isArray(products)) {
     throw new Error("QuitHero products response did not contain a product list.");
   }
 
-  return products;
+  return products.filter(productIsVisible);
 }
 
 function collectionsFrom(payload: QuitHeroCollectionsResponse) {

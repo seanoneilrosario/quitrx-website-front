@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bundleComponentsFrom, bundleDropdownsFrom, bundleSlotsFrom, productIsAvailable, variantIsAvailable } from "./quithero-bundle";
+import { bundleComponentsFrom, bundleDropdownsFrom, bundleSlotsFrom, productIsAvailable, productIsVisible, variantIsAvailable } from "./quithero-bundle";
 
 describe("bundleDropdownsFrom", () => {
   it("normalizes the current variant bundle dropdown structure", () => {
@@ -59,6 +59,16 @@ describe("productIsAvailable", () => {
       tags: ["Bundle"],
       variants: [{ bundleComponents: [{ componentVariantId: "device", componentVariant: { inventory: 2 }, quantity: 1 }] }],
     })).toBe(true);
+  });
+});
+
+describe("productIsVisible", () => {
+  it("hides dashboard-created products after they are archived", () => {
+    expect(productIsVisible({ status: "ARCHIVED" })).toBe(false);
+  });
+
+  it("preserves archived products synced from an external source", () => {
+    expect(productIsVisible({ status: "ARCHIVED", sourceSystem: "QOBLEX" })).toBe(true);
   });
 });
 
