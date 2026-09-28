@@ -86,26 +86,6 @@ function addItemsToCart(items: StorefrontCartItem[]) {
   );
 }
 
-async function syncBundleComponents(item: StorefrontCartItem) {
-  if (!item.variantId || !item.bundleComponents?.length) return;
-
-  const bundlePayload = item.bundleComponents.map((component, index) => ({
-    componentVariantId: component.variantId,
-    position: index,
-    quantity: component.quantity ?? 1,
-  }));
-
-  const response = await fetch(
-    `/api/quithero-bundle/${encodeURIComponent(item.productId)}/${encodeURIComponent(item.variantId)}`,
-    {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bundlePayload),
-    },
-  );
-  if (!response.ok) throw new Error("Unable to add this bundle to the cart.");
-}
-
 export default function ProductPurchasePanel({
   productId,
   productName,
@@ -140,8 +120,6 @@ export default function ProductPurchasePanel({
       (dropdown) => dropdown.options.find((option) => option.available)?.componentVariantId || "",
     ),
   );
-  const [bundleLoading, setBundleLoading] = useState(false);
-  const [bundleError, setBundleError] = useState("");
   const [stockError, setStockError] = useState("");
   const [added, setAdded] = useState(false);
   const selected = variants[selectedIndex];
@@ -154,7 +132,7 @@ export default function ProductPurchasePanel({
     ? Math.min(...selectedBundleOptions.map((option) => option?.availableStock ?? 0))
     : getAvailableStock(selected);
   const available = productStatusAllowsPurchase(productStatus) && (isBundle
-    ? Boolean(selected?.id) && !bundleLoading && !bundleError && bundleIsAvailable
+    ? Boolean(selected?.id) && bundleIsAvailable
     : variantIsAvailable(selected));
   const price = formatPrice((selected || variants[0])?.price);
 
@@ -168,7 +146,7 @@ export default function ProductPurchasePanel({
     );
   }
 
-  async function addToCart() {
+  function addToCart() {
     if (!available) return;
 
     setStockError("");
@@ -237,18 +215,6 @@ export default function ProductPurchasePanel({
       return;
     }
 
-    if (isBundle) {
-      setBundleLoading(true);
-      setBundleError("");
-      try {
-        await syncBundleComponents(items[0]);
-      } catch {
-        setBundleError("Unable to add this bundle to the cart. Please try again.");
-        setBundleLoading(false);
-        return;
-      }
-      setBundleLoading(false);
-    }
     addItemsToCart(items);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2200);
@@ -302,18 +268,15 @@ export default function ProductPurchasePanel({
       </div>
 
       <p className={available ? styles.stockStatus : styles.outOfStock}>
-        {bundleLoading
-          ? "Loading bundle..."
-          : bundleError ||
-            (available ? (
-              <>
-                Low stock! Only <strong>{availableStock}</strong> units left!
-              </>
-            ) : selected ? (
-              "Out of stock"
-            ) : (
-              "Select a bundle"
-            ))}
+        {available ? (
+          <>
+            Low stock! Only <strong>{availableStock}</strong> units left!
+          </>
+        ) : selected ? (
+          "Out of stock"
+        ) : (
+          "Select a bundle"
+        )}
       </p>
       {stockError && (
         <p className={styles.outOfStock} role="alert">
@@ -411,13 +374,11 @@ export default function ProductPurchasePanel({
       <button type="button" className={styles.addToCart} disabled={!available} onClick={addToCart}>
         {added
           ? "Added to cart"
-          : bundleLoading
-            ? "Loading bundle"
-            : !selected
-              ? "Select a bundle"
-              : available
-                ? "Add to cart"
-                : "Sold out"}
+          : !selected
+            ? "Select a bundle"
+            : available
+              ? "Add to cart"
+              : "Sold out"}
       </button>
 
       <div className={styles.stickyPurchaseBar}>
@@ -469,13 +430,11 @@ export default function ProductPurchasePanel({
         >
           {added
             ? "Added"
-            : bundleLoading
-              ? "Loading"
-              : !selected
-                ? "Select bundle"
-                : available
-                  ? "Add to Cart"
-                  : "Sold out"}
+            : !selected
+              ? "Select bundle"
+              : available
+                ? "Add to Cart"
+                : "Sold out"}
         </button>
       </div>
     </>

@@ -21,5 +21,11 @@ export default async function LoginPage({ searchParams }: {
   const customerSession = await getCustomerSession();
   const email = session?.user?.email ?? customerSession?.email;
   if (email && error !== "AccountNotFound") redirect(redirectTo);
-  return <LoginPopup redirectTo={redirectTo} loginError={loginError} googleEnabled={Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)} facebookEnabled={Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET)} />;
+  return <LoginPopup
+    redirectTo={redirectTo}
+    loginError={loginError}
+    googleEnabled={Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET)}
+    facebookEnabled={Boolean(process.env.AUTH_FACEBOOK_ID && process.env.AUTH_FACEBOOK_SECRET)}
+    localLoginEnabled={process.env.NODE_ENV !== "production"}
+  />;
 }

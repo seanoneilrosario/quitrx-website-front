@@ -359,6 +359,22 @@
   padding: 15px 20px;
   border-radius: 12px;
 }
+.customer-login__local-button {
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px dashed #87aaa8;
+  border-radius: 10px;
+  background: #f4faf9;
+  color: #075d67;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+.customer-login__local-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
 .customer-login__error,
 .customer-login__note {
   font-size: 12px;

@@ -31,11 +31,13 @@ export default function LoginPopup({
   redirectTo,
   googleEnabled,
   facebookEnabled,
+  localLoginEnabled,
   loginError,
 }: {
   redirectTo: string;
   googleEnabled: boolean;
   facebookEnabled: boolean;
+  localLoginEnabled: boolean;
   loginError?: string;
 }) {
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
@@ -201,6 +203,17 @@ export default function LoginPopup({
                     )}
                   </button>
                 </div>
+                {localLoginEnabled && (
+                  <button
+                    className="customer-login__local-button"
+                    type="submit"
+                    name="intent"
+                    value="local"
+                    disabled={pending}
+                  >
+                    Sign in locally without a code
+                  </button>
+                )}
               </>
             )}
         </form>

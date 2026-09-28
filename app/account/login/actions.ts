@@ -159,6 +159,23 @@ export async function accessCustomerAccount(
 
   const emailValue = formData.get("email");
   const email = typeof emailValue === "string" ? emailValue.trim() : "";
+  if (intent === "local") {
+    if (process.env.NODE_ENV === "production") return { error: "Local sign-in is unavailable." };
+    if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid customer email address." };
+
+    try {
+      const customer = await findQuitHeroCustomerByEmail(email);
+      if (!customer?.email) return { error: "No QuitHero customer was found with that email address." };
+      await setCustomerSession({ id: customer.id, email: customer.email });
+    } catch (error) {
+      console.error("Local customer sign-in failed.", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+      return { error: "We could not connect to that QuitHero customer." };
+    }
+
+    redirect(redirectTo);
+  }
   if (intent !== "verify") return requestCode(email);
 
   const codeValue = formData.get("code");
