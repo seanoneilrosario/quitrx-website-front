@@ -9,8 +9,6 @@ import type { FrequentlyBoughtTogetherDocument } from "./frequently-bought-toget
 import type { QuitHeroProduct, QuitHeroVariant } from "./quithero-types";
 import { DEFAULT_PRODUCT_IMAGE } from "./product-image";
 
-import { createHash } from "node:crypto";
-
 export type { QuitHeroBrand, QuitHeroImage, QuitHeroProduct, QuitHeroProductTag, QuitHeroTag, QuitHeroVariant } from "./quithero-types";
 
 type QuitHeroCollectionProduct = string | (QuitHeroProduct & {

@@ -147,6 +147,7 @@ function cartMoney(value?: number | string) {
 }
 const fallbackMenu: NavigationMenuItem[] = [{ title: "About", href: "/about" }];
 const MARQUEE_TEXT = "Welcome to the NEW QuitRX. Advancing the way Australians quit.";
+const MOBILE_MARQUEE_TEXT = "Advancing the way Australians quit.";
 const BODY_TEMPLATE_CLASSES = ["template-index", "template-page", "template-admin"];
 function getHref(item: NavigationMenuItem, isHome: boolean) {
   const base = item.href || item.link || "";
@@ -321,7 +322,8 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     <Fragment>
       <div className="site-marquee">
         <div className="site-marquee__track">
-          <span className="site-marquee__item">{MARQUEE_TEXT}</span>
+          <span className="site-marquee__item site-marquee__item--desktop">{MARQUEE_TEXT}</span>
+          <span className="site-marquee__item site-marquee__item--mobile">{MOBILE_MARQUEE_TEXT}</span>
         </div>
       </div>
       <header
@@ -334,15 +336,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
             <div className="mobile_nav_icons">
               <div className="cart-button">
                 <button
-                  className="site-header__cart site-header__mobile"
-                  type="button"
-                  onClick={() => setIsCartOpen(true)}
-                >
-                  My Cart{" "}
-                  {cartCount > 0 && <span className="site-header__cart-count">{cartCount}</span>}
-                </button>
-                <button
-                  className="site-header__cart site-header__desktop"
+                  className="site-header__cart"
                   type="button"
                   aria-label={`Open cart with ${cartCount} items`}
                   onClick={() => setIsCartOpen(true)}
