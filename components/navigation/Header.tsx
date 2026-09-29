@@ -160,6 +160,14 @@ function getHref(item: NavigationMenuItem, isHome: boolean) {
 
   return base || "#";
 }
+
+function isActivePage(href: string, pathname: string) {
+  if (!href.startsWith("/")) return false;
+
+  const hrefPath = href.split(/[?#]/, 1)[0].replace(/\/+$/, "") || "/";
+  const currentPath = pathname.replace(/\/+$/, "") || "/";
+  return hrefPath === currentPath;
+}
 export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -426,10 +434,12 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
             </Link>
             <nav className="site-header__desktop-nav" aria-label="Primary navigation">
               {menuItems.map((item) => {
+                const href = getHref(item, isHome);
                 return (
                   <Link
-                    key={`${item.title}-${getHref(item, isHome)}`}
-                    href={getHref(item, isHome)}
+                    key={`${item.title}-${href}`}
+                    href={href}
+                    aria-current={isActivePage(href, pathname) ? "page" : undefined}
                     onClick={() => setIsOpen(false)}
                   >
                     {item.title}

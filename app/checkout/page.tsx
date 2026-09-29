@@ -173,7 +173,7 @@ export default function CheckoutPage() {
                   <input type="email" name="email" autoComplete="email" placeholder="you@example.com" required />
                 </label>
                 <label className={styles.checkbox}>
-                  <input type="checkbox" name="newsletter" />
+                  <input type="checkbox" name="newsletter" defaultChecked />
                   <span>Email me news and special offers</span>
                 </label>
               </section>
@@ -222,7 +222,7 @@ export default function CheckoutPage() {
                 <div className={styles.paymentOptions}>
                   <label className={paymentMethod === "eway" ? styles.selectedOption : ""}>
                     <input type="radio" name="paymentMethod" checked={paymentMethod === "eway"} onChange={() => setPaymentMethod("eway")} />
-                    <span><strong>Credit or debit card via eWAY</strong><small>You&apos;ll enter your card details securely on eWAY.</small></span>
+                    <span><strong>Credit or debit card</strong><small>Pay securely using your credit or debit card.</small></span>
                   </label>
                   <label className={paymentMethod === "paypal" ? styles.selectedOption : ""}>
                     <input type="radio" name="paymentMethod" checked={paymentMethod === "paypal"} onChange={() => setPaymentMethod("paypal")} />
@@ -232,7 +232,7 @@ export default function CheckoutPage() {
               </section>
 
               {displayedNotice && <p className={styles.notice} role="status">{displayedNotice}</p>}
-              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>{isSubmitting ? `Connecting to ${paymentMethod === "paypal" ? "PayPal" : "eWAY"}…` : `Pay securely with ${paymentMethod === "paypal" ? "PayPal" : "eWAY"}`} <span aria-hidden="true">→</span></button>
+              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>{isSubmitting ? "Processing…" : "Pay Securely Now"} <span aria-hidden="true">→</span></button>
               <p className={styles.terms}>By continuing, you agree to our <Link href="/terms-and-conditions">terms</Link> and <Link href="/privacy-policy">privacy policy</Link>.</p>
             </form>
           )}

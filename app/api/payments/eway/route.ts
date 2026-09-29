@@ -83,6 +83,7 @@ export async function POST(request: Request) {
     const reference = `QuitRx-${Date.now()}`;
     const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
     const cancelUrl = new URL("/api/payments/eway/cancel", request.url).toString();
+    const logoUrl = new URL("/images/quitrx-logo-light.png", request.url);
     const street2 = requiredText(address, "address2", 50);
 
     const result = await createEwaySharedPayment({
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
       Items: [...paymentItems, { SKU: "SHIPPING", Description: `${body.shippingMethod} shipping`, Quantity: 1, UnitCost: shippingCents, Total: shippingCents }],
       RedirectUrl: callbackUrl,
       CancelUrl: cancelUrl,
+      ...(logoUrl.protocol === "https:" ? { LogoUrl: logoUrl.toString() } : {}),
       HeaderText: "QuitRx secure payment",
       CustomView: "BootstrapFlatly",
       Method: "ProcessPayment",

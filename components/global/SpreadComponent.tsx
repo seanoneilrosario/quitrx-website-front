@@ -215,7 +215,6 @@ const sectionRenderers: Record<
   promotional_banner_slider: (component) => (
     <PromotionalBannerSlider
       slides={component.slides || []}
-      autoplay={component.autoplay}
     />
   ),
   brand_grid: (component) => (

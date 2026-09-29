@@ -237,7 +237,6 @@ export interface COMPONENTS {
     url?: string;
     openInNewTab?: boolean;
   }[];
-  autoplay?: boolean;
   brands?: {
     _key?: string;
     name?: string;

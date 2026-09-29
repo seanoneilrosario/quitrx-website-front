@@ -1,12 +1,12 @@
 .section {
   width: 100%;
-  padding: 0 0 0 ;
+  padding: clamp(40px, 6vw, 80px) 0;
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 20px 20px;
+  padding: 0 24px;
 }
 
 .wrapper {
@@ -16,16 +16,19 @@
 }
 
 .eyebrow {
+  margin: 0;
   font-size: 14px;
-    line-height: 16px;
-    color: #182B44;
-    letter-spacing: 0.28px;
-    font-family: 'Quicksand';
+  line-height: 1.5;
+  color: #182b44;
+  letter-spacing: 0.08em;
+  font-family: 'Quicksand';
 }
 
 .title {
-  font-size: 55px;
-  font-weight: 700;
+  margin: 0;
+  font-size: clamp(36px, 5vw, 55px);
+  font-weight: 600;
+  line-height: 1.12;
   color: #035c67;
   font-family: 'Quicksand';
 }
@@ -33,17 +36,61 @@
 .content {
   display: grid;
   gap: 1rem;
-  max-width: 760px;
+  max-width: 900px;
 }
 
 .description {
-  font-size: 19.2px;
-  color: #035c67;
+  font-size: clamp(17px, 1.4vw, 19px);
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+  color: #164f56;
   font-family: 'Quicksand';
 }
 
 .description p {
-  margin: 0 0 1rem;
+  margin: 0 0 1.25em;
+}
+
+.description p:last-child {
+  margin-bottom: 0;
+}
+
+.description :global(h2),
+.description :global(h3),
+.description :global(h4) {
+  margin: 1.6em 0 0.55em;
+  color: #035c67;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.description :global(ul),
+.description :global(ol) {
+  margin: 0 0 1.5em;
+  padding-left: 1.5em;
+}
+
+.description :global(ul) {
+  list-style: disc outside;
+}
+
+.description :global(ol) {
+  list-style: decimal outside;
+}
+
+.description :global(li) {
+  margin-bottom: 0.65em;
+  padding-left: 0.35em;
+}
+
+.description :global(li)::marker {
+  color: #50b982;
+  font-weight: 600;
+}
+
+.description :global(strong) {
+  color: #035c67;
+  font-weight: 600;
 }
 
 .description :global(a) {
@@ -71,6 +118,7 @@
 
 @media (min-width: 1024px) {
   .container {
-    padding: 20px 39px 20px;
+    padding-right: 39px;
+    padding-left: 39px;
   }
 }
