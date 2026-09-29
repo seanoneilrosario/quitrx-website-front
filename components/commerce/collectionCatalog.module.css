@@ -1,6 +1,6 @@
 .catalog {
   display: grid;
-  grid-template-columns: 295px minmax(0, 1fr);
+  grid-template-columns: 285px minmax(0, 1fr);
   gap: 36px;
   align-items: start;
 }
