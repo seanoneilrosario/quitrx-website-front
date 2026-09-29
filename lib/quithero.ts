@@ -94,10 +94,21 @@ async function quitHeroFetch<T>(path: string): Promise<T> {
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
     let response: Response;
     try {
+      const startedAt = Date.now();
+
       response = await fetch(`${API_BASE}${path}`, {
         method: "GET",
-        headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
         cache: "no-store",
+      });
+
+      console.log("[QuitHero API]", {
+        path,
+        status: response.status,
+        duration: `${Date.now() - startedAt}ms`,
       });
     } catch (error) {
       lastError = error;
@@ -416,21 +427,32 @@ const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quither
 
 export const getQuitHeroProducts = cache(getCachedQuitHeroProducts);
 
-export async function getQuitHeroProduct(handle: string) {
-  try {
-    const response = await quitHeroFetch<{ data: QuitHeroProduct }>(
-      `/products/${encodeURIComponent(handle)}`,
-    );
+const getCachedQuitHeroProduct = unstable_cache(
+  async (handle: string) => {
+    try {
+      const response = await quitHeroFetch<{ data: QuitHeroProduct }>(
+        `/products/${encodeURIComponent(handle)}`,
+      );
 
-    return response.data ?? undefined;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("404")) {
-      return undefined;
+      return response.data ?? undefined;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("404")) {
+        return undefined;
+      }
+
+      throw error;
     }
+  },
+  ["quithero-product-by-handle"],
+  {
+    revalidate: QUITHERO_CACHE_SECONDS,
+    tags: ["quithero-products"],
+  },
+);
 
-    throw error;
-  }
-}
+export const getQuitHeroProduct = cache(
+  async (handle: string) => getCachedQuitHeroProduct(handle),
+);
 
 async function loadQuitHeroProductById(id: string) {
   return quitHeroFetch<QuitHeroProduct>(

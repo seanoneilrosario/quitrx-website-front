@@ -1,30 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { productDetailQuery } from "@/lib/catalog-queries";
 import type { ProductDetailData } from "@/lib/product-detail-data";
 import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import ProductAccessGate from "./ProductAccessGate";
 import styles from "@/app/store.module.css";
-import { useEffect } from "react";
 
-export default function ProductDetailContent({ initialData }: { initialData: ProductDetailData }) {
-  const slug = initialData.product.handle || initialData.product.slug || initialData.productId;
-  const { data, error, refetch, isFetching } = useQuery({
-    ...productDetailQuery(slug),
-    initialData,
-  });
-  
-  const { product, image, description, isBundle, productId, variants, bundleDropdowns, relatedProducts } = data;
+export default function ProductDetailContent({
+  initialData,
+}: {
+  initialData: ProductDetailData;
+}) {
+  const {
+    product,
+    image,
+    description,
+    isBundle,
+    productId,
+    variants,
+    bundleDropdowns,
+    relatedProducts,
+  } = initialData;
 
   return <ProductAccessGate productName={product.name || "Product"}>
     <main className={styles.productPage}>
-      {error && <div className="page-width" role="alert">
-        <p>We couldn&apos;t refresh this product. Displaying the last loaded details.</p>
-        <button type="button" disabled={isFetching} onClick={() => void refetch()}>Try again</button>
-      </div>}
       <div className={`${styles.productDetail} page-width`}>
         <ProductImageZoom image={image} alt={product.name || "Product"} />
 
