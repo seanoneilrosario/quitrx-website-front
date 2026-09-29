@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 type PromotionalSlide = {
@@ -16,55 +16,34 @@ type PromotionalSlide = {
   openInNewTab?: boolean;
 };
 
-type PromotionalBannerSliderProps = {
-  slides: PromotionalSlide[];
-  autoplay?: boolean;
-};
-
 function getHref(slide: PromotionalSlide) {
   if (slide.pageType === "home") return "/";
   if (slide.pageSlug) return `/${slide.pageSlug}`;
   return slide.url;
 }
 
-export default function PromotionalBannerSlider({
-  slides,
-  autoplay = true,
-}: PromotionalBannerSliderProps) {
+export default function PromotionalBannerSlider({ slides }: { slides: PromotionalSlide[] }) {
   const { customer, loading } = useAccountCustomer();
   const visibleSlides = slides.filter((slide) => Boolean(slide.image));
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const slideCount = visibleSlides.length;
-
-  useEffect(() => {
-    if (!autoplay || isPaused || slideCount < 2) return;
-
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slideCount);
-    }, 5500);
-
-    return () => window.clearInterval(timer);
-  }, [autoplay, isPaused, slideCount]);
 
   if (loading || !customer || !slideCount) return null;
 
-  const safeActiveIndex = activeIndex % slideCount;
+  const safeActiveIndex = Math.min(activeIndex, slideCount - 1);
 
   const goToPrevious = () => {
-    setActiveIndex((current) => (current - 1 + slideCount) % slideCount);
+    setActiveIndex((current) => Math.max(0, current - 1));
   };
 
   const goToNext = () => {
-    setActiveIndex((current) => (current + 1) % slideCount);
+    setActiveIndex((current) => Math.min(slideCount - 1, current + 1));
   };
 
   return (
     <section
       className="promotional-banner-slider"
       aria-label="Promotions"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
     >
       <div
         className="promotional-banner-slider__track"
@@ -133,6 +112,7 @@ export default function PromotionalBannerSlider({
             type="button"
             className="promotional-banner-slider__arrow promotional-banner-slider__arrow--previous"
             onClick={goToPrevious}
+            disabled={safeActiveIndex === 0}
             aria-label="Previous promotion"
           >
             <span>
@@ -143,6 +123,7 @@ export default function PromotionalBannerSlider({
             type="button"
             className="promotional-banner-slider__arrow promotional-banner-slider__arrow--next"
             onClick={goToNext}
+            disabled={safeActiveIndex === slideCount - 1}
             aria-label="Next promotion"
           >
             <span>

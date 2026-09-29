@@ -64,12 +64,6 @@ export default defineType({
         },
       ],
     }),
-    defineField({
-      name: "autoplay",
-      title: "Autoplay slides",
-      type: "boolean",
-      initialValue: true,
-    }),
   ],
   preview: {
     select: { slides: "slides" },

@@ -163,7 +163,6 @@ const PAGE_COMPONENTS = `
       question,
       answer
     },
-    autoplay,
     slides[]{
       _key,
       "image": image.asset->url,

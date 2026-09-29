@@ -94,6 +94,12 @@
   transform: translateY(-50%) scale(1.06);
 }
 
+.promotional-banner-slider__arrow:disabled {
+  cursor: default;
+  opacity: .35;
+  transform: translateY(-50%);
+}
+
 .promotional-banner-slider__pagination {
   position: absolute;
   z-index: 2;
