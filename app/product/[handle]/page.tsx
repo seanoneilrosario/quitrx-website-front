@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getQuitHeroProductWhenReady } from "@/lib/quithero";
+import { getQuitHeroProduct } from "@/lib/quithero";
 import ProductDetail from "@/components/commerce/ProductDetail";
 
 type ProductPageProps = { params: Promise<{ handle: string }> };
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { handle } = await params;
-  const product = await getQuitHeroProductWhenReady(handle).catch(() => undefined);
+  const product = await getQuitHeroProduct(handle).catch(() => undefined);
   const title = product?.name || "Product";
   const description = product?.shortDescription;
 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getQuitHeroProductWhenReady((await params).handle);
+  const product = await getQuitHeroProduct((await params).handle);
   if (!product) notFound();
 
   return <ProductDetail product={product} />;
