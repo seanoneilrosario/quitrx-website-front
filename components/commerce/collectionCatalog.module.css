@@ -1,6 +1,6 @@
 .catalog {
   display: grid;
-  grid-template-columns: 285px minmax(0, 1fr);
+  grid-template-columns: 255px minmax(0, 1fr);
   gap: 36px;
   align-items: start;
 }
@@ -80,7 +80,7 @@
 .filtersHeader h2 {
   margin: 0;
   color: #287f89;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -130,7 +130,7 @@
   gap: 16px;
   align-items: center;
   color: #397f87;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: .025em;
   cursor: pointer;
@@ -191,7 +191,7 @@
   margin-bottom: 24px;
   color: #398b94;
   font-family: "Quicksand", sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: .01em;
 }
@@ -208,7 +208,7 @@
   border: 0;
   background: transparent;
   color: #398b94;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -446,7 +446,7 @@
 
 .lockedModalEyebrow {
   margin: 4px 0 30px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -464,7 +464,7 @@
   border-radius: 11px;
   background: #3bf0ba;
   color: #035c67;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   text-decoration: none;
 }
@@ -550,7 +550,7 @@
     border-bottom: 0;
     background: transparent;
     color: inherit;
-    font-size: 18px;
+    font-size: 16px;
     cursor: pointer;
   }
 
@@ -635,7 +635,7 @@
     gap: 3px;
   }
 
-  .drawerHeader strong { font-size: 18px; }
+  .drawerHeader strong { font-size: 16px; }
   .drawerHeader span { font-size: 16px; }
 
   .drawerHeader button {
