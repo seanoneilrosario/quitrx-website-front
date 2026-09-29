@@ -1,20 +1,32 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
+
 import { getQuitHeroProduct } from "@/lib/quithero";
 import ProductDetail from "@/components/commerce/ProductDetail";
 
-type ProductPageProps = { params: Promise<{ handle: string }> };
+type ProductPageProps = {
+  params: Promise<{ handle: string }>;
+};
+
+const getProduct = cache(async (handle: string) => {
+  return getQuitHeroProduct(handle);
+});
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { handle } = await params;
-  const product = await getQuitHeroProduct(handle).catch(() => undefined);
+
+  const product = await getProduct(handle).catch(() => undefined);
+
   const title = product?.name || "Product";
   const description = product?.shortDescription;
 
   return {
     title,
     description,
-    alternates: { canonical: `/product/${handle}` },
+    alternates: {
+      canonical: `/product/${handle}`,
+    },
     openGraph: {
       title,
       description,
@@ -23,13 +35,22 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       locale: "en_AU",
       type: "website",
     },
-    twitter: { card: "summary", title, description },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
   };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await getQuitHeroProduct((await params).handle);
-  if (!product) notFound();
+  const { handle } = await params;
+
+  const product = await getProduct(handle);
+
+  if (!product) {
+    notFound();
+  }
 
   return <ProductDetail product={product} />;
 }
