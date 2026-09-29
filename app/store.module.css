@@ -379,14 +379,41 @@
 .productImageLoader {
   position: absolute;
   inset: clamp(40px, 5vw, 80px);
+  display: grid;
+  place-content: center;
+  gap: 16px;
+  justify-items: center;
   border-radius: 18px;
-  background: linear-gradient(110deg, #edf3f6 25%, #f8fbfd 45%, #edf3f6 65%);
+  background: linear-gradient(110deg, #dcebed 20%, #f8fbfd 45%, #dcebed 70%);
   background-size: 220% 100%;
+  box-shadow: inset 0 0 0 1px rgba(3, 92, 103, .08);
   animation: product-image-loading 1.2s ease-in-out infinite;
+}
+
+.productImageLoader::before {
+  content: "";
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(3, 92, 103, .18);
+  border-top-color: #348a83;
+  border-radius: 50%;
+  animation: product-image-spinner .8s linear infinite;
+}
+
+.productImageLoader::after {
+  content: "Loading product image";
+  color: #035c67;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
 }
 
 @keyframes product-image-loading {
   to { background-position-x: -220%; }
+}
+
+@keyframes product-image-spinner {
+  to { transform: rotate(1turn); }
 }
 
 @keyframes product-image-reveal {
@@ -396,6 +423,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .productImageLoader,
+  .productImageLoader::before,
   .productImageLoaded {
     animation: none;
   }
