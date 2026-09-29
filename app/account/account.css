@@ -32,7 +32,10 @@
   text-decoration: none;
 }
 
-.account-brand img { width: min(170px, 100%); height: auto; }
+.account-brand img {
+  width: min(170px, 100%);
+  height: auto;
+}
 
 .account-sidebar__intro {
   display: grid;
@@ -114,9 +117,9 @@
   object-fit: contain;
 }
 
-.account-phone-icon__path {
-  fill: currentColor;
-  stroke: none;
+.account-sidebar nav a:hover .account-nav-image-icon--monochrome,
+.account-sidebar nav a.active .account-nav-image-icon--monochrome {
+  filter: brightness(0) invert(1);
 }
 
 .account-nav-status {
@@ -241,7 +244,10 @@
   margin-bottom: 52px;
   text-decoration: none;
 }
-.customer-login__brand img { width: 174px; height: auto; }
+.customer-login__brand img {
+  width: 174px;
+  height: auto;
+}
 .customer-login__socials {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1443,8 +1449,8 @@
   }
 
   .account-main {
-    display: flex;
-    flex-direction: column;
+    /* display: flex;
+    flex-direction: column; */
     padding: 24px 18px 50px;
   }
 
@@ -1522,7 +1528,7 @@
     padding: 70px 14px 50px 27px;
   }
   .account-overview__header {
-    padding: 0 0 66px;
+    padding: 0 0 40px;
   }
   .account-overview__header h1 {
     font-size: 26px;

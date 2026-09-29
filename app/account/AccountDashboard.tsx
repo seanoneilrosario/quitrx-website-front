@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import OrderHistoryTable from "@/components/account/OrderHistoryTable";
@@ -152,10 +153,13 @@ export default function AccountDashboard({
         <article className="account-panel account-panel--overview">
           <div className="account-panel__heading">
             <div className="account-panel__icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 3h12v18H6z" />
-                <path d="M9 8h6M9 12h6M9 16h3" />
-              </svg>
+              <Image
+                src="/images/account/QuitRX dashboard icons-30.png"
+                width={100}
+                height={100}
+                alt=""
+                aria-hidden="true"
+              />
             </div>
             <h2>
               Script
@@ -186,10 +190,13 @@ export default function AccountDashboard({
         <article className="account-panel account-panel--address">
           <div className="account-panel__heading">
             <div className="account-panel__icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 21s6-5.5 6-11a6 6 0 1 0-12 0c0 5.5 6 11 6 11Z" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>
+              <Image
+                src="/images/account/QuitRX dashboard icons-31.png"
+                width={100}
+                height={100}
+                alt=""
+                aria-hidden="true"
+              />
             </div>
             <h2>
               Your
@@ -215,10 +222,13 @@ export default function AccountDashboard({
         <article className="account-panel account-panel--orders">
           <div className="account-panel__heading">
             <div className="account-panel__icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 8h14l-1 13H6L5 8Z" />
-                <path d="M9 10V6a3 3 0 0 1 6 0v4" />
-              </svg>
+              <Image
+                src="/images/account/QuitRX dashboard icons-32.png"
+                width={100}
+                height={100}
+                alt=""
+                aria-hidden="true"
+              />
             </div>
             <h2>Orders</h2>
           </div>
@@ -237,10 +247,13 @@ export default function AccountDashboard({
       <section className="account-order-history">
         <div className="account-order-history__header">
           <span className="account-order-history__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M6 3h12v18H6z" />
-              <path d="M9 8h6M9 12h6M9 16h3" />
-            </svg>
+            <Image
+              src="/images/account/QuitRX dashboard icons-32.png"
+              width={100}
+              height={100}
+              alt=""
+              aria-hidden="true"
+            />
           </span>
           <h2>Order History</h2>
         </div>
