@@ -416,8 +416,7 @@ const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quither
 
 export const getQuitHeroProducts = cache(getCachedQuitHeroProducts);
 
-async function loadQuitHeroProduct(handle: string) {
-
+export async function getQuitHeroProduct(handle: string) {
   try {
     const response = await quitHeroFetch<{ data: QuitHeroProduct }>(
       `/products/${encodeURIComponent(handle)}`,
@@ -425,8 +424,6 @@ async function loadQuitHeroProduct(handle: string) {
 
     return response.data ?? undefined;
   } catch (error) {
-    // The API uses 404 when the product does not exist.
-    // Preserve the existing storefront behavior so the page can call notFound().
     if (error instanceof Error && error.message.includes("404")) {
       return undefined;
     }
@@ -434,12 +431,6 @@ async function loadQuitHeroProduct(handle: string) {
     throw error;
   }
 }
-
-export const getQuitHeroProductWhenReady = cache(
-  async function getQuitHeroProductWhenReady(handle: string) {
-    return loadQuitHeroProduct(handle);
-  },
-);
 
 async function loadQuitHeroProductById(id: string) {
   return quitHeroFetch<QuitHeroProduct>(
