@@ -48,7 +48,9 @@ export default async function ProductPage({
 
   const product = await getQuitHeroProduct(handle);
 
-  if (!product) {
+  console.log(product);
+
+  if (!product || product.status === "ARCHIVED") {
     notFound();
   }
 
