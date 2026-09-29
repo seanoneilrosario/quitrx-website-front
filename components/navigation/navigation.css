@@ -1021,9 +1021,9 @@
 }
 
 .site-marquee__track {
-  display: inline-flex;
-  animation: site-marquee-scroll 25s linear infinite;
-  will-change: transform;
+  display: flex;
+  width: 100%;
+  justify-content: center;
 }
 
 .site-marquee__item {
@@ -1033,20 +1033,6 @@
   font-weight: 700;
   color: #2c7a7b;
   font-family: "Quicksand", sans-serif;
-}
-
-@keyframes site-marquee-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-/* Optional: pause on hover */
-.site-marquee:hover .site-marquee__track {
-  animation-play-state: paused;
 }
 
 /* Menu button */

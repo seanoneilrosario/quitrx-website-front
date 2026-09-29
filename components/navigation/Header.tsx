@@ -147,7 +147,6 @@ function cartMoney(value?: number | string) {
 }
 const fallbackMenu: NavigationMenuItem[] = [{ title: "About", href: "/about" }];
 const MARQUEE_TEXT = "Welcome to the NEW QuitRX. Advancing the way Australians quit.";
-const MARQUEE_REPEAT = 4;
 const BODY_TEMPLATE_CLASSES = ["template-index", "template-page", "template-admin"];
 function getHref(item: NavigationMenuItem, isHome: boolean) {
   const base = item.href || item.link || "";
@@ -322,11 +321,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
     <Fragment>
       <div className="site-marquee">
         <div className="site-marquee__track">
-          {Array.from({ length: MARQUEE_REPEAT }).map((_, i) => (
-            <span className="site-marquee__item" key={i}>
-              {MARQUEE_TEXT}
-            </span>
-          ))}
+          <span className="site-marquee__item">{MARQUEE_TEXT}</span>
         </div>
       </div>
       <header

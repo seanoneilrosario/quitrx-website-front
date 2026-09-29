@@ -40,7 +40,7 @@ export function collectionProductsQuery(slug: string) {
   });
 }
 
-export function productDetailQuery(slug: string) {
+  export function productDetailQuery(slug: string) {
   const url = `/api/quithero-products/${encodeURIComponent(slug)}`;
   return queryOptions({
     queryKey: ["api", url] as const,
