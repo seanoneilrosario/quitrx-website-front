@@ -9,6 +9,8 @@ import type { FrequentlyBoughtTogetherDocument } from "./frequently-bought-toget
 import type { QuitHeroProduct, QuitHeroVariant } from "./quithero-types";
 import { DEFAULT_PRODUCT_IMAGE } from "./product-image";
 
+import { createHash } from "node:crypto";
+
 export type { QuitHeroBrand, QuitHeroImage, QuitHeroProduct, QuitHeroProductTag, QuitHeroTag, QuitHeroVariant } from "./quithero-types";
 
 type QuitHeroCollectionProduct = string | (QuitHeroProduct & {
@@ -85,14 +87,18 @@ function retryDelayFrom(response: Response, fallback: number) {
 
 async function quitHeroFetch<T>(path: string): Promise<T> {
   const apiKey = process.env.QUITHERO_API_KEY;
-  if (!apiKey) throw new Error("QuitHero API key is not configured.");
+
+  if (!apiKey) {
+    throw new Error("QuitHero API key is not configured.");
+  }
 
   let lastError: unknown;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
     let response: Response;
     try {
       response = await fetch(`${API_BASE}${path}`, {
-        headers: { "x-api-key": apiKey },
+        method: "GET",
+        headers: { "Content-Type": "application/json", "x-api-key": apiKey },
         cache: "no-store",
       });
     } catch (error) {
@@ -105,7 +111,16 @@ async function quitHeroFetch<T>(path: string): Promise<T> {
 
     if (response.ok) return response.json() as Promise<T>;
 
+    const responseBody = await response.text();
+
+    console.error("QuitHero API error:", {
+      status: response.status,
+      path,
+      body: responseBody,
+    });
+
     const error = new Error(`QuitHero request failed with ${response.status}.`);
+
     if (response.status !== 429 && response.status < 500) throw error;
     lastError = error;
     const retryDelay = RETRY_DELAYS_MS[attempt];
@@ -404,44 +419,48 @@ const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quither
 export const getQuitHeroProducts = cache(getCachedQuitHeroProducts);
 
 async function loadQuitHeroProduct(handle: string) {
-  const searchTerm = handle.split("-").filter(Boolean).slice(0, 3).join(" ") || handle;
-  const response = await quitHeroFetch<QuitHeroProductsResponse>(
-    `/products?search=${encodeURIComponent(searchTerm)}&page=1&limit=100`,
-  );
-  const products = productsFrom(response);
-  const match = products.find((product) => product.handle === handle || product.slug === handle);
-  if (match) return match;
 
-  // Preserve support for unusual slugs that cannot be derived from the product name.
-  // Use a fresh catalog here. A cached catalog can still contain a product
-  // that was deleted after the cache was populated.
-  const catalog = await loadQuitHeroProducts();
-  return catalog.find((product) => product.handle === handle || product.slug === handle);
+  try {
+    const response = await quitHeroFetch<{ data: QuitHeroProduct }>(
+      `/products/${encodeURIComponent(handle)}`,
+    );
+
+    return response.data ?? undefined;
+  } catch (error) {
+    // The API uses 404 when the product does not exist.
+    // Preserve the existing storefront behavior so the page can call notFound().
+    if (error instanceof Error && error.message.includes("404")) {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
-const getCachedQuitHeroProduct = unstable_cache(loadQuitHeroProduct, ["quithero-product"], {
-  revalidate: QUITHERO_CACHE_SECONDS,
-  tags: ["quithero-products"],
-});
+export const getQuitHeroProductWhenReady = cache(
+  async function getQuitHeroProductWhenReady(handle: string) {
+    return loadQuitHeroProduct(handle);
+  },
+);
 
-export const getQuitHeroProduct = cache(getCachedQuitHeroProduct);
+async function loadQuitHeroProductById(id: string) {
+  return quitHeroFetch<QuitHeroProduct>(
+    `/products/${encodeURIComponent(id)}`,
+  );
+}
 
-export const getQuitHeroProductWhenReady = cache(async function getQuitHeroProductWhenReady(handle: string) {
-  // Product routes must reflect dashboard deletions immediately. React's
-  // request cache still deduplicates metadata/page lookups in one render.
-  const freshProduct = await loadQuitHeroProduct(handle);
-  if (freshProduct) return freshProduct;
+function getCachedQuitHeroProductById(id: string) {
+  return unstable_cache(
+    () => loadQuitHeroProductById(id),
+    ["quithero-product", id],
+    {
+      revalidate: QUITHERO_CACHE_SECONDS,
+      tags: ["quithero-products"],
+    },
+  )();
+}
 
-  // A newly synced product can take a moment to appear in search results.
-  // Check once more before treating the URL as a genuine 404.
-  await delay(750);
-  return loadQuitHeroProduct(handle);
-});
-
-export const getQuitHeroProductById = cache(async function getQuitHeroProductById(id: string) {
-  const products = await getQuitHeroProducts();
-  return products.find((product) => product.id === id);
-});
+export const getQuitHeroProductById = cache(getCachedQuitHeroProductById);
 
 export async function getFrequentlyBoughtTogetherIds(productId: string) {
   const recommendation = await client.withConfig({ useCdn: false }).fetch<FrequentlyBoughtTogetherDocument | null>(

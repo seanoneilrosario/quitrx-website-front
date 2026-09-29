@@ -8,7 +8,6 @@ import SiteChrome from "@/components/navigation/SiteChrome";
 import type { NavigationData, SearchPage } from "@/components/navigation/Header";
 import { AccountCustomerProvider } from "@/hooks/useAccountCustomer";
 import QueryProvider from "./QueryProvider";
-import RealtimeConnection from "./RealtimeConnection";
 import type { QuitHeroCustomer } from "@/lib/quithero-customers";
 
 type WebsiteShellProps = {

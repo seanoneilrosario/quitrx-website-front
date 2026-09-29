@@ -8,6 +8,7 @@ import ProductImageZoom from "./ProductImageZoom";
 import ProductPurchasePanel from "./ProductPurchasePanel";
 import ProductAccessGate from "./ProductAccessGate";
 import styles from "@/app/store.module.css";
+import { useEffect } from "react";
 
 export default function ProductDetailContent({ initialData }: { initialData: ProductDetailData }) {
   const slug = initialData.product.handle || initialData.product.slug || initialData.productId;
@@ -15,6 +16,7 @@ export default function ProductDetailContent({ initialData }: { initialData: Pro
     ...productDetailQuery(slug),
     initialData,
   });
+  
   const { product, image, description, isBundle, productId, variants, bundleDropdowns, relatedProducts } = data;
 
   return <ProductAccessGate productName={product.name || "Product"}>

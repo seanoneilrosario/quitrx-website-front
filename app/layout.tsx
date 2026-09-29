@@ -17,6 +17,8 @@ import { HEADER_SEARCH_QUERY, NAVIGATION, SETTINGS } from "@/sanity/lib/queries"
 
 import "./globals.css";
 
+
+
 export const revalidate = 300;
 
 export const metadata: Metadata = {
