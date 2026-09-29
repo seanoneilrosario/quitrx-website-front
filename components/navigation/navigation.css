@@ -869,6 +869,12 @@
     opacity: 1;
   }
 
+  .site-header__desktop-nav a[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
+  }
+
   .site-header__bar {
     padding: 43px 50px;
   }

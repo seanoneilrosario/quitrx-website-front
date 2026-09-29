@@ -1,9 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { QuitHeroProduct } from "@/lib/quithero";
-import { productIsAvailable } from "@/lib/quithero-bundle";
+import { bundleComponentsFrom, bundleDropdownsFrom, productIsAvailable } from "@/lib/quithero-bundle";
+import { getAvailableStock } from "@/lib/available-stock";
+import type { StorefrontCartItem } from "@/lib/storefront-cart";
 import ProductImage from "./ProductImage";
 import styles from "./collectionCatalog.module.css";
+
+const CART_KEY = "quitrx-cart";
 
 type ProductCardProps = {
   product: QuitHeroProduct;
@@ -30,16 +34,60 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
   const productHandle = product.handle ?? product.slug;
   const productUrl = `/product/${encodeURIComponent(productHandle!)}`;
   const isAvailable = productIsAvailable(product);
+  const variants = product.variants ?? [];
+  const productType = typeof product.productType === "string"
+    ? product.productType
+    : product.productType?.name || product.productType?.slug || "";
+  const tags = product.tags?.flatMap((tag) => typeof tag === "string"
+    ? [tag]
+    : [tag.name, tag.slug, tag.tag?.name, tag.tag?.slug].filter((value): value is string => Boolean(value))) ?? [];
+  const isBundle = [productType, ...tags].some((value) => value.trim().toLowerCase() === "bundle")
+    || variants.some((variant) => bundleComponentsFrom(variant).length > 0 || bundleDropdownsFrom(variant).length > 0);
+  const directVariant = !isBundle && variants.length === 1 && variants[0]?.id ? variants[0] : undefined;
+
+  function addToCart() {
+    if (!directVariant || !product.id || !isAvailable) return;
+
+    const variantName = directVariant.name || "Default";
+    const key = `${product.id}:${directVariant.id}`;
+    const availableStock = getAvailableStock(directVariant);
+    const storedCart: StorefrontCartItem[] = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    const existing = storedCart.find((item) => item.key === key);
+
+    if (existing) {
+      if (existing.quantity >= availableStock) return;
+      existing.quantity += 1;
+    } else {
+      storedCart.push({
+        key,
+        productId: product.id,
+        productName: product.name || "Product",
+        image: image?.url,
+        variantId: directVariant.id,
+        variantName,
+        price: directVariant.price,
+        quantity: 1,
+        availableStock,
+      });
+    }
+
+    localStorage.setItem(CART_KEY, JSON.stringify(storedCart));
+    window.dispatchEvent(new CustomEvent("quitrx:cart-updated", {
+      detail: { items: storedCart, open: true },
+    }));
+  }
+
+  const lockedClick = locked && onLockedClick ? (event: React.MouseEvent) => {
+    event.preventDefault();
+    onLockedClick();
+  } : undefined;
 
   return (
     <article className={styles.productCard}>
       <Link
         href={productUrl}
         className={styles.productLink}
-        onClick={locked && onLockedClick ? (event) => {
-          event.preventDefault();
-          onLockedClick();
-        } : undefined}
+        onClick={lockedClick}
       >
         <span className={styles.productImageWrap}>
           {locked && <span className={styles.scriptRequired}>Script required</span>}
@@ -52,8 +100,14 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
           <strong>{product.name}</strong>
           {price && <span className={styles.price}>{price}</span>}
         </span>
-        <span className={styles.chooseButton}>{locked ? "View product" : isAvailable ? "Choose options" : "Sold out"}</span>
       </Link>
+      {directVariant && isAvailable && !locked ? (
+        <button type="button" className={styles.chooseButton} onClick={addToCart}>Add to cart</button>
+      ) : (
+        <Link href={productUrl} className={styles.chooseButton} onClick={lockedClick}>
+          {locked ? "View product" : isAvailable ? "Choose options" : "Sold out"}
+        </Link>
+      )}
     </article>
   );
 }
