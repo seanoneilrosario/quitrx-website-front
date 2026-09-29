@@ -238,9 +238,10 @@ export default function ProductPurchasePanel({
                 type="button"
                 className={selectedIndex === index ? styles.variantActive : ""}
                 disabled={!variantIsAvailable(variant)}
+                title={variantLabel(variant, index)}
                 onClick={() => selectParentVariant(index)}
               >
-                {variantLabel(variant, index)}
+                {relatedVariantLabel(productName, variant, index)}
               </button>
             ))}
           </div>

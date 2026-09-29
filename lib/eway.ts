@@ -23,6 +23,7 @@ export type EwaySharedPaymentRequest = {
   Items: EwayLineItem[];
   RedirectUrl: string;
   CancelUrl: string;
+  LogoUrl?: string;
   HeaderText?: string;
   CustomView?: "BootstrapFlatly";
   Method: "ProcessPayment";

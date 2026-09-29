@@ -173,7 +173,7 @@ export default function CheckoutPage() {
                   <input type="email" name="email" autoComplete="email" placeholder="you@example.com" required />
                 </label>
                 <label className={styles.checkbox}>
-                  <input type="checkbox" name="newsletter" />
+                  <input type="checkbox" name="newsletter" defaultChecked />
                   <span>Email me news and special offers</span>
                 </label>
               </section>
