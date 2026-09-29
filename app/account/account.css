@@ -240,7 +240,9 @@
   align-items: center;
   margin-bottom: 52px;
   text-decoration: none;
+  margin-left: -25px;
 }
+
 .customer-login__brand img { width: 174px; height: auto; }
 .customer-login__socials {
   display: grid;
