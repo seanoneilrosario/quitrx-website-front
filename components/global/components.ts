@@ -230,7 +230,11 @@ export interface COMPONENTS {
   slides?: {
     _key?: string;
     image?: string;
+    imageWidth?: number;
+    imageHeight?: number;
     mobileImage?: string;
+    mobileImageWidth?: number;
+    mobileImageHeight?: number;
     alt?: string;
     pageSlug?: string;
     pageType?: string;

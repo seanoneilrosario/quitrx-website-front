@@ -166,7 +166,11 @@ const PAGE_COMPONENTS = `
     slides[]{
       _key,
       "image": image.asset->url,
+      "imageWidth": image.asset->metadata.dimensions.width,
+      "imageHeight": image.asset->metadata.dimensions.height,
       "mobileImage": mobileImage.asset->url,
+      "mobileImageWidth": mobileImage.asset->metadata.dimensions.width,
+      "mobileImageHeight": mobileImage.asset->metadata.dimensions.height,
       alt,
       url,
       openInNewTab,

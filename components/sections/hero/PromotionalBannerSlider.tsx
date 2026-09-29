@@ -8,7 +8,11 @@ import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 type PromotionalSlide = {
   _key?: string;
   image?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   mobileImage?: string;
+  mobileImageWidth?: number;
+  mobileImageHeight?: number;
   alt?: string;
   pageSlug?: string;
   pageType?: string;
@@ -63,8 +67,8 @@ export default function PromotionalBannerSlider({ slides }: { slides: Promotiona
                 className="promotional-banner-slider__desktop-image"
                 src={slide.image!}
                 alt={slide.alt || "Promotional banner"}
-                width={1920}
-                height={640}
+                width={slide.imageWidth || 1920}
+                height={slide.imageHeight || 640}
                 sizes="100vw"
                 priority={index === 0}
               />
@@ -73,8 +77,8 @@ export default function PromotionalBannerSlider({ slides }: { slides: Promotiona
                   className="promotional-banner-slider__mobile-image"
                   src={slide.mobileImage}
                   alt={slide.alt || "Promotional banner"}
-                  width={768}
-                  height={768}
+                  width={slide.mobileImageWidth || 768}
+                  height={slide.mobileImageHeight || 768}
                   sizes="100vw"
                   priority={index === 0}
                 />

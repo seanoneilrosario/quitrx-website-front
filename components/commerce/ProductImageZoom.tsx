@@ -7,6 +7,9 @@ import ProductImage from "./ProductImage";
 
 export default function ProductImageZoom({ image, alt }: { image?: string; alt: string }) {
   const [open, setOpen] = useState(false);
+  const [loadedImage, setLoadedImage] = useState<string>();
+  const imageKey = image || "default-product-image";
+  const imageLoaded = loadedImage === imageKey;
 
   useEffect(() => {
     if (!open) return;
@@ -32,9 +35,20 @@ export default function ProductImageZoom({ image, alt }: { image?: string; alt: 
         onClick={() => image && setOpen(true)}
         aria-label={`Zoom ${alt}`}
         disabled={!image}
+        aria-busy={!imageLoaded}
       >
         <span className={styles.zoomIcon} aria-hidden="true">+</span>
-        <ProductImage src={image} width={900} height={900} sizes="(max-width: 989px) 100vw, 50vw" alt={alt} className={styles.productImage} />
+        {!imageLoaded && <span className={styles.productImageLoader} aria-hidden="true" />}
+        <ProductImage
+          src={image}
+          width={900}
+          height={900}
+          sizes="(max-width: 989px) 100vw, 50vw"
+          alt={alt}
+          className={`${styles.productImage} ${imageLoaded ? styles.productImageLoaded : styles.productImageLoading}`}
+          priority
+          onLoad={() => setLoadedImage(imageKey)}
+        />
       </button>
 
       {open && image && typeof document !== "undefined" && createPortal(

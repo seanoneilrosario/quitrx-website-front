@@ -367,6 +367,40 @@
   max-height: 650px;
 }
 
+.productImageLoading {
+  opacity: 0;
+}
+
+.productImageLoaded {
+  opacity: 1;
+  animation: product-image-reveal 420ms ease-out both;
+}
+
+.productImageLoader {
+  position: absolute;
+  inset: clamp(40px, 5vw, 80px);
+  border-radius: 18px;
+  background: linear-gradient(110deg, #edf3f6 25%, #f8fbfd 45%, #edf3f6 65%);
+  background-size: 220% 100%;
+  animation: product-image-loading 1.2s ease-in-out infinite;
+}
+
+@keyframes product-image-loading {
+  to { background-position-x: -220%; }
+}
+
+@keyframes product-image-reveal {
+  from { opacity: 0; transform: scale(.985); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .productImageLoader,
+  .productImageLoaded {
+    animation: none;
+  }
+}
+
 .zoomIcon {
   position: absolute;
   top: 18px;
@@ -851,6 +885,7 @@ select.bundleComponentValue:focus {
   .productPage { padding: 18px 0 100px; }
   .productDetail { gap: 26px; }
   .productImageWrap { padding: 38px; }
+  .productImageLoader { inset: 38px; }
   .zoomModal { padding: 60px 18px 24px; }
   .zoomClose { top: 16px; right: 16px; width: 44px; height: 44px; }
   .zoomClose::before, .zoomClose::after { top: 21px; left: 11px; width: 22px; }
