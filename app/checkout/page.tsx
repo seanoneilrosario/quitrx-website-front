@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import styles from "./checkout.module.css";
-import { CHECKOUT_SHIPPING } from "@/lib/checkout";
+import { CHECKOUT_SHIPPING, getCheckoutCustomerDefaults } from "@/lib/checkout";
 import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
+import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 type CartItem = {
   key: string;
@@ -40,6 +41,7 @@ function readPaymentStatus() {
 }
 
 export default function CheckoutPage() {
+  const { customer } = useAccountCustomer();
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
   const [paymentMethod, setPaymentMethod] = useState<"eway" | "paypal">("eway");
   const [notice, setNotice] = useState("");
@@ -70,6 +72,7 @@ export default function CheckoutPage() {
     0,
   );
   const shipping = CHECKOUT_SHIPPING[shippingMethod];
+  const customerDefaults = useMemo(() => getCheckoutCustomerDefaults(customer), [customer]);
 
   const paymentNotice = paymentStatus === "success"
     ? "Payment successful. Your order has been placed."
@@ -162,7 +165,7 @@ export default function CheckoutPage() {
               <Link href="/collections/all-products">Browse products</Link>
             </div>
           ) : (
-            <form className={styles.form} onSubmit={handleSubmit}>
+            <form className={styles.form} key={customer?.id ?? customer?.email ?? "guest"} onSubmit={handleSubmit}>
               <section className={styles.formSection}>
                 <div className={styles.sectionHeading}>
                   <span>1</span>
@@ -170,7 +173,7 @@ export default function CheckoutPage() {
                 </div>
                 <label className={styles.fieldWide}>
                   <span>Email address</span>
-                  <input type="email" name="email" autoComplete="email" placeholder="you@example.com" required />
+                  <input type="email" name="email" autoComplete="email" placeholder="you@example.com" defaultValue={customerDefaults.email} required />
                 </label>
                 <label className={styles.checkbox}>
                   <input type="checkbox" name="newsletter" defaultChecked />
@@ -184,14 +187,14 @@ export default function CheckoutPage() {
                   <div><h2>Delivery address</h2><p>Where should we send your order?</p></div>
                 </div>
                 <div className={styles.fieldGrid}>
-                  <label><span>First name</span><input name="firstName" autoComplete="given-name" required /></label>
-                  <label><span>Last name</span><input name="lastName" autoComplete="family-name" required /></label>
-                  <label className={styles.fieldWide}><span>Address</span><input name="address" autoComplete="street-address" required /></label>
-                  <label className={styles.fieldWide}><span>Apartment, suite, etc. <em>Optional</em></span><input name="address2" autoComplete="address-line2" /></label>
-                  <label><span>Suburb</span><input name="city" autoComplete="address-level2" required /></label>
-                  <label><span>State</span><select name="state" autoComplete="address-level1" defaultValue="" required><option value="" disabled>Select state</option><option>ACT</option><option>NSW</option><option>NT</option><option>QLD</option><option>SA</option><option>TAS</option><option>VIC</option><option>WA</option></select></label>
-                  <label><span>Postcode</span><input name="postcode" autoComplete="postal-code" inputMode="numeric" required /></label>
-                  <label><span>Phone</span><input type="tel" name="phone" autoComplete="tel" required /></label>
+                  <label><span>First name</span><input name="firstName" autoComplete="given-name" defaultValue={customerDefaults.firstName} required /></label>
+                  <label><span>Last name</span><input name="lastName" autoComplete="family-name" defaultValue={customerDefaults.lastName} required /></label>
+                  <label className={styles.fieldWide}><span>Address</span><input name="address" autoComplete="street-address" defaultValue={customerDefaults.address} required /></label>
+                  <label className={styles.fieldWide}><span>Apartment, suite, etc. <em>Optional</em></span><input name="address2" autoComplete="address-line2" defaultValue={customerDefaults.address2} /></label>
+                  <label><span>Suburb</span><input name="city" autoComplete="address-level2" defaultValue={customerDefaults.city} required /></label>
+                  <label><span>State</span><select name="state" autoComplete="address-level1" defaultValue={customerDefaults.state} required><option value="" disabled>Select state</option><option>ACT</option><option>NSW</option><option>NT</option><option>QLD</option><option>SA</option><option>TAS</option><option>VIC</option><option>WA</option></select></label>
+                  <label><span>Postcode</span><input name="postcode" autoComplete="postal-code" inputMode="numeric" defaultValue={customerDefaults.postcode} required /></label>
+                  <label><span>Phone</span><input type="tel" name="phone" autoComplete="tel" defaultValue={customerDefaults.phone} required /></label>
                 </div>
               </section>
 
