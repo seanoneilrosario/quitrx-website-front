@@ -70,8 +70,11 @@ export default function CollectionCatalog({
 
     return Array.from(
       new Map(
-        allProducts.map((product) => [product.id ?? product.slug, product])
-      ).values()
+        allProducts.map((product) => [
+          product.id ?? product.slug,
+          product,
+        ]),
+      ).values(),
     );
   }, [data]);
   const collection = data?.pages[0]?.collection ?? { name: collectionSlug.replaceAll("-", " "), description: "" };
@@ -166,15 +169,39 @@ export default function CollectionCatalog({
 
   useEffect(() => {
     const trigger = loadMoreTriggerRef.current;
-    if (!infiniteScrollReady || !trigger || isFetching || error || !canLoadMore) return;
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && entry.intersectionRatio >= 1) void loadMore();
-    }, { rootMargin: "0px", threshold: 1 });
+    if (
+      !infiniteScrollReady ||
+      !trigger ||
+      isFetching ||
+      error ||
+      !canLoadMore
+    ) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          void loadMore();
+        }
+      },
+      {
+        rootMargin: "300px",
+        threshold: 0,
+      },
+    );
 
     observer.observe(trigger);
+
     return () => observer.disconnect();
-  }, [error, canLoadMore, infiniteScrollReady, isFetching, loadMore]);
+  }, [
+    error,
+    canLoadMore,
+    infiniteScrollReady,
+    isFetching,
+    loadMore,
+  ]);
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);

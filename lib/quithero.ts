@@ -151,14 +151,15 @@ async function quitHeroFetch<T>(path: string): Promise<T> {
 }
 
 function productsFrom(payload: QuitHeroProductsResponse) {
-  if (Array.isArray(payload)) return payload.filter(productIsVisible);
+  if (Array.isArray(payload)) return payload;
 
   const products = payload.products ?? payload.data ?? payload.items;
+
   if (!Array.isArray(products)) {
     throw new Error("QuitHero products response did not contain a product list.");
   }
 
-  return products.filter(productIsVisible);
+  return products;
 }
 
 function collectionsFrom(payload: QuitHeroCollectionsResponse) {
@@ -198,15 +199,37 @@ async function loadQuitHeroProducts() {
   return products;
 }
 
-async function loadQuitHeroProductsPage(page: number, limit: number, search?: string) {
-  const query = new URLSearchParams({ page: String(page), limit: String(limit) });
+async function loadQuitHeroProductsPage(
+  page: number,
+  limit: number,
+  search?: string,
+) {
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
   if (search) query.set("search", search);
-  const payload = await quitHeroFetch<QuitHeroProductsResponse>(`/products?${query}`);
+
+  const payload = await quitHeroFetch<QuitHeroProductsResponse>(
+    `/products?${query}`,
+  );
+
   const products = productsFrom(payload);
+
+  const total = Array.isArray(payload)
+    ? products.length
+    : Number(payload.pagination?.total) || products.length;
+
   const totalPages = Array.isArray(payload)
     ? 1
     : Math.max(1, Number(payload.pagination?.totalPages) || 1);
-  return { products, totalPages };
+
+  return {
+    products,
+    total,
+    totalPages,
+  };
 }
 
 async function hydrateBundleAvailability(products: QuitHeroProduct[]) {
@@ -234,11 +257,32 @@ export async function getQuitHeroCollectionPage(
     Math.min(100, Math.floor(limit)),
   );
 
+  type QuitHeroPagination = {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+  };
+
   if (slug === "all-products") {
-    const { products, totalPages } = await loadQuitHeroProductsPage(
+    const {
+      products,
+      total,
+      totalPages,
+    } = await loadQuitHeroProductsPage(
       normalizedPage,
       normalizedLimit,
     );
+
+    console.log("[All Products Pagination]", {
+      page: normalizedPage,
+      limit: normalizedLimit,
+      products: products.length,
+      total,
+      totalPages,
+      hasNextPage: normalizedPage < totalPages,
+    });
 
     return {
       collection: {
@@ -249,7 +293,7 @@ export async function getQuitHeroCollectionPage(
       pagination: {
         page: normalizedPage,
         limit: normalizedLimit,
-        total: products.length,
+        total,
         totalPages,
         hasNextPage: normalizedPage < totalPages,
       },
@@ -264,13 +308,7 @@ export async function getQuitHeroCollectionPage(
       description?: string | null;
       products: QuitHeroProduct[];
     };
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNextPage: boolean;
-    };
+    pagination: QuitHeroPagination;
   }>(
     `/collections/${encodeURIComponent(slug)}?page=${normalizedPage}&limit=${normalizedLimit}`,
   );
@@ -282,13 +320,7 @@ export async function getQuitHeroCollectionPage(
       description: response.data.description ?? undefined,
     },
     products: response.data.products ?? [],
-    pagination: {
-      page: response.pagination.page,
-      limit: response.pagination.limit,
-      total: response.pagination.total,
-      totalPages: response.pagination.totalPages,
-      hasNextPage: response.pagination.hasNextPage,
-    },
+    pagination: response.pagination,
   };
 }
 
