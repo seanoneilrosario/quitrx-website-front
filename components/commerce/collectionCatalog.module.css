@@ -2,14 +2,28 @@
   display: flex;
   gap: 10px;
   margin: 0 0 32px;
-  padding-bottom: 4px;
+  padding: 0 0 12px;
   overflow-x: auto;
-  scrollbar-width: none;
-  justify-content: center;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scrollbar-color: #7eb6bd #dce9eb;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  justify-content: safe center;
 }
 
 .collectionNav::-webkit-scrollbar {
-  display: none;
+  height: 6px;
+}
+
+.collectionNav::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #dce9eb;
+}
+
+.collectionNav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #7eb6bd;
 }
 
 .collectionNav a {
