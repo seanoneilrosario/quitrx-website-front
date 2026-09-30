@@ -325,9 +325,19 @@ export default function CollectionCatalog({
             else void refetch();
           }}>Try again</button>
         </div>}
-        {(canLoadMore || productsLoading) && <div ref={loadMoreTriggerRef} className={styles.pagination} style={{ minHeight: 1 }} aria-live="polite">
-          {productsLoading && <span>Loading...</span>}
-        </div>}
+        {(canLoadMore || productsLoading) && (
+          <div
+            ref={loadMoreTriggerRef}
+            className={styles.pagination}
+            aria-live="polite"
+          >
+            {productsLoading ? (
+              <span>Loading...</span>
+            ) : (
+              <span>Loading more products...</span>
+            )}
+          </div>
+        )}
       </section>
 
       {lockedProductName && (
