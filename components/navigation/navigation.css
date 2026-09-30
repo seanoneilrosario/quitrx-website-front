@@ -128,6 +128,7 @@
   z-index: 60;
   display: flex;
   min-height: 100vh;
+  height: calc(100vh - 128px);
   align-items: center;
   justify-content: flex-end;
   background: rgba(0, 0, 0, 0.45);
@@ -798,7 +799,7 @@
 
   .site-nav__panel {
     padding: 40px 18px 28px;
-    background: #25616d;
+    background: #035c67;
   }
 
   .site-nav__menu {
@@ -813,6 +814,7 @@
     top: 85px;
     min-height: 0;
     background: #25616d;
+    height: calc(100vh - 128px);
   }
 
   .site-nav__footer {
