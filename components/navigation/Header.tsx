@@ -21,6 +21,7 @@ export type NavigationData = {
   headerLogoMenu?: string | null;
   headerLogoMenuAlt?: string | null;
   header_menu?: NavigationMenuItem[] | null;
+  mobile_header_menu?: NavigationMenuItem[] | null;
   header_logo2?: string | null;
 };
 export type SearchPage = {
@@ -192,6 +193,9 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const lastScrollY = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const menuItems = navigation?.header_menu?.length ? navigation.header_menu : fallbackMenu;
+  const mobileMenuItems = navigation?.mobile_header_menu?.length
+    ? navigation.mobile_header_menu
+    : menuItems;
   const accountFirstName = accountIdentity?.firstName?.trim();
   const accountName = [accountFirstName, accountIdentity?.lastName]
     .map((name) => name?.trim())
@@ -460,7 +464,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
         >
           <div className="site-nav__panel" onClick={(event) => event.stopPropagation()}>
             <nav className="site-nav__menu" aria-label="Primary navigation">
-              {menuItems.map((item) => (
+              {mobileMenuItems.map((item) => (
                 <Link
                   key={`${item.title}-${getHref(item, isHome)}`}
                   href={getHref(item, isHome)}

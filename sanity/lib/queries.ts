@@ -224,6 +224,20 @@ export const NAVIGATION = `*[_type == "navigation"][0]{
       )
     )
   },
+  mobile_header_menu[]{
+    title,
+    link,
+    anchor,
+    "href": coalesce(
+      link,
+      anchor,
+      select(
+        page.slug->_type == "home" => "/",
+        defined(page.slug->slug.current) => "/" + page.slug->slug.current,
+        "#"
+      )
+    )
+  },
   footer_menu[]{
     title,
     link
