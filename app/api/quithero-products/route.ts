@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { COLLECTION_PAGE_SIZE } from "@/lib/catalog-pagination";
-import { getFastQuitHeroCollectionPage, getQuitHeroCollection, getQuitHeroProducts } from "@/lib/quithero";
+import { getFastQuitHeroCollectionPage, getQuitHeroCollectionPage, getQuitHeroCollection, getQuitHeroProducts } from "@/lib/quithero";
 
 export async function GET(request: Request) {
   try {
@@ -20,8 +20,10 @@ export async function GET(request: Request) {
       if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1) {
         return NextResponse.json({ error: "Invalid pagination parameters." }, { status: 400 });
       }
-      return NextResponse.json(await getFastQuitHeroCollectionPage(collectionSlug, page, limit), {
-        headers: { "cache-control": "public, s-maxage=300, stale-while-revalidate=600" },
+      const fresh = searchParams.get("fresh") === "1";
+      const loadPage = fresh ? getQuitHeroCollectionPage : getFastQuitHeroCollectionPage;
+      return NextResponse.json(await loadPage(collectionSlug, page, limit), {
+        headers: { "cache-control": fresh ? "private, no-store" : "public, s-maxage=300, stale-while-revalidate=600" },
       });
     }
 

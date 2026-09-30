@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { isBrowserReload } from "@/lib/catalog-refresh";
 import { collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
@@ -62,7 +63,8 @@ export default function CollectionCatalog({
           pageParams: [1],
         }
       : undefined,
-    initialDataUpdatedAt: Date.now(),
+    // Cached server HTML must not suppress the fresh request on a browser reload.
+    initialDataUpdatedAt: isBrowserReload() ? 0 : Date.now(),
   });
   const products = useMemo(() => {
     const allProducts =

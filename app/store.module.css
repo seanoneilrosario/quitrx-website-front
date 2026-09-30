@@ -5,6 +5,30 @@
   color: #035c67;
 }
 
+.backToPharmacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-bottom: 24px;
+  padding: 10px 18px;
+  border: 1px solid #80b7bf;
+  border-radius: 999px;
+  color: #035c67;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.backToPharmacy:hover {
+  background: #e0eeef;
+}
+
+.backToPharmacy:focus-visible {
+  outline: 2px solid #035c67;
+  outline-offset: 4px;
+}
+
 .collectionHeader {
   max-width: 800px;
   margin: 0 auto 64px;

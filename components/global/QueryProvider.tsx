@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { collectionCacheForRestore, isBrowserReload } from "@/lib/catalog-refresh";
 import { API_STALE_TIME, API_CACHE_TIME, shouldPersistQuery } from "@/lib/query-cache";
 
 export { API_STALE_TIME } from "@/lib/query-cache";
@@ -24,7 +25,7 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
     key: "quitrx-catalog-query-cache-v1",
     storage: {
       getItem: (key) => {
-        try { return window.sessionStorage.getItem(key); } catch { return null; }
+        try { return collectionCacheForRestore(window.sessionStorage.getItem(key), isBrowserReload()); } catch { return null; }
       },
       setItem: (key, value) => {
         try { window.sessionStorage.setItem(key, value); } catch { /* Memory cache still works if storage is full or disabled. */ }

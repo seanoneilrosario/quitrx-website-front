@@ -6,7 +6,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 function page(number: number, hasNextPage: boolean, products = [{ id: `product-${number}` }]): CollectionPageResponse {
   return { collection: { slug: "brand-a", name: "Brand A" }, products,
-    pagination: { page: number, limit: 100, totalPages: 2, hasNextPage } };
+    pagination: { page: number, limit: 100, total: 200, totalPages: 2, hasNextPage } };
 }
 
 describe("catalog API queries", () => {
@@ -27,7 +27,8 @@ describe("catalog API queries", () => {
       expect(observer.getCurrentResult().hasNextPage).toBe(false);
       await observer.fetchNextPage();
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0][0]).toContain("collectionPage=brand-a&page=2&limit=100");
+      expect(fetchMock.mock.calls[0][0]).toContain("collectionPage=brand-a&page=2&limit=100&fresh=1");
+      expect(fetchMock.mock.calls[0][1].cache).toBe("no-store");
     } finally { unsubscribe(); client.clear(); }
   });
 
@@ -65,4 +66,27 @@ describe("catalog API queries", () => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     } finally { client.clear(); }
   });
+});
+
+
+it("reload fetches fresh collection data once and caches the replacement for navigation", async () => {
+  vi.stubGlobal("window", { performance: { getEntriesByType: () => [{ type: "reload" }] } });
+  const fetchMock = vi.fn().mockResolvedValue(Response.json(page(1, false, [{ id: "new-product" }])));
+  vi.stubGlobal("fetch", fetchMock);
+  const client = new QueryClient();
+  const observer = new InfiniteQueryObserver(client, {
+    ...collectionProductsQuery("brand-a"),
+    initialData: { pages: [page(1, true, [{ id: "deleted-product" }])], pageParams: [1] },
+    initialDataUpdatedAt: 0,
+  });
+  const unsubscribe = observer.subscribe(() => {});
+  try {
+    await vi.waitFor(() => expect(observer.getCurrentResult().isFetching).toBe(false));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain("limit=100&fresh=1");
+    expect(fetchMock.mock.calls[0][1].cache).toBe("no-store");
+    expect(observer.getCurrentResult().data?.pages[0].products).toEqual([{ id: "new-product" }]);
+    await client.fetchInfiniteQuery(collectionProductsQuery("brand-a"));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  } finally { unsubscribe(); client.clear(); }
 });

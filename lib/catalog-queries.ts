@@ -7,8 +7,8 @@ import { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 export type CollectionPageResponse = QuitHeroCollectionPage;
 export { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 
-async function getCatalogData<T>(url: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(url, { signal });
+async function getCatalogData<T>(url: string, signal: AbortSignal, fresh = false): Promise<T> {
+  const response = await fetch(url, { signal, ...(fresh ? { cache: "no-store" as const } : {}) });
   if (!response.ok) throw new Error(response.status === 404 ? "Product or collection not found." : "Unable to load products. Please try again.");
   return await response.json() as T;
 }
@@ -31,7 +31,9 @@ export function collectionProductsQuery(slug: string) {
     initialPageParam: 1,
     queryFn: ({ pageParam, signal }) => {
       const params = new URLSearchParams({ collectionPage: slug, page: String(pageParam), limit: String(COLLECTION_PAGE_SIZE) });
-      return getCatalogData<CollectionPageResponse>(`/api/quithero-products?${params}`, signal);
+      // Every network fetch bypasses HTTP and server catalog caches.
+      params.set("fresh", "1");
+      return getCatalogData<CollectionPageResponse>(`/api/quithero-products?${params}`, signal, true);
     },
     getNextPageParam: (lastPage) => lastPage.pagination.hasNextPage && lastPage.products.length > 0
       ? lastPage.pagination.page + 1
