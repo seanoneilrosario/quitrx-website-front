@@ -1,3 +1,33 @@
+.collectionNav {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 32px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.collectionNav::-webkit-scrollbar {
+  display: none;
+}
+
+.collectionNav a {
+  flex: 0 0 auto;
+  padding: 10px 18px;
+  border: 1px solid #7eb6bd;
+  border-radius: 999px;
+  color: #176976;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color .18s ease, color .18s ease;
+}
+
+.collectionNav a:hover,
+.collectionNav .collectionNavActive {
+  background: #006b75;
+  color: #fff;
+}
+
 .catalog {
   display: grid;
   grid-template-columns: 255px minmax(0, 1fr);
