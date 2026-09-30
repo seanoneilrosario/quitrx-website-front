@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import type { ProductDetailData } from "@/lib/product-detail-data";
 import ProductImageZoom from "./ProductImageZoom";
@@ -47,7 +48,12 @@ export default function ProductDetailContent({
           />
 
           {descriptionSections.details && <details className={styles.productDisclosure} open>
-            <summary>Details</summary>
+            <summary>
+              <span className={styles.disclosureSummaryLabel}>
+                <Image src="/images/product-disclosures/details-icon.svg" alt="" width={20} height={20} aria-hidden="true" />
+                Details
+              </span>
+            </summary>
             {descriptionSections.details && (
               <div
                 className={styles.disclosureContent}
@@ -56,15 +62,30 @@ export default function ProductDetailContent({
             )}
           </details>}
           {descriptionSections.inTheBox && <details className={styles.productDisclosure}>
-            <summary>What&apos;s in the box</summary>
+            <summary>
+              <span className={styles.disclosureSummaryLabel}>
+                <Image src="/images/product-disclosures/whats-in-the-box-icon.svg" alt="" width={20} height={20} aria-hidden="true" />
+                What&apos;s in the box
+              </span>
+            </summary>
             <div className={styles.disclosureContent} dangerouslySetInnerHTML={{ __html: descriptionSections.inTheBox }} />
           </details>}
           {descriptionSections.beginnerTips && <details className={styles.productDisclosure}>
-            <summary>Beginner Tips</summary>
+            <summary>
+              <span className={styles.disclosureSummaryLabel}>
+                <Image src="/images/product-disclosures/beginners-tips-icon.svg" alt="" width={20} height={20} aria-hidden="true" />
+                Beginner Tips
+              </span>
+            </summary>
             <div className={styles.disclosureContent} dangerouslySetInnerHTML={{ __html: descriptionSections.beginnerTips }} />
           </details>}
           {descriptionSections.shipping && <details className={styles.productDisclosure}>
-            <summary>Shipping &amp; Delivery</summary>
+            <summary>
+              <span className={styles.disclosureSummaryLabel}>
+                <Image src="/images/product-disclosures/shipping-icon.svg" alt="" width={20} height={20} aria-hidden="true" />
+                Shipping &amp; Delivery
+              </span>
+            </summary>
             <div className={styles.disclosureContent} dangerouslySetInnerHTML={{ __html: descriptionSections.shipping }} />
           </details>}
         </div>

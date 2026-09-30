@@ -259,6 +259,10 @@ export const HOME_QUERY = `*[_type == "home"][0]{
   ${PAGE_COMPONENTS}
 }`;
 
+export const PRODUCT_GRID_COLLECTIONS_QUERY = `*[_type == "home"][0]
+  .components[_type == "product_api_grid"][0]
+  .collections[]->{title, "slug": slug.current}`;
+
 export const PAGE_QUERY = `*[_type == "page" && slug.current == $slug][0]{
   ${PAGE_METADATA}
   ${PAGE_COMPONENTS}

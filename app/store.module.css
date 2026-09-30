@@ -206,6 +206,18 @@
   list-style-position: inside;
 }
 
+.disclosureSummaryLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.disclosureSummaryLabel img {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+
 .disclosureContent {
   margin: 0;
   padding: 0 6px 18px;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { catalogListQuery, collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { productIsAvailable, productIsVisible } from "@/lib/quithero-bundle";
@@ -17,20 +17,6 @@ type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 const DISPLAY_PAGE_SIZE = 20;
 
 type CollectionLink = { name: string; slug: string };
-
-function collectionLinksFrom(payload: unknown): CollectionLink[] {
-  const record = payload && typeof payload === "object" ? payload as Record<string, unknown> : undefined;
-  const values = Array.isArray(payload) ? payload : record?.collections ?? record?.data ?? record?.items;
-  if (!Array.isArray(values)) return [];
-
-  return values.flatMap((value) => {
-    if (!value || typeof value !== "object") return [];
-    const item = value as Record<string, unknown>;
-    const slug = typeof item.slug === "string" ? item.slug.trim() : "";
-    const name = typeof item.name === "string" ? item.name.trim() : "";
-    return slug && name && slug !== "all-products" ? [{ name, slug }] : [];
-  });
-}
 
 function variantPrices(product: QuitHeroProduct) {
   return (product.variants ?? []).flatMap((variant) => {
@@ -55,7 +41,15 @@ function unique(values: Array<string | undefined>) {
   return [...new Set(values.filter((value): value is string => Boolean(value)))].sort();
 }
 
-export default function CollectionCatalog({ collectionSlug, initialPage }: { collectionSlug: string; initialPage?: CollectionPageResponse }) {
+export default function CollectionCatalog({
+  collectionSlug,
+  initialPage,
+  collectionLinks,
+}: {
+  collectionSlug: string;
+  initialPage?: CollectionPageResponse;
+  collectionLinks: CollectionLink[];
+}) {
 
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
@@ -63,20 +57,11 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
     ...collectionProductsQuery(collectionSlug),
     initialData: initialPage ? { pages: [initialPage], pageParams: [1] } : undefined,
   });
-  const { data: collectionsPayload } = useQuery(catalogListQuery("collections"));
   const products = useMemo(() => {
     const allProducts = data?.pages.flatMap((page) => page.products).filter(productIsVisible) ?? [];
     return Array.from(new Map(allProducts.map((product) => [product.id ?? product.slug, product])).values());
   }, [data]);
   const collection = data?.pages[0]?.collection ?? { name: collectionSlug.replaceAll("-", " "), description: "" };
-  const collectionLinks = useMemo(() => {
-    const links = [
-      { name: "All Products", slug: "all-products" },
-      ...collectionLinksFrom(collectionsPayload),
-      { name: collection.name, slug: collectionSlug },
-    ];
-    return Array.from(new Map(links.map((item) => [item.slug, item])).values());
-  }, [collection.name, collectionSlug, collectionsPayload]);
   const productsLoading = isPending || isFetchingNextPage;
   const productsError = error?.message ?? "";
   const [brands, setBrands] = useState<string[]>([]);
