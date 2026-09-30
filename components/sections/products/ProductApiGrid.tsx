@@ -31,11 +31,17 @@ function asRecord(value: unknown): ApiRecord | undefined {
 }
 
 function getProducts(payload: unknown): ApiRecord[] {
-  if (Array.isArray(payload)) return payload.filter(asRecord) as ApiRecord[];
+  if (Array.isArray(payload)) return (payload.filter(asRecord) as ApiRecord[]).filter(productIsVisible);
 
   const record = asRecord(payload);
   const collection = record?.products || record?.data || record?.items;
-  return Array.isArray(collection) ? (collection.filter(asRecord) as ApiRecord[]) : [];
+  return Array.isArray(collection)
+    ? (collection.filter(asRecord) as ApiRecord[]).filter(productIsVisible)
+    : [];
+}
+
+function productIsVisible(product: ApiRecord) {
+  return getText(product, ["status"])?.trim().toLowerCase() !== "archived";
 }
 
 function getCollections(payload: unknown): ApiRecord[] {

@@ -113,6 +113,7 @@ function parseSearchProducts(payload: unknown): SearchProduct[] {
   return items.flatMap((item) => {
     const product = asRecord(item);
     if (!product) return [];
+    if (textValue(product, ["status"])?.trim().toLowerCase() === "archived") return [];
     const id = textValue(product, ["id", "_id"]);
     const name = textValue(product, ["name", "title", "productName"]);
     if (!id || !name) return [];

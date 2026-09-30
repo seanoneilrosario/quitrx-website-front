@@ -434,7 +434,8 @@ const getCachedQuitHeroProduct = unstable_cache(
         `/products/${encodeURIComponent(handle)}`,
       );
 
-      return response.data ?? undefined;
+      const product = response.data ?? undefined;
+      return product && productIsVisible(product) ? product : undefined;
     } catch (error) {
       if (error instanceof Error && error.message.includes("404")) {
         return undefined;
@@ -651,7 +652,7 @@ function resolveCollectionProducts(
       ?? (isCompleteProduct(nested) ? nested : undefined)
       ?? (isCompleteProduct(record) ? record : undefined);
 
-    if (!product || !isCompleteProduct(product)) {
+    if (!product || !isCompleteProduct(product) || !productIsVisible(product)) {
       console.warn("Unable to resolve collection product.", {
         collectionSlug,
         storedId: typeof reference === "string" ? reference : record?.productId ?? record?.id,

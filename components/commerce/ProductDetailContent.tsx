@@ -15,7 +15,7 @@ export default function ProductDetailContent({
   const {
     product,
     image,
-    description,
+    descriptionSections,
     isBundle,
     productId,
     variants,
@@ -46,27 +46,27 @@ export default function ProductDetailContent({
             relatedProducts={relatedProducts}
           />
 
-          <details className={styles.productDisclosure} open>
+          {descriptionSections.details && <details className={styles.productDisclosure} open>
             <summary>Details</summary>
-            {description && (
+            {descriptionSections.details && (
               <div
                 className={styles.disclosureContent}
-                dangerouslySetInnerHTML={{ __html: description }}
+                dangerouslySetInnerHTML={{ __html: descriptionSections.details }}
               />
             )}
-          </details>
-          <details className={styles.productDisclosure}>
+          </details>}
+          {descriptionSections.inTheBox && <details className={styles.productDisclosure}>
             <summary>What&apos;s in the box</summary>
-            <p className={styles.disclosureContent}>See the product packaging and description for included items.</p>
-          </details>
-          <details className={styles.productDisclosure}>
+            <div className={styles.disclosureContent} dangerouslySetInnerHTML={{ __html: descriptionSections.inTheBox }} />
+          </details>}
+          {descriptionSections.beginnerTips && <details className={styles.productDisclosure}>
             <summary>Beginner Tips</summary>
-            <p className={styles.disclosureContent}>Follow the product directions and contact our team if you need help choosing an option.</p>
-          </details>
-          <details className={styles.productDisclosure}>
+            <div className={styles.disclosureContent} dangerouslySetInnerHTML={{ __html: descriptionSections.beginnerTips }} />
+          </details>}
+          {descriptionSections.shipping && <details className={styles.productDisclosure}>
             <summary>Shipping &amp; Delivery</summary>
-            <p className={styles.disclosureContent}>Delivery options and costs are confirmed during checkout.</p>
-          </details>
+            <div className={styles.disclosureContent} dangerouslySetInnerHTML={{ __html: descriptionSections.shipping }} />
+          </details>}
         </div>
       </div>
     </main>

@@ -1,6 +1,5 @@
 import "server-only";
 
-import sanitizeHtml from "sanitize-html";
 import type { QuitHeroProduct } from "./quithero";
 import {
   getFrequentlyBoughtTogetherIds,
@@ -9,32 +8,15 @@ import {
   getQuitHeroProductById,
   productHasTag,
 } from "./quithero";
-import { bundleDropdownsFrom } from "./quithero-bundle";
+import { bundleDropdownsFrom, productIsVisible } from "./quithero-bundle";
 import { getAvailableStock } from "./available-stock";
+import { productDescriptionSections } from "./product-description-sections";
 
 export async function getProductDetailData(product: QuitHeroProduct) {
   const image = getPrimaryImage(product);
 
-  const description = sanitizeHtml(
-    product.description || product.shortDescription || "",
-    {
-      allowedTags: [
-        "p",
-        "br",
-        "strong",
-        "b",
-        "em",
-        "i",
-        "a",
-        "ul",
-        "ol",
-        "li",
-      ],
-      allowedAttributes: {
-        a: ["href", "target", "rel"],
-      },
-      allowedSchemes: ["http", "https", "mailto", "tel"],
-    },
+  const descriptionSections = productDescriptionSections(
+    product.description || product.shortDescription,
   );
 
   const isBundle = productHasTag(product, "bundle");
@@ -54,7 +36,7 @@ export async function getProductDetailData(product: QuitHeroProduct) {
   );
 
   const relatedProducts = relatedProductsData
-    .filter((item): item is QuitHeroProduct => Boolean(item))
+    .filter((item): item is QuitHeroProduct => item !== undefined && productIsVisible(item))
     .map((item) => ({
       id: item.id!,
       name: item.name!,
@@ -73,7 +55,7 @@ export async function getProductDetailData(product: QuitHeroProduct) {
 
   // Build lookup from the current product + related products.
   const productsForLookup = [product, ...relatedProductsData.filter(
-    (item): item is QuitHeroProduct => Boolean(item),
+    (item): item is QuitHeroProduct => item !== undefined && productIsVisible(item),
   )];
 
   const variantLookup = new Map(
@@ -127,7 +109,7 @@ export async function getProductDetailData(product: QuitHeroProduct) {
   return {
     product,
     image,
-    description,
+    descriptionSections,
     isBundle,
     productId,
     variants,

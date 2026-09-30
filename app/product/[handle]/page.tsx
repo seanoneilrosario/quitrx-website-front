@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getQuitHeroProduct } from "@/lib/quithero";
+import { productIsVisible } from "@/lib/quithero-bundle";
 import ProductDetail from "@/components/commerce/ProductDetail";
 
 type ProductPageProps = {
@@ -48,9 +49,7 @@ export default async function ProductPage({
 
   const product = await getQuitHeroProduct(handle);
 
-  console.log(product);
-
-  if (!product || product.status === "ARCHIVED") {
+  if (!product || !productIsVisible(product)) {
     notFound();
   }
 
