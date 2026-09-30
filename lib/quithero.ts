@@ -234,7 +234,7 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
   const resolvedCollection = await getQuitHeroCollection(slug);
 
   if (resolvedCollection) {
-    const collectionProducts = resolvedCollection.products;
+    const collectionProducts = resolvedCollection.products.filter(productIsVisible);
     const totalPages = Math.max(1, Math.ceil(collectionProducts.length / normalizedLimit));
     const startIndex = (normalizedPage - 1) * normalizedLimit;
 

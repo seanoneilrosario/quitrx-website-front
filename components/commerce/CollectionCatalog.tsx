@@ -5,7 +5,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
-import { productIsAvailable } from "@/lib/quithero-bundle";
+import { productIsAvailable, productIsVisible } from "@/lib/quithero-bundle";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { hasActiveScript } from "@/lib/script-access";
 import ProductCard from "./ProductCard";
@@ -48,7 +48,7 @@ export default function CollectionCatalog({ collectionSlug, initialPage }: { col
     initialData: initialPage ? { pages: [initialPage], pageParams: [1] } : undefined,
   });
   const products = useMemo(() => {
-    const allProducts = data?.pages.flatMap((page) => page.products) ?? [];
+    const allProducts = data?.pages.flatMap((page) => page.products).filter(productIsVisible) ?? [];
     return Array.from(new Map(allProducts.map((product) => [product.id ?? product.slug, product])).values());
   }, [data]);
   const collection = data?.pages[0]?.collection ?? { name: collectionSlug.replaceAll("-", " "), description: "" };
