@@ -798,6 +798,7 @@
 
   .site-nav__panel {
     padding: 40px 18px 28px;
+    background: #25616d;
   }
 
   .site-nav__menu {
@@ -811,6 +812,7 @@
   .site-nav {
     top: 85px;
     min-height: 0;
+    background: #25616d;
   }
 
   .site-nav__footer {
