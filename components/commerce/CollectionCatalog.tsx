@@ -75,7 +75,7 @@ export default function CollectionCatalog({
           product,
         ]),
       ).values(),
-    );
+    ).filter((product) => product.status !== "ARCHIVED");
   }, [data]);
   const collection = data?.pages[0]?.collection ?? { name: collectionSlug.replaceAll("-", " "), description: "" };
   const productsLoading = isPending || isFetchingNextPage;

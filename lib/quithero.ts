@@ -207,6 +207,7 @@ async function loadQuitHeroProductsPage(
   const query = new URLSearchParams({
     page: String(page),
     limit: String(limit),
+    status: "active",
   });
 
   if (search) query.set("search", search);
@@ -310,7 +311,7 @@ export async function getQuitHeroCollectionPage(
     };
     pagination: QuitHeroPagination;
   }>(
-    `/collections/${encodeURIComponent(slug)}?page=${normalizedPage}&limit=${normalizedLimit}`,
+    `/collections/${encodeURIComponent(slug)}?page=${normalizedPage}&limit=${normalizedLimit}&status=active`,
   );
 
   return {
