@@ -14,7 +14,7 @@ import styles from "./collectionCatalog.module.css";
 import storeStyles from "@/app/store.module.css";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
-const DISPLAY_PAGE_SIZE = 20;
+const DISPLAY_PAGE_SIZE = 15;
 
 type CollectionLink = { name: string; slug: string };
 
@@ -53,13 +53,26 @@ export default function CollectionCatalog({
 
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
-  const { data, error, isPending, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } = useInfiniteQuery({
+  const { data, error, isPending, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
+  useInfiniteQuery({
     ...collectionProductsQuery(collectionSlug),
-    initialData: initialPage ? { pages: [initialPage], pageParams: [1] } : undefined,
+    initialData: initialPage
+      ? {
+          pages: [initialPage],
+          pageParams: [1],
+        }
+      : undefined,
+    initialDataUpdatedAt: Date.now(),
   });
   const products = useMemo(() => {
-    const allProducts = data?.pages.flatMap((page) => page.products).filter(productIsVisible) ?? [];
-    return Array.from(new Map(allProducts.map((product) => [product.id ?? product.slug, product])).values());
+    const allProducts =
+      data?.pages.flatMap((page) => page.products) ?? [];
+
+    return Array.from(
+      new Map(
+        allProducts.map((product) => [product.id ?? product.slug, product])
+      ).values()
+    );
   }, [data]);
   const collection = data?.pages[0]?.collection ?? { name: collectionSlug.replaceAll("-", " "), description: "" };
   const productsLoading = isPending || isFetchingNextPage;
@@ -216,7 +229,7 @@ export default function CollectionCatalog({
       />
       <aside className={`${styles.filters} ${filtersOpen ? styles.filtersOpen : ""}`} aria-label="Product filters">
         <div className={styles.drawerHeader}>
-          <div><strong>Filter and sort</strong><span>{products.length} products</span></div>
+          <div><strong>Filter and sort</strong><span> {data?.pages[0]?.pagination?.total ?? products.length} products</span></div>
           <button type="button" aria-label="Close filters" onClick={() => setFiltersOpen(false)}><span /></button>
         </div>
         <div className={styles.filtersHeader}>
@@ -251,7 +264,9 @@ export default function CollectionCatalog({
             <span className={styles.filterIcon} aria-hidden="true" />
             Filter and sort
           </button>
-          <strong>{products.length} products</strong>
+          <strong>
+            {data?.pages[0]?.pagination?.total ?? products.length} products
+          </strong>
         </div>
         <div className={styles.toolbar}>
           <label>Sort by:

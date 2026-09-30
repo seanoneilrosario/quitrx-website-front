@@ -47,9 +47,19 @@ type QuitHeroProductsResponse =
     };
 
 export type QuitHeroCollectionPage = {
-  collection: { name: string; slug: string; description?: string };
+  collection: {
+    name: string;
+    slug: string;
+    description?: string;
+  };
   products: QuitHeroProduct[];
-  pagination: { page: number; limit: number; totalPages: number; hasNextPage: boolean };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+  };
 };
 
 type QuitHeroCollectionsResponse =
@@ -213,38 +223,29 @@ async function hydrateBundleAvailability(products: QuitHeroProduct[]) {
   }));
 }
 
-export async function getQuitHeroCollectionPage(slug: string, page: number, limit: number): Promise<QuitHeroCollectionPage> {
+export async function getQuitHeroCollectionPage(
+  slug: string,
+  page: number,
+  limit: number,
+): Promise<QuitHeroCollectionPage> {
   const normalizedPage = Math.max(1, Math.floor(page));
-  const normalizedLimit = Math.max(1, Math.min(100, Math.floor(limit)));
-  // All products needs no collection matching. Fetch only the requested page
-  // instead of downloading every catalog page before slicing the results.
-  if (slug === "all-products") {
-    const { products, totalPages } = await loadQuitHeroProductsPage(normalizedPage, normalizedLimit);
-    return {
-      collection: { name: "All Products", slug },
-      products: await hydrateBundleAvailability(products),
-      pagination: {
-        page: normalizedPage,
-        limit: normalizedLimit,
-        totalPages,
-        hasNextPage: normalizedPage < totalPages,
-      },
-    };
-  }
-  const resolvedCollection = await getQuitHeroCollection(slug);
+  const normalizedLimit = Math.max(
+    1,
+    Math.min(100, Math.floor(limit)),
+  );
 
-  if (resolvedCollection) {
-    const collectionProducts = resolvedCollection.products.filter(productIsVisible);
-    const totalPages = Math.max(1, Math.ceil(collectionProducts.length / normalizedLimit));
-    const startIndex = (normalizedPage - 1) * normalizedLimit;
+  if (slug === "all-products") {
+    const { products, totalPages } = await loadQuitHeroProductsPage(
+      normalizedPage,
+      normalizedLimit,
+    );
 
     return {
       collection: {
-        name: resolvedCollection.brand?.name ?? slug.replaceAll("-", " "),
+        name: "All Products",
         slug,
-        description: resolvedCollection.brand?.description,
       },
-      products: await hydrateBundleAvailability(collectionProducts.slice(startIndex, startIndex + normalizedLimit)),
+      products,
       pagination: {
         page: normalizedPage,
         limit: normalizedLimit,
@@ -254,80 +255,38 @@ export async function getQuitHeroCollectionPage(slug: string, page: number, limi
     };
   }
 
-  const assignmentPromise = client.withConfig({ useCdn: false }).fetch<{
-    title?: string;
-    description?: string;
-    productIds?: string[];
-    selectionMode?: "manual" | "dynamic";
-    dynamicTag?: string;
-    ruleMatch?: "all" | "any";
-    dynamicRules?: CollectionRule[];
-  } | null>(
-    `*[_type == "productCollection" && slug.current == $slug][0]{title, description, productIds, selectionMode, dynamicTag, ruleMatch, dynamicRules}`,
-    { slug },
-    { next: { revalidate: 30 } },
-  ).catch(() => null);
-  const [apiCollections, assignment] = await Promise.all([
-    getQuitHeroCollections().catch(() => []),
-    assignmentPromise,
-  ]);
-  const apiCollection = apiCollections.find((collection) => collection.slug === slug);
-  const isDefinedCollection = Boolean(apiCollection || assignment || slug === "all-products");
-  const search = isDefinedCollection ? undefined : slug.split("-").filter(Boolean).slice(0, 3).join(" ");
-  const { products: batch, totalPages } = await loadQuitHeroProductsPage(normalizedPage, normalizedLimit, search);
-
-  let products = batch;
-  let knownCollectionTotal: number | undefined;
-  if (apiCollection?.type?.toLowerCase() === "dynamic") {
-    const apiRules = apiCollection.rules?.length ? apiCollection.rules : apiCollection.dynamicRules ?? [];
-    const fallbackRules = assignment?.dynamicRules?.length
-      ? assignment.dynamicRules
-      : assignment?.dynamicTag
-        ? [{ field: "tag", operator: "equals", value: assignment.dynamicTag } satisfies CollectionRule]
-        : [];
-    const rules = apiRules.length ? apiRules : fallbackRules;
-    const match = (apiCollection.match ?? assignment?.ruleMatch)?.toLowerCase() === "any" ? "any" : "all";
-    const fallbackIds = new Set(assignment?.productIds ?? []);
-    const needsProductFallback = !apiRules.length || rules.some((rule) => rule.field === "tag")
-      && batch.some((product) => !product.tags?.length);
-    products = batch.filter((product) => productMatchesCollectionRules(product, rules, match)
-      || Boolean(needsProductFallback && product.id && fallbackIds.has(product.id)));
-  } else if (apiCollection) {
-    const references: QuitHeroCollectionProduct[] = [...(apiCollection.products ?? []), ...(apiCollection.productIds ?? [])];
-    const identifiers = new Set(references.flatMap((reference) => {
-      if (typeof reference === "string") return [reference];
-      return [reference.productId, reference._ref, reference.product?.id, reference.id].filter((value): value is string => Boolean(value));
-    }));
-    knownCollectionTotal = identifiers.size;
-    products = batch.filter((product) => [product.id, product.sourceId, product.handle, product.slug].some((id) => id && identifiers.has(id)));
-  } else if (assignment) {
-    const selected = new Set(assignment.productIds ?? []);
-    const rules = assignment.dynamicRules?.length
-      ? assignment.dynamicRules
-      : assignment.dynamicTag
-        ? [{ field: "tag", operator: "equals", value: assignment.dynamicTag } satisfies CollectionRule]
-        : [];
-    products = assignment.selectionMode === "dynamic"
-      ? batch.filter((product) => productMatchesCollectionRules(product, rules, assignment.ruleMatch ?? "all"))
-      : batch.filter((product) => Boolean(product.id && selected.has(product.id)));
-    if (assignment.selectionMode !== "dynamic") knownCollectionTotal = selected.size;
-  } else if (slug !== "all-products") {
-    products = batch.filter((product) => product.brand?.slug === slug);
-  }
+  const response = await quitHeroFetch<{
+    data: {
+      id: string;
+      name: string;
+      slug: string;
+      description?: string | null;
+      products: QuitHeroProduct[];
+    };
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNextPage: boolean;
+    };
+  }>(
+    `/collections/${encodeURIComponent(slug)}?page=${normalizedPage}&limit=${normalizedLimit}`,
+  );
 
   return {
     collection: {
-      name: apiCollection?.name ?? assignment?.title ?? (slug === "all-products" ? "All Products" : slug.replaceAll("-", " ")),
-      slug,
-      description: apiCollection?.description ?? assignment?.description,
+      name: response.data.name,
+      slug: response.data.slug,
+      description: response.data.description ?? undefined,
     },
-    products: await hydrateBundleAvailability(products),
+    products: response.data.products ?? [],
     pagination: {
-      page: normalizedPage,
-      limit: normalizedLimit,
-      totalPages,
-      hasNextPage: normalizedPage < totalPages
-        && (knownCollectionTotal === undefined || products.length < knownCollectionTotal),
+      page: response.pagination.page,
+      limit: response.pagination.limit,
+      total: response.pagination.total,
+      totalPages: response.pagination.totalPages,
+      hasNextPage: response.pagination.hasNextPage,
     },
   };
 }
