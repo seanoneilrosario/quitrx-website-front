@@ -249,6 +249,7 @@ export async function getQuitHeroCollectionPage(
       pagination: {
         page: normalizedPage,
         limit: normalizedLimit,
+        total: products.length,
         totalPages,
         hasNextPage: normalizedPage < totalPages,
       },
