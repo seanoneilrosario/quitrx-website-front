@@ -315,7 +315,7 @@
   aspect-ratio: 1;
   place-items: center;
   padding: clamp(24px, 3vw, 42px);
-  background: linear-gradient(135deg, #eef1fb, #e0f3ec);
+  background: #fff;
 }
 
 .scriptRequired {

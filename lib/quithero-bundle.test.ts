@@ -67,8 +67,12 @@ describe("productIsVisible", () => {
     expect(productIsVisible({ status: "ARCHIVED" })).toBe(false);
   });
 
-  it("preserves archived products synced from an external source", () => {
-    expect(productIsVisible({ status: "ARCHIVED", sourceSystem: "QOBLEX" })).toBe(true);
+  it("hides archived products synced from an external source", () => {
+    expect(productIsVisible({ status: "ARCHIVED", sourceSystem: "QOBLEX" })).toBe(false);
+  });
+
+  it("normalizes archived status before checking visibility", () => {
+    expect(productIsVisible({ status: "  archived  " })).toBe(false);
   });
 });
 

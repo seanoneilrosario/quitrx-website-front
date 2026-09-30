@@ -55,9 +55,7 @@ type BundleAwareProduct = {
 
 export function productIsVisible(product: Pick<BundleAwareProduct, "status" | "sourceSystem">) {
   const status = product.status?.trim().toLowerCase();
-  // Dashboard-created products are archived when removed. Synced source
-  // products may legitimately use ARCHIVED while remaining on the storefront.
-  return status !== "archived" || Boolean(product.sourceSystem?.trim());
+  return status !== "archived";
 }
 
 export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] {
