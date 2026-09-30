@@ -192,7 +192,11 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const lastScrollY = useRef(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const menuItems = navigation?.header_menu?.length ? navigation.header_menu : fallbackMenu;
-  const accountName = accountIdentity?.firstName?.trim();
+  const accountFirstName = accountIdentity?.firstName?.trim();
+  const accountName = [accountFirstName, accountIdentity?.lastName]
+    .map((name) => name?.trim())
+    .filter(Boolean)
+    .join(" ");
   const isAuthenticated = Boolean(accountIdentity?.email?.trim());
   const accountPending = !isAuthenticated && (accountLoading || Boolean(accountError));
 
@@ -381,7 +385,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                     </svg>
                   )}
                   <span>
-                    {isAuthenticated ? (accountName ? `Hi, ${accountName}` : "Hi") : "Login"}
+                    {isAuthenticated ? (accountFirstName ? `Hi, ${accountFirstName}` : "Hi") : "Login"}
                   </span>
                 </Link>
               )}
@@ -455,6 +459,59 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
           onClick={() => setIsOpen(false)}
         >
           <div className="site-nav__panel" onClick={(event) => event.stopPropagation()}>
+            <div className="site-nav__header">
+              <button
+                className="site-nav__close"
+                type="button"
+                aria-label="Close navigation menu"
+                onClick={() => setIsOpen(false)}
+              >
+                <span />
+                <span />
+              </button>
+              <Link className="site-nav__logo" href="/" aria-label="Home" onClick={() => setIsOpen(false)}>
+                {navigation?.headerLogoMenu || selectedLogo ? (
+                  <Image
+                    src={navigation?.headerLogoMenu || selectedLogo || ""}
+                    alt={navigation?.headerLogoMenuAlt || navigation?.headerLogoAlt || navigation?.title || "QuitRx"}
+                    width={280}
+                    height={80}
+                  />
+                ) : (
+                  <span>QuitRx</span>
+                )}
+              </Link>
+              <div className="site-nav__actions">
+                <button
+                  className="site-nav__search"
+                  type="button"
+                  aria-label="Search the site"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsSearchOpen(true);
+                  }}
+                >
+                  <svg fill="none" viewBox="0 0 18 19" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      fillRule="evenodd"
+                      d="M11.03 11.68A5.784 5.784 0 1 1 2.85 3.5a5.784 5.784 0 0 1 8.18 8.18m.26 1.12a6.78 6.78 0 1 1 .72-.7l5.4 5.4a.5.5 0 1 1-.71.7z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+                <button
+                  className="site-nav__cart"
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsCartOpen(true);
+                  }}
+                >
+                  My Cart{cartCount > 0 ? ` (${cartCount})` : ""}
+                </button>
+              </div>
+            </div>
             <nav className="site-nav__menu" aria-label="Primary navigation">
               {menuItems.map((item) => (
                 <Link
@@ -496,6 +553,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                     <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
+                  <span>{isAuthenticated ? accountName || "My Account" : "Login"}</span>
                 </Link>
               )}
             </div>
