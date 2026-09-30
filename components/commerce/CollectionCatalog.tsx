@@ -193,18 +193,20 @@ export default function CollectionCatalog({
     <header className={storeStyles.collectionHeader}>
       <h1>{collection.name}</h1>
     </header>
-    <nav className={styles.collectionNav} aria-label="Product collections">
-      {collectionLinks.map((item) => (
-        <Link
-          href={`/collections/${item.slug}`}
-          className={item.slug === collectionSlug ? styles.collectionNavActive : undefined}
-          aria-current={item.slug === collectionSlug ? "page" : undefined}
-          key={item.slug}
-        >
-          {item.name}
-        </Link>
-      ))}
-    </nav>
+    {collectionLinks.length > 0 && (
+      <nav className={styles.collectionNav} aria-label="Product collections">
+        {collectionLinks.map((item) => (
+          <Link
+            href={`/collections/${item.slug}`}
+            className={item.slug === collectionSlug ? styles.collectionNavActive : undefined}
+            aria-current={item.slug === collectionSlug ? "page" : undefined}
+            key={item.slug}
+          >
+            {item.name}
+          </Link>
+        ))}
+      </nav>
+    )}
     <div className={styles.catalog}>
       <button
         type="button"

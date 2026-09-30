@@ -191,36 +191,60 @@
 }
 
 .productDisclosure {
-  border-top: 1px solid #8fa7ab;
+  border-top: 1px solid #b5b8ba;
 }
 
 .productDisclosure:last-child {
-  border-bottom: 1px solid #8fa7ab;
+  border-bottom: 1px solid #b5b8ba;
 }
 
 .productDisclosure summary {
-  padding: 14px 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 8px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 700;
-  list-style-position: inside;
+  color: #2c315f;
+  list-style: none;
+}
+
+.productDisclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.productDisclosure summary::after {
+  width: 6px;
+  height: 6px;
+  margin: 0 4px 3px 12px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: "";
+  transform: rotate(45deg);
+  transition: transform 150ms ease;
+}
+
+.productDisclosure[open] summary::after {
+  margin-bottom: -3px;
+  transform: rotate(225deg);
 }
 
 .disclosureSummaryLabel {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
 }
 
 .disclosureSummaryLabel img {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
 }
 
 .disclosureContent {
   margin: 0;
-  padding: 0 6px 18px;
+  padding: 2px 8px 14px 34px;
   font-size: 14px;
   line-height: 1.65;
 }
