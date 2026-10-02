@@ -16,6 +16,7 @@ interface EscriptBannerProps {
   buttonIcon?: string;
 
   buttonText?: string;
+  buttonUrl?: string;
 
   paddingTop?: number;
   paddingBottom?: number;
@@ -63,20 +64,22 @@ const EscriptBanner = ({
             </div>
           </div>
 
-          {!loading && <Link
-            href={customer ? "/upload-prescription" : "/account/login?next=/upload-prescription"}
-            className={styles.button}
-          >
-            {buttonIcon && (
-              <Image
-                src={buttonIcon}
-                alt=""
-                width={30}
-                height={30}
-              />
-            )}
-            <span>{buttonText}</span>
-          </Link>}
+          {/* {buttonText && buttonUrl && ( */}
+            {!loading && <Link
+              href={customer ? "/upload-prescription" : "/account/login?next=/upload-prescription"}
+              className={styles.button}
+            >
+              {buttonIcon && (
+                <Image
+                  src={buttonIcon}
+                  alt=""
+                  width={30}
+                  height={30}
+                />
+              )}
+              <span>{buttonText}</span>
+            </Link>}
+          {/* )} */}
         </div>
       </div>
     </section>

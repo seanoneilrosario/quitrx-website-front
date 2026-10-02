@@ -414,6 +414,9 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                 </svg>
               </button>
             </div>
+            {/* <Link className="site-header__consultations" href="/contact">
+              Consultations
+            </Link> */}
             <Link className="site-header__logo" href="/" aria-label="Home">
               {selectedLogo ? (
                 <Image

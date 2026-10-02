@@ -147,6 +147,8 @@ export function ThemeProvider({
   return (
     <ThemeContext.Provider value={value}>
       <div className="children relative" data-pathname={pathname}>
+        {/* <Image src={bg} alt="Background" fill style={{ objectFit: "cover", position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: -1 }} /> */}
+
         <div className="floating-nav">
           
         </div>

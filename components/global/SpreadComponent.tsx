@@ -146,6 +146,10 @@ const sectionRenderers: Record<
       disclaimer={component.comparison_disclaimer}
       paddingTop={component.paddingTop || 0}
       paddingBottom={component.paddingBottom || 0}
+      // isLoggedIn={isLoggedIn}
+      // isLoggedIn={true}
+      // customer={true}
+      // openLoginPopup={openLoginPopup}
     />
   ),
   escript_banner: (component) => (
@@ -155,6 +159,7 @@ const sectionRenderers: Record<
       icon={component.icon}
       buttonIcon={component.buttonIcon}
       buttonText={component.button_text || ""}
+      buttonUrl={component.button_url?.slug || ""}
       paddingTop={component.paddingTop || 0}
       paddingBottom={component.paddingBottom || 0}
     />

@@ -38,6 +38,7 @@ export default function WebsiteShell({
     <QueryProvider>
       <ThemeProvider settings={settings}>
         <AccountCustomerProvider initialCustomer={initialCustomer}>
+          {/* <RealtimeConnection /> */}
           <SiteChrome navigation={navigation} searchPages={searchPages}>
             {children}
           </SiteChrome>
