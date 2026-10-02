@@ -6,7 +6,7 @@ import { isBrowserReload } from "@/lib/catalog-refresh";
 import { collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
-import { productIsAvailable, productIsVisible } from "@/lib/quithero-bundle";
+import { productIsAvailable } from "@/lib/quithero-bundle";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { hasActiveScript } from "@/lib/script-access";
 import ProductCard from "./ProductCard";
@@ -16,8 +16,6 @@ import storeStyles from "@/app/store.module.css";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 const DISPLAY_PAGE_SIZE = 15;
-
-type CollectionLink = { name: string; slug: string };
 
 function variantPrices(product: QuitHeroProduct) {
   return (product.variants ?? []).flatMap((variant) => {
@@ -45,15 +43,14 @@ function unique(values: Array<string | undefined>) {
 export default function CollectionCatalog({
   collectionSlug,
   initialPage,
-  collectionLinks,
 }: {
   collectionSlug: string;
   initialPage?: CollectionPageResponse;
-  collectionLinks: CollectionLink[];
 }) {
 
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
+  const [initialDataUpdatedAt] = useState(() => isBrowserReload() ? 0 : Date.now());
   const { data, error, isPending, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
   useInfiniteQuery({
     ...collectionProductsQuery(collectionSlug),
@@ -64,7 +61,7 @@ export default function CollectionCatalog({
         }
       : undefined,
     // Cached server HTML must not suppress the fresh request on a browser reload.
-    initialDataUpdatedAt: isBrowserReload() ? 0 : Date.now(),
+    initialDataUpdatedAt,
   });
   const products = useMemo(() => {
     const allProducts =
@@ -235,20 +232,6 @@ export default function CollectionCatalog({
     <header className={storeStyles.collectionHeader}>
       <h1>{collection.name}</h1>
     </header>
-    {collectionLinks.length > 0 && (
-      <nav className={styles.collectionNav} aria-label="Product collections">
-        {collectionLinks.map((item) => (
-          <Link
-            href={`/collections/${item.slug}`}
-            className={item.slug === collectionSlug ? styles.collectionNavActive : undefined}
-            aria-current={item.slug === collectionSlug ? "page" : undefined}
-            key={item.slug}
-          >
-            {item.name}
-          </Link>
-        ))}
-      </nav>
-    )}
     <div className={styles.catalog}>
       <button
         type="button"
