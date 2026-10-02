@@ -17,8 +17,6 @@ import storeStyles from "@/app/store.module.css";
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
 const DISPLAY_PAGE_SIZE = 15;
 
-type CollectionLink = { name: string; slug: string };
-
 function variantPrices(product: QuitHeroProduct) {
   return (product.variants ?? []).flatMap((variant) => {
     if (variant.price === undefined || variant.price === null || variant.price === "") return [];
@@ -45,11 +43,9 @@ function unique(values: Array<string | undefined>) {
 export default function CollectionCatalog({
   collectionSlug,
   initialPage,
-  collectionLinks,
 }: {
   collectionSlug: string;
   initialPage?: CollectionPageResponse;
-  collectionLinks: CollectionLink[];
 }) {
 
   const { customer } = useAccountCustomer();
@@ -235,20 +231,6 @@ export default function CollectionCatalog({
     <header className={storeStyles.collectionHeader}>
       <h1>{collection.name}</h1>
     </header>
-    {collectionLinks.length > 0 && (
-      <nav className={styles.collectionNav} aria-label="Product collections">
-        {collectionLinks.map((item) => (
-          <Link
-            href={`/collections/${item.slug}`}
-            className={item.slug === collectionSlug ? styles.collectionNavActive : undefined}
-            aria-current={item.slug === collectionSlug ? "page" : undefined}
-            key={item.slug}
-          >
-            {item.name}
-          </Link>
-        ))}
-      </nav>
-    )}
     <div className={styles.catalog}>
       <button
         type="button"
