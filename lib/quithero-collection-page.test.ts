@@ -35,3 +35,22 @@ describe("all-products pagination", () => {
     expect(result.pagination.hasNextPage).toBe(false);
   });
 });
+
+describe("collection product fields", () => {
+  it("requests only the product data used by the collection catalog", async () => {
+    vi.stubEnv("QUITHERO_API_KEY", "test-key");
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({
+      data: { name: "E-liquids", slug: "e-liquids", products: [] },
+      pagination: { page: 1, limit: 24, total: 0, totalPages: 1, hasNextPage: false },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getQuitHeroCollectionPage("e-liquids", 1, 24);
+
+    const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(requestUrl.pathname).toBe("/collections/e-liquids");
+    expect(requestUrl.searchParams.get("productFields")).toBe(
+      "id,name,slug,status,brand,productType,variants,images,tags",
+    );
+  });
+});
