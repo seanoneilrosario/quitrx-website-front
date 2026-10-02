@@ -233,20 +233,6 @@ async function loadQuitHeroProductsPage(
   };
 }
 
-async function hydrateBundleAvailability(products: QuitHeroProduct[]) {
-  return Promise.all(products.map(async (product) => {
-    if (!productHasTag(product, "bundle") || !product.id || !product.variants?.length) return product;
-
-    const variants = await Promise.all(product.variants.map(async (variant) => {
-      if (!variant.id) return variant;
-      const bundleVariant = await getQuitHeroBundleVariant(product.id!, variant.id).catch(() => undefined);
-      return bundleVariant ? { ...variant, ...bundleVariant } : variant;
-    }));
-
-    return { ...product, variants };
-  }));
-}
-
 export async function getQuitHeroCollectionPage(
   slug: string,
   page: number,

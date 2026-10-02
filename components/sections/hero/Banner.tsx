@@ -220,33 +220,8 @@ export function Banner({
           height={1000}
         />
       }
-      {/* {doc_img && 
-        <Image
-          className="front_image"
-          src={`${doc_img}`}
-          alt={title}
-          width={1000}
-          height={1000}
-        />
-      } */}
         <Image src={doc_img} className="front_image" width={1000} height={1000} alt="" />
-        {/* <div>{doc_img}</div> */}
     </div>
-
-      {/* <button
-        type="button"
-        className="hero-scroll"
-        onClick={handleScrollDown}
-        aria-label="Scroll down"
-      >
-        <Image
-          src={arrow}
-          alt="Scroll down"
-          width={17}
-          height={17}
-          className="mx-auto"
-        />
-      </button> */}
     </section>
   );
 
