@@ -18,7 +18,7 @@ describe("all-products pagination", () => {
     const result = await getQuitHeroCollectionPage("all-products", 1, 100);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/products\?page=1&limit=100$/);
-    expect(result.pagination).toEqual({ page: 1, limit: 100, total: 1, totalPages: 50, hasNextPage: true });
+    expect(result.pagination).toEqual({ page: 1, limit: 100, totalPages: 50, hasNextPage: true });
     expect(result.products).toHaveLength(1);
   });
 

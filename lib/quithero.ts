@@ -207,6 +207,7 @@ async function loadQuitHeroProductsPage(
   const query = new URLSearchParams({
     page: String(page),
     limit: String(limit),
+    status: "active",
   });
 
   if (search) query.set("search", search);
@@ -230,20 +231,6 @@ async function loadQuitHeroProductsPage(
     total,
     totalPages,
   };
-}
-
-async function hydrateBundleAvailability(products: QuitHeroProduct[]) {
-  return Promise.all(products.map(async (product) => {
-    if (!productHasTag(product, "bundle") || !product.id || !product.variants?.length) return product;
-
-    const variants = await Promise.all(product.variants.map(async (variant) => {
-      if (!variant.id) return variant;
-      const bundleVariant = await getQuitHeroBundleVariant(product.id!, variant.id).catch(() => undefined);
-      return bundleVariant ? { ...variant, ...bundleVariant } : variant;
-    }));
-
-    return { ...product, variants };
-  }));
 }
 
 export async function getQuitHeroCollectionPage(
@@ -274,7 +261,6 @@ export async function getQuitHeroCollectionPage(
       normalizedPage,
       normalizedLimit,
     );
-    const hydratedProducts = await hydrateBundleAvailability(products);
 
     console.log("[All Products Pagination]", {
       page: normalizedPage,
@@ -290,7 +276,7 @@ export async function getQuitHeroCollectionPage(
         name: "All Products",
         slug,
       },
-      products: hydratedProducts,
+      products,
       pagination: {
         page: normalizedPage,
         limit: normalizedLimit,
