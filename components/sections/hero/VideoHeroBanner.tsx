@@ -22,8 +22,6 @@ export default function VideoHeroBanner({
         />
       </div>
 
-      {/* <div className="video-hero-banner__overlay" /> */}
-
       <div className="video-hero-banner__content">
         <h1 className="video-hero-banner__title">
           {heading}

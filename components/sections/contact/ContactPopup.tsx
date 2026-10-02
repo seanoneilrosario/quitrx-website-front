@@ -13,11 +13,6 @@ export default function ContactPopup({
 }: Props) {
   return (
     <>
-      {/* <div
-        className={`${styles.overlay} ${open ? styles.show : ""}`}
-        onClick={onClose}
-      /> */}
-
       <div className={`${styles.popup} ${open ? styles.open : ""}`}>
         <button
           className={styles.close}

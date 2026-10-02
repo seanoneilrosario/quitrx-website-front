@@ -6,7 +6,7 @@ import { isBrowserReload } from "@/lib/catalog-refresh";
 import { collectionProductsQuery, type CollectionPageResponse } from "@/lib/catalog-queries";
 import Link from "next/link";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
-import { productIsAvailable, productIsVisible } from "@/lib/quithero-bundle";
+import { productIsAvailable } from "@/lib/quithero-bundle";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { hasActiveScript } from "@/lib/script-access";
 import ProductCard from "./ProductCard";
@@ -50,6 +50,7 @@ export default function CollectionCatalog({
 
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
+  const [initialDataUpdatedAt] = useState(() => isBrowserReload() ? 0 : Date.now());
   const { data, error, isPending, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
   useInfiniteQuery({
     ...collectionProductsQuery(collectionSlug),
@@ -60,7 +61,7 @@ export default function CollectionCatalog({
         }
       : undefined,
     // Cached server HTML must not suppress the fresh request on a browser reload.
-    initialDataUpdatedAt: isBrowserReload() ? 0 : Date.now(),
+    initialDataUpdatedAt,
   });
   const products = useMemo(() => {
     const allProducts =

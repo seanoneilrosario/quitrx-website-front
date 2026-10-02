@@ -28,35 +28,7 @@ export function Footer({ navigation }: FooterProps) {
   }
   return (
     <footer className="footer ">
-      {/* <Image
-          src={navigation?.footer_background_image || ""}
-          alt="Background image"
-          width={2000}
-          height={2000}
-          className="richtext-with-image__background absolute top-0 left-0 w-full h-full object-cover z-[-1]"
-        /> */}
       <div className="footer-content relative">
-        
-        {/* <div className="richtext-with-image__container">
-          {navigation?.footerLogo && (
-            <div className="richtext-with-image__image">
-              <Image
-                src={navigation?.footerLogo}
-                alt={ "Richtext image"}
-                width={100}
-                height={100}
-                className="richtext-with-image__img"
-              />
-             
-            </div>
-          )}
-  
-          <div className="richtext-with-image__content">
-            <div className="richtext-with-image__description">
-              <PortableText value={navigation?.company_info} />
-            </div>
-          </div>
-        </div> */}
       </div>
       <div className="footer-border-separator hidden lg:block  w-[89%] mb-5 mx-auto"></div>
 
@@ -73,30 +45,10 @@ export function Footer({ navigation }: FooterProps) {
               {item.title}
             </Link>
           ))}
-          {/* <Link
-              href={`/privacy-policy`}
-              className="footer__link"
-            >
-              Privacy Policy
-            </Link> */}
         </div>
-
-        {/* CENTER */}
-        {/* <div className="footer__center">
-          {navigation?.footerLogo && (
-            <Image
-              src={urlFor(navigation.footerLogo).url()}
-              alt={navigation.footerLogo || "Footer Logo"}
-              width={220}
-              height={80}
-              className="footer__logo"
-            />
-          )}
-        </div> */}
 
         {/* RIGHT */}
         <div className="footer__right">
-          {/* <PortableText value={navigation?.company_info} components={components} /> */}
           <p>&copy; Copyright QuitRx {currentYear}</p>
 
         </div>
