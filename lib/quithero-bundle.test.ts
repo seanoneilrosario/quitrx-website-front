@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import { bundleComponentsFrom, bundleDropdownsFrom, bundleSlotsFrom, productIsAvailable, productIsVisible, variantIsAvailable } from "./quithero-bundle";
 
 describe("bundleDropdownsFrom", () => {
+  it("preserves selection quantities and requires enough component stock", () => {
+    const bundleDropdowns = [{ name: "Flavour", quantity: 2, options: [{ componentVariantId: "mint", componentVariant: { inventory: 1 } }] }];
+    expect(bundleDropdownsFrom({ bundleDropdowns })[0].quantity).toBe(2);
+    expect(variantIsAvailable({ bundleDropdowns })).toBe(false);
+    bundleDropdowns[0].options[0].componentVariant.inventory = 2;
+    expect(variantIsAvailable({ bundleDropdowns })).toBe(true);
+  });
   it("normalizes the current variant bundle dropdown structure", () => {
     expect(bundleDropdownsFrom({ bundleDropdowns: [{
       name: "Choose a flavour",
@@ -10,6 +17,7 @@ describe("bundleDropdownsFrom", () => {
         { componentVariantId: "berry" },
       ],
     }] })).toEqual([{
+      quantity: 1,
       name: "Choose a flavour",
       options: [
         { componentVariantId: "mint", componentVariant: { name: "Mint", inventory: 4 } },

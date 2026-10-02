@@ -74,6 +74,7 @@ export async function getProductDetailData(product: QuitHeroProduct) {
   const bundleDropdowns = bundleDropdownsFrom(bundleVariant).map(
     (dropdown) => ({
       name: dropdown.name,
+      quantity: dropdown.quantity,
       options: dropdown.options.map(
         ({ componentVariantId, componentVariant }) => {
           const match = variantLookup.get(componentVariantId);
@@ -99,7 +100,7 @@ export async function getProductDetailData(product: QuitHeroProduct) {
               match?.variant.name ||
               "Default",
             availableStock,
-            available: availableStock > 0,
+            available: availableStock >= dropdown.quantity,
           };
         },
       ),

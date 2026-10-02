@@ -637,7 +637,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                               {component.variantName !== "Default" && (
                                 <span> - {component.variantName}</span>
                               )}
-                              {component.quantity > 1 && <span> &times; {component.quantity}</span>}
+
                             </li>
                           ))}
                         </ol>

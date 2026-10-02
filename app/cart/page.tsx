@@ -95,7 +95,7 @@ export default function CartPage() {
                           <li key={`${component.productName}-${component.variantName}-${index}`}>
                             <span>{component.productName}</span>
                             {component.variantName !== "Default" && <span> - {component.variantName}</span>}
-                            {component.quantity > 1 && <span> &times; {component.quantity}</span>}
+
                           </li>
                         ))}
                       </ol>

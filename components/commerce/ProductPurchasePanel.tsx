@@ -29,6 +29,7 @@ type RelatedProduct = {
 
 type BundleDropdown = {
   name: string;
+  quantity: number;
   options: Array<{
     componentVariantId: string;
     productId: string;
@@ -129,7 +130,7 @@ export default function ProductPurchasePanel({
   const bundleIsAvailable =
     selectedBundleOptions.length > 0 && selectedBundleOptions.every((option) => option?.available);
   const availableStock = isBundle
-    ? Math.min(...selectedBundleOptions.map((option) => option?.availableStock ?? 0))
+    ? Math.min(...selectedBundleOptions.map((option, index) => option ? Math.floor(option.availableStock / bundleDropdowns[index].quantity) : 0))
     : getAvailableStock(selected);
   const available = productStatusAllowsPurchase(productStatus) && (isBundle
     ? Boolean(selected?.id) && bundleIsAvailable
@@ -153,7 +154,7 @@ export default function ProductPurchasePanel({
     const storedCart: StorefrontCartItem[] = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
 
     const mainVariantName = selected ? variantLabel(selected, selectedIndex) : "Default";
-    const selectedBundleComponents = selectedBundleOptions.flatMap((option) =>
+    const selectedBundleComponents = selectedBundleOptions.flatMap((option, index) =>
       option
         ? [
             {
@@ -161,13 +162,13 @@ export default function ProductPurchasePanel({
               productName: option.productName,
               variantId: option.componentVariantId,
               variantName: option.variantName,
-              quantity: 1,
+              quantity: bundleDropdowns[index].quantity,
             },
           ]
         : [],
     );
     const configurationKey = selectedBundleComponents
-      .map((component) => component.variantId || component.variantName)
+      .map((component) => `${component.variantId || component.variantName}:${component.quantity}`)
       .join(",");
     const mainItem: StorefrontCartItem = {
       key: `${productId}:${selected?.id || mainVariantName}${configurationKey ? `:${configurationKey}` : ""}`,

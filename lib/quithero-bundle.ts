@@ -25,6 +25,7 @@ export type QuitHeroBundleSlot = {
 
 export type QuitHeroBundleDropdown = {
   name: string;
+  quantity: number;
   options: Array<{
     componentVariantId: string;
     componentVariant?: {
@@ -74,7 +75,9 @@ export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] 
         : undefined;
       return componentVariantId ? [{ componentVariantId, ...(componentVariant ? { componentVariant } : {}) }] : [];
     });
-    return name && options.length ? [{ name, options }] : [];
+    const rawQuantity = Number(dropdown.quantity ?? 1);
+    const quantity = Number.isSafeInteger(rawQuantity) && rawQuantity > 0 ? rawQuantity : 1;
+    return name && options.length ? [{ name, quantity, options }] : [];
   });
 }
 
@@ -205,7 +208,7 @@ export function getPurchasableStock(variant?: BundleAwareVariant) {
   if (dropdowns.length) {
     return Math.min(...dropdowns.map((dropdown) => Math.max(
       0,
-      ...dropdown.options.map((option) => getAvailableStock(option.componentVariant)),
+      ...dropdown.options.map((option) => Math.floor(getAvailableStock(option.componentVariant) / dropdown.quantity)),
     )));
   }
   return getAvailableStock(variant);
