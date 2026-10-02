@@ -70,6 +70,19 @@ const API_BASE = (process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quith
 const RETRY_DELAYS_MS = [250, 750];
 const QUITHERO_CACHE_SECONDS = 60;
 const QUITHERO_CATALOG_CACHE_SECONDS = 300;
+const COLLECTION_PRODUCT_FIELDS = [
+  "id", // Required for adding products to the cart.
+  "name",
+  "slug",
+  "brandId",
+  "productTypeId",
+  "brand",
+  "productType",
+  "variants",
+  "images",
+  "tags",
+  "productOptions",
+].join(",");
 
 function delay(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -297,7 +310,7 @@ export async function getQuitHeroCollectionPage(
     };
     pagination: QuitHeroPagination;
   }>(
-    `/collections/${encodeURIComponent(slug)}?page=${normalizedPage}&limit=${normalizedLimit}&status=active`,
+    `/collections/${encodeURIComponent(slug)}?page=${normalizedPage}&limit=${normalizedLimit}&status=active&productFields=${COLLECTION_PRODUCT_FIELDS}`,
   );
 
   return {
@@ -313,7 +326,7 @@ export async function getQuitHeroCollectionPage(
 
 const getCachedQuitHeroCollectionPage = unstable_cache(
   getQuitHeroCollectionPage,
-  ["quithero-collection-page"],
+  ["quithero-collection-page", COLLECTION_PRODUCT_FIELDS],
   { revalidate: QUITHERO_CATALOG_CACHE_SECONDS, tags: ["quithero-products", "quithero-collections"] },
 );
 
