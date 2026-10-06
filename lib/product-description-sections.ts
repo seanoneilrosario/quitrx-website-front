@@ -24,6 +24,9 @@ export function productDescriptionSections(description?: string) {
     /^\s*(?:<p[^>]*>\s*(?:<(?:strong|b)[^>]*>\s*)?Details\s*:?(?:\s*<\/(?:strong|b)>)?\s*<\/p>|<(?:strong|b)[^>]*>\s*Details\s*:?\s*<\/(?:strong|b)>)\s*/i;
   marked = marked.replace(detailsHeading, "");
 
+  const strippedElementDetailsHeading = /^Details(?:\s|&nbsp;)*:?(?=\s*<)/i;
+  marked = marked.replace(strippedElementDetailsHeading, "");
+
   const inlineDetailsHeading = /^(<p[^>]*>)(?:\s|&nbsp;)*(?:<(?:strong|b)[^>]*>(?:\s|&nbsp;)*)?Details(?:\s|&nbsp;)*:?(?:(?:\s|&nbsp;)*<\/(?:strong|b)>)?(?:\s|&nbsp;)*<br\s*\/?>/i;
   marked = marked.replace(inlineDetailsHeading, "$1");
 

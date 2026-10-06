@@ -51,4 +51,10 @@ describe("productDescriptionSections", () => {
       "<p>Product note.</p>",
     );
   });
+
+  it("removes Details from a heading element stripped by sanitization", () => {
+    expect(productDescriptionSections("<h3>Details</h3><p>Product note.</p>").details).toBe(
+      "<p>Product note.</p>",
+    );
+  });
 });
