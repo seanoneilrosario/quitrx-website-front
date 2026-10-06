@@ -25,4 +25,12 @@ describe("productDescriptionSections", () => {
       shipping: "",
     });
   });
+
+  it("removes a leading Details heading already supplied by the disclosure", () => {
+    const sections = productDescriptionSections(
+      "<p><strong>Details</strong></p><p>Product information.</p>",
+    );
+
+    expect(sections.details).toBe("<p>Product information.</p>");
+  });
 });
