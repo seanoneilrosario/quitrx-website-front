@@ -720,7 +720,8 @@
   justify-items: center;
   gap: 18px;
 }
-.cart-drawer__empty button {
+.cart-drawer__empty a {
+  display: grid;
   min-height: 44px;
   padding: 0 20px;
   border: 0;
@@ -729,6 +730,8 @@
   color: #035c67;
   font-weight: 800;
   cursor: pointer;
+  place-items: center;
+  text-decoration: none;
 }
 
 .mobile_nav_icons {

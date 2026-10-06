@@ -34,7 +34,7 @@ export default function Faq({
   paddingTop = 80,
   paddingBottom = 80,
 }: FAQProps) {
-  const [open, setOpen] = useState(0);
+  const [open, setOpen] = useState(-1);
 
   return (
     <section

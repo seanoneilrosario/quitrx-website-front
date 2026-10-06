@@ -16,6 +16,11 @@ type CartItem = {
   price?: number | string;
   quantity: number;
   variantId?: string;
+  bundleComponents?: Array<{
+    productName: string;
+    variantName: string;
+    quantity: number;
+  }>;
 };
 
 const CART_KEY = "quitrx-cart";
@@ -251,7 +256,23 @@ export default function CheckoutPage() {
                     <Image src={item.image || DEFAULT_PRODUCT_IMAGE} width={68} height={72} alt="" sizes="68px" />
                     <span>{item.quantity}</span>
                   </div>
-                  <div><strong>{item.productName}</strong><small>{item.variantName}</small></div>
+                  <div>
+                    <strong>{item.productName}</strong>
+                    <small>{item.variantName}</small>
+                    {item.bundleComponents?.length ? (
+                      <ol className={styles.itemBundle} aria-label="Bundle selections">
+                        {item.bundleComponents.map((component, index) => (
+                          <li key={`${component.productName}-${component.variantName}-${index}`}>
+                            <span>{component.productName}</span>
+                            {component.variantName !== "Default" && (
+                              <span> - {component.variantName}</span>
+                            )}
+                            <span> &times; {component.quantity * item.quantity}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : null}
+                  </div>
                   <strong>{money(numericPrice(item.price) * item.quantity)}</strong>
                 </article>
               ))}

@@ -604,9 +604,9 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
           {cartItems.length === 0 ? (
             <div className="cart-drawer__empty">
               <p>Your cart is empty.</p>
-              <button type="button" onClick={() => setIsCartOpen(false)}>
+              <Link href="/pharmacy" onClick={() => setIsCartOpen(false)}>
                 Continue shopping
-              </button>
+              </Link>
             </div>
           ) : (
             <>
@@ -634,7 +634,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                               {component.variantName !== "Default" && (
                                 <span> - {component.variantName}</span>
                               )}
-                              {component.quantity > 1 && <span> &times; {component.quantity}</span>}
+                              <span> &times; {component.quantity * item.quantity}</span>
                             </li>
                           ))}
                         </ol>

@@ -268,17 +268,15 @@ export default function ProductPurchasePanel({
         </button>
       </div>
 
-      <p className={available ? styles.stockStatus : styles.outOfStock}>
-        {available ? (
-          <>
+      {available ? (
+        availableStock < 50 && (
+          <p className={styles.stockStatus}>
             Low stock! Only <strong>{availableStock}</strong> units left!
-          </>
-        ) : selected ? (
-          "Out of stock"
-        ) : (
-          "Select a bundle"
-        )}
-      </p>
+          </p>
+        )
+      ) : (
+        <p className={styles.outOfStock}>{selected ? "Out of stock" : "Select a bundle"}</p>
+      )}
       {stockError && (
         <p className={styles.outOfStock} role="alert">
           {stockError}
