@@ -41,4 +41,14 @@ describe("productDescriptionSections", () => {
 
     expect(sections.details).toBe("<p>Product information.</p>");
   });
+
+  it("removes Details after empty markup or before content in the same paragraph", () => {
+    expect(
+      productDescriptionSections("<p><br></p><p>&nbsp;</p><p>Details</p><p>First product.</p>")
+        .details,
+    ).toBe("<p>First product.</p>");
+    expect(productDescriptionSections("<p>Details<br>Product note.</p>").details).toBe(
+      "<p>Product note.</p>",
+    );
+  });
 });

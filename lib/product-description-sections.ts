@@ -17,9 +17,15 @@ const headings: Array<[Exclude<SectionKey, "details">, string]> = [
 export function productDescriptionSections(description?: string) {
   let marked = sanitizeHtml(description || "", sanitizeOptions);
 
+  const leadingEmptyParagraphs = /^(?:\s|<p[^>]*>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>)*/i;
+  marked = marked.replace(leadingEmptyParagraphs, "");
+
   const detailsHeading =
     /^\s*(?:<p[^>]*>\s*(?:<(?:strong|b)[^>]*>\s*)?Details\s*:?(?:\s*<\/(?:strong|b)>)?\s*<\/p>|<(?:strong|b)[^>]*>\s*Details\s*:?\s*<\/(?:strong|b)>)\s*/i;
   marked = marked.replace(detailsHeading, "");
+
+  const inlineDetailsHeading = /^(<p[^>]*>)(?:\s|&nbsp;)*(?:<(?:strong|b)[^>]*>(?:\s|&nbsp;)*)?Details(?:\s|&nbsp;)*:?(?:(?:\s|&nbsp;)*<\/(?:strong|b)>)?(?:\s|&nbsp;)*<br\s*\/?>/i;
+  marked = marked.replace(inlineDetailsHeading, "$1");
 
   for (const [key, heading] of headings) {
     const standaloneHeading = new RegExp(
