@@ -33,4 +33,12 @@ describe("productDescriptionSections", () => {
 
     expect(sections.details).toBe("<p>Product information.</p>");
   });
+
+  it("removes a leading bare strong Details heading", () => {
+    const sections = productDescriptionSections(
+      "<strong>Details</strong>\n<p>Product information.</p>",
+    );
+
+    expect(sections.details).toBe("<p>Product information.</p>");
+  });
 });
