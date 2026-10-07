@@ -2,21 +2,18 @@
 
 import { useState } from "react";
 
-import {
-  CTAButtonsProps,
-  PortableTextBlock,
-} from "@/components/global/components";
+import { CTAButtonsProps, PortableTextBlock } from "@/components/sections/section-types";
 
-import "./richtextwithcta.css";
+import "./richtext-with-cta.css";
 import { PortableText } from "next-sanity";
-import { useWindowWide } from "@/hooks/screenSize";
+import { useWindowWidth } from "@/hooks/useWindowWidth";
 
 interface Props {
   title: string;
   description: PortableTextBlock[];
   cta_buttons: CTAButtonsProps[];
   activeItem: number;
-  desktop_left_width: number
+  desktop_left_width: number;
 }
 
 const RichtextWithCta = ({
@@ -24,7 +21,7 @@ const RichtextWithCta = ({
   cta_buttons,
   activeItem,
   desktop_left_width,
-  description
+  description,
 }: Props) => {
   const [activeIndex, setActiveIndex] = useState(activeItem ? activeItem : 0);
   const [exitingIndex, setExitingIndex] = useState<number | null>(null);
@@ -40,24 +37,22 @@ const RichtextWithCta = ({
     }, 700); // same as CSS transition
   };
 
-  const wide = useWindowWide()
+  const wide = useWindowWidth();
 
-  const leftStyle = wide !== null && wide >= 1024 ? {width: `${desktop_left_width}%`} : {}
-
+  const leftStyle = wide !== null && wide >= 1024 ? { width: `${desktop_left_width}%` } : {};
 
   return (
     <section className="richtext-with-cta">
       <div className="richtext-with-cta__container">
-        
         <div className="richtext-with-cta__sidebar">
           <h2 className="richtext-with-cta__title">{title}</h2>
-          {description && 
+          {description && (
             <div className="description mt-15">
-              <PortableText value={description}/>
+              <PortableText value={description} />
             </div>
-          }
+          )}
 
-          {cta_buttons && 
+          {cta_buttons && (
             <div className="content-cta-wrapper mt-15">
               <div style={leftStyle} className="cta_buttons">
                 {cta_buttons?.map((item, index) => {
@@ -66,16 +61,13 @@ const RichtextWithCta = ({
                   const firstLetter = label.charAt(0);
                   const lastLetter = label.charAt(label.length - 1);
 
-
                   return (
                     <button
                       key={index}
-                      className={`cta-button ${
-                        activeIndex === index ? "active" : ""
-                      }`}
+                      className={`cta-button ${activeIndex === index ? "active" : ""}`}
                       onClick={() => {
                         setActiveIndex(index);
-                        handleChange(index)
+                        handleChange(index);
                       }}
                     >
                       {/* NORMAL TEXT */}
@@ -85,7 +77,10 @@ const RichtextWithCta = ({
                       <span className="active-text">
                         <span>{firstLetter}</span>
 
-                        <span style={{width: activeIndex === index ? labelWidth : 0}} className="line" />
+                        <span
+                          style={{ width: activeIndex === index ? labelWidth : 0 }}
+                          className="line"
+                        />
 
                         <span>{lastLetter}</span>
                       </span>
@@ -107,9 +102,7 @@ const RichtextWithCta = ({
                 ))}
               </div>
             </div>
-          }
-
-          
+          )}
         </div>
       </div>
     </section>

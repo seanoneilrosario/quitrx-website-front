@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PortableText } from "next-sanity";
-import { PortableTextBlock } from "@/components/global/components";
+import { PortableTextBlock } from "@/components/sections/section-types";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
-import styles from "./EscriptBanner.module.css";
+import styles from "./escript-banner.module.css";
 
 interface EscriptBannerProps {
   heading: string;
@@ -45,38 +45,26 @@ const EscriptBanner = ({
           <div className={styles.content}>
             {icon && (
               <div className={styles.icon}>
-                <Image
-                  src={icon}
-                  alt={heading}
-                  width={120}
-                  height={120}
-                />
+                <Image src={icon} alt={heading} width={120} height={120} />
               </div>
             )}
 
             <div className={styles.text}>
               <h2>{heading}</h2>
 
-              {description && (
-                <PortableText value={description} />
-              )}
+              {description && <PortableText value={description} />}
             </div>
           </div>
 
-          {!loading && <Link
-            href={customer ? "/upload-prescription" : "/account/login?next=/upload-prescription"}
-            className={styles.button}
-          >
-            {buttonIcon && (
-              <Image
-                src={buttonIcon}
-                alt=""
-                width={30}
-                height={30}
-              />
-            )}
-            <span>{buttonText}</span>
-          </Link>}
+          {!loading && (
+            <Link
+              href={customer ? "/upload-prescription" : "/account/login?next=/upload-prescription"}
+              className={styles.button}
+            >
+              {buttonIcon && <Image src={buttonIcon} alt="" width={30} height={30} />}
+              <span>{buttonText}</span>
+            </Link>
+          )}
         </div>
       </div>
     </section>

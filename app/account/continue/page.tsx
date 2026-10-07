@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getCustomerSession } from "@/lib/customer-session";
-import { findQuitHeroCustomerByEmail } from "@/lib/quithero-customers";
-import { hasActiveScript } from "@/lib/script-access";
+import { getCustomerSession } from "@/lib/auth/customer-session";
+import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
+import { hasActiveScript } from "@/lib/account/script-access";
 
 export default async function ContinueToTreatmentPage() {
   const session = await auth();

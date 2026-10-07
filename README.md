@@ -1,4 +1,13 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QuitRX Storefront
+
+Customer storefront built with Next.js, Sanity, and the QuitHero Retail API.
+
+## Finding and maintaining code
+
+Start with the [project structure and file guide](docs/project-structure.md) for
+folder responsibilities, common changes, naming conventions, and validation commands.
+Pages and API routes live in `app/`, reusable UI in `components/`, shared logic in
+domain folders under `lib/`, and CMS schemas in `sanity/schemas/`.
 
 ## Getting Started
 
@@ -31,7 +40,7 @@ Do not prefix these variables with `NEXT_PUBLIC_`; API keys and OAuth secrets mu
 
 Use `sandbox` while testing eWAY and PayPal. Set each gateway's environment to `production` only after replacing its credentials with the corresponding live credentials.
 
-The reusable customer synchronization service is in `lib/quithero-customers.ts`. Once the authentication provider has verified a login and returned the authenticated user, its server-side success callback should await the non-strict wrapper before redirecting:
+The reusable customer synchronization service is in `lib/quithero/customers.ts`. Once the authentication provider has verified a login and returned the authenticated user, its server-side success callback should await the non-strict wrapper before redirecting:
 
 ```ts
 await syncQuitHeroCustomerWithoutBlocking({
@@ -50,21 +59,15 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The storefront loads its Quicksand fonts from `public/fonts/` through `app/globals.css`.
 
-## Realtime data
+## Data fetching and caching
 
 The root layout resolves the signed-in account and seeds the account query for
 the first render, so the header greeting is present before hydration. This makes
@@ -79,8 +82,8 @@ their original fetch timestamp. Search and product grids share the same query
 options; collection filters are sorted and deduplicated for consistent cache keys.
 
 Account and order queries are shared in memory but are not persisted across
-reloads. Login completion, successful edits, external-form departure, and realtime
-changes can invalidate data before its freshness window expires. OAuth completion
+reloads. Login completion, successful edits, and external-form departure
+can invalidate data before its freshness window expires. OAuth completion
 always checks the current session. Server-rendered content still uses Next.js
 caching, and payment/profile writes remain explicit requests to their existing
 endpoints.
@@ -93,30 +96,7 @@ Collection pages use `useInfiniteQuery` with a cache per collection and a server
 first page. Product detail pages seed `useQuery` with server-loaded details and
 refresh through `/api/quithero-products/[slug]`, including bundle choices and
 related products. Product and collection grids also fetch through `useQuery`.
-`RealtimeConnection` mounts inside the account provider and connects
-once a signed-in customer is available. It disconnects on logout or unmount.
 
-`NEXT_PUBLIC_REALTIME_URL` optionally overrides the default Socket.IO namespace,
-`https://retail-api.quithero.com.au/realtime`. The server must allow the storefront
-origin with credentials. See the [Socket.IO React guide](https://socket.io/how-to/use-with-react).
-
-Customer events refresh the matching account through `/api/account/me`.
-`order.updated` invalidates the current customer's order list and detail queries;
-active queries refetch immediately and inactive queries refresh when opened.
-Connections also reconcile account and order data after reconnecting. Event
-payloads are never inserted directly into account or order caches.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The provider lives in `components/providers/QueryProvider.tsx`. Shared cache policy
+lives in `lib/query/query-cache.ts`, and account state is managed in
+`hooks/useAccountCustomer.tsx`.

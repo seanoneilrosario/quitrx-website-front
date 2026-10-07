@@ -3,8 +3,8 @@
 import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { findQuitHeroCustomerByEmail } from "@/lib/quithero-customers";
-import { setCustomerSession } from "@/lib/customer-session";
+import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
+import { setCustomerSession } from "@/lib/auth/customer-session";
 
 const EMAIL_CODE_COOKIE = "quitrx_email_code";
 const CODE_MAX_AGE_SECONDS = 10 * 60;
@@ -29,7 +29,9 @@ export type CustomerAccessState = {
 function sessionSecret() {
   const secret = process.env.AUTH_SESSION_SECRET || process.env.AUTH_SECRET;
   if (!secret || secret.length < 32) {
-    throw new Error("AUTH_SECRET or AUTH_SESSION_SECRET must be configured with at least 32 characters.");
+    throw new Error(
+      "AUTH_SECRET or AUTH_SESSION_SECRET must be configured with at least 32 characters.",
+    );
   }
   return secret;
 }
@@ -116,7 +118,10 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
   try {
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
     if (!customer) {
-      return { error: "No account found with that email address. Check your email, or contact us for help getting started." };
+      return {
+        error:
+          "No account found with that email address. Check your email, or contact us for help getting started.",
+      };
     }
 
     await sendLoginCode(normalizedEmail, code);
@@ -128,7 +133,11 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
       resendAt: Date.now() + 60_000,
       attempts: 0,
     });
-    return { step: "code", email: normalizedEmail, message: `We sent a confirmation code to ${normalizedEmail}.` };
+    return {
+      step: "code",
+      email: normalizedEmail,
+      message: `We sent a confirmation code to ${normalizedEmail}.`,
+    };
   } catch (error) {
     console.error("Email sign-in code delivery failed.", {
       error: error instanceof Error ? error.message : "Unknown error",
@@ -147,9 +156,12 @@ export async function accessCustomerAccount(
 
   const intent = formData.get("intent");
   const redirectValue = formData.get("redirectTo");
-  const redirectTo = typeof redirectValue === "string" && redirectValue.startsWith("/") && !redirectValue.startsWith("//")
-    ? redirectValue
-    : "/account";
+  const redirectTo =
+    typeof redirectValue === "string" &&
+    redirectValue.startsWith("/") &&
+    !redirectValue.startsWith("//")
+      ? redirectValue
+      : "/account";
   const cookieStore = await cookies();
 
   if (intent === "reset") {
@@ -165,7 +177,8 @@ export async function accessCustomerAccount(
 
     try {
       const customer = await findQuitHeroCustomerByEmail(email);
-      if (!customer?.email) return { error: "No QuitHero customer was found with that email address." };
+      if (!customer?.email)
+        return { error: "No QuitHero customer was found with that email address." };
       await setCustomerSession({ id: customer.id, email: customer.email });
     } catch (error) {
       console.error("Local customer sign-in failed.", {

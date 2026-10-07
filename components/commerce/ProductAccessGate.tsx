@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
-import { hasActiveScript } from "@/lib/script-access";
+import { hasActiveScript } from "@/lib/account/script-access";
 import styles from "@/app/store.module.css";
 
 type ProductAccessGateProps = {
@@ -24,9 +24,16 @@ export default function ProductAccessGate({ productName, children }: ProductAcce
       <div className={`${styles.lockedProductCard} page-width`}>
         <h1>{productName}</h1>
         <p className={styles.lockedProductEyebrow}>This content is locked</p>
-        <h2>Looking for Products?<br />A free nicotine vaping script unlocks your options</h2>
-        <Link href="/intake-form" className={styles.applyFreeButton}>Apply Free</Link>
-        <p className={styles.lockedProductContact}>Any questions? <Link href="/contact">Contact us.</Link></p>
+        <h2>
+          Looking for Products?
+          <br />A free nicotine vaping script unlocks your options
+        </h2>
+        <Link href="/intake-form" className={styles.applyFreeButton}>
+          Apply Free
+        </Link>
+        <p className={styles.lockedProductContact}>
+          Any questions? <Link href="/contact">Contact us.</Link>
+        </p>
       </div>
     </main>
   );

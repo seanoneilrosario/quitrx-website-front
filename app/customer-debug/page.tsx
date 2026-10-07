@@ -4,15 +4,16 @@ export default async function CustomerDebugPage() {
   let result: unknown;
 
   try {
-    const res = await fetch(
-      `${API_URL}/api/quithero-customers?search=seanrosario119@gmail.com`,
-      {
-        cache: "no-store",
-      },
-    );
+    const res = await fetch(`${API_URL}/api/quithero-customers?search=seanrosario119@gmail.com`, {
+      cache: "no-store",
+    });
 
     if (!res.ok) {
-      result = { error: "Could not load customer data.", status: res.status, statusText: res.statusText };
+      result = {
+        error: "Could not load customer data.",
+        status: res.status,
+        statusText: res.statusText,
+      };
     } else {
       result = await res.json();
     }

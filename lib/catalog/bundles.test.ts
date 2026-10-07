@@ -1,0 +1,241 @@
+import { describe, expect, it } from "vitest";
+import {
+  bundleComponentsFrom,
+  bundleDropdownsFrom,
+  bundleSlotsFrom,
+  productIsAvailable,
+  productIsVisible,
+  variantIsAvailable,
+} from "./bundles";
+
+describe("bundleDropdownsFrom", () => {
+  it("preserves selection quantities and requires enough component stock", () => {
+    const bundleDropdowns = [
+      {
+        name: "Flavour",
+        quantity: 2,
+        options: [{ componentVariantId: "mint", componentVariant: { inventory: 1 } }],
+      },
+    ];
+    expect(bundleDropdownsFrom({ bundleDropdowns })[0].quantity).toBe(2);
+    expect(variantIsAvailable({ bundleDropdowns })).toBe(false);
+    bundleDropdowns[0].options[0].componentVariant.inventory = 2;
+    expect(variantIsAvailable({ bundleDropdowns })).toBe(true);
+  });
+  it("normalizes the current variant bundle dropdown structure", () => {
+    expect(
+      bundleDropdownsFrom({
+        bundleDropdowns: [
+          {
+            name: "Choose a flavour",
+            options: [
+              { componentVariantId: "mint", componentVariant: { name: "Mint", inventory: 4 } },
+              { componentVariantId: "berry" },
+            ],
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        quantity: 1,
+        name: "Choose a flavour",
+        options: [
+          { componentVariantId: "mint", componentVariant: { name: "Mint", inventory: 4 } },
+          { componentVariantId: "berry" },
+        ],
+      },
+    ]);
+  });
+
+  it("ignores malformed dropdowns and options", () => {
+    expect(
+      bundleDropdownsFrom({
+        bundleDropdowns: [
+          { name: "", options: [{ componentVariantId: "mint" }] },
+          { name: "Device", options: [{ componentVariantId: "" }, {}] },
+        ],
+      }),
+    ).toEqual([]);
+  });
+
+  it("treats a configured dropdown bundle independently of parent inventory", () => {
+    expect(
+      variantIsAvailable({
+        inventory: 0,
+        bundleDropdowns: [
+          {
+            name: "Device",
+            options: [{ componentVariantId: "device", componentVariant: { inventory: 2 } }],
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("productIsAvailable", () => {
+  it("does not use misleading parent inventory when a bundle has no configuration", () => {
+    expect(
+      productIsAvailable({
+        status: "ACTIVE",
+        productType: "Bundle",
+        variants: [{ inventory: 177 }],
+      }),
+    ).toBe(false);
+  });
+
+  it("marks explicitly sold-out products unavailable", () => {
+    expect(productIsAvailable({ status: "SOLD_OUT", variants: [{ inventory: 10 }] })).toBe(false);
+  });
+
+  it("uses inventory for archived source products that remain purchasable", () => {
+    expect(
+      productIsAvailable({
+        status: "ARCHIVED",
+        productType: "Premix - Salt",
+        variants: [{ inventory: 163, allocatedInventory: 2 }],
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps configured bundles available when their components have stock", () => {
+    expect(
+      productIsAvailable({
+        tags: ["Bundle"],
+        variants: [
+          {
+            bundleComponents: [
+              { componentVariantId: "device", componentVariant: { inventory: 2 }, quantity: 1 },
+            ],
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("productIsVisible", () => {
+  it("hides dashboard-created products after they are archived", () => {
+    expect(productIsVisible({ status: "ARCHIVED" })).toBe(false);
+  });
+
+  it("hides archived products synced from an external source", () => {
+    expect(productIsVisible({ status: "ARCHIVED", sourceSystem: "QOBLEX" })).toBe(false);
+  });
+
+  it("normalizes archived status before checking visibility", () => {
+    expect(productIsVisible({ status: "  archived  " })).toBe(false);
+  });
+});
+
+describe("bundleSlotsFrom", () => {
+  it("normalizes dashboard slots and their allowed child variants", () => {
+    expect(
+      bundleSlotsFrom({
+        bundle: {
+          slots: [
+            {
+              id: "slot-1",
+              name: "Pods - 1",
+              allowedVariants: [{ id: "menthol-0" }, { variantId: "mint-10" }],
+              defaultVariantId: "mint-10",
+            },
+          ],
+        },
+      }),
+    ).toEqual([
+      {
+        id: "slot-1",
+        label: "Pods - 1",
+        position: 0,
+        quantity: 1,
+        defaultVariantId: "mint-10",
+        allowedVariantIds: ["menthol-0", "mint-10"],
+      },
+    ]);
+  });
+
+  it("expands legacy component quantities into independent slots", () => {
+    const slots = bundleSlotsFrom({
+      components: [{ componentVariantId: "pod", position: 1, quantity: 2 }],
+    });
+    expect(slots).toHaveLength(2);
+    expect(slots.every((slot) => slot.allowProductVariants)).toBe(true);
+  });
+});
+
+describe("bundleComponentsFrom", () => {
+  it("normalizes and sorts bundle components", () => {
+    expect(
+      bundleComponentsFrom({
+        components: [
+          { componentVariantId: "second", position: 2, quantity: 2 },
+          { componentVariant: { id: "first" }, position: 1, quantity: 3 },
+        ],
+      }),
+    ).toEqual([
+      { componentVariantId: "first", componentVariant: { id: "first" }, position: 1, quantity: 3 },
+      { componentVariantId: "second", position: 2, quantity: 2 },
+    ]);
+  });
+
+  it("accepts a nested bundle response and safe quantity defaults", () => {
+    expect(
+      bundleComponentsFrom({
+        bundle: { components: [{ componentVariantId: "variant", quantity: 0 }] },
+      }),
+    ).toEqual([{ componentVariantId: "variant", position: 0, quantity: 1 }]);
+  });
+
+  it("accepts the API product-variant response shape", () => {
+    expect(
+      bundleComponentsFrom({
+        bundleComponents: [{ componentVariantId: "configured-variant", position: 0, quantity: 2 }],
+      }),
+    ).toEqual([{ componentVariantId: "configured-variant", position: 0, quantity: 2 }]);
+  });
+
+  it("keeps a zero-inventory bundle available when every component has enough inventory", () => {
+    expect(
+      variantIsAvailable({
+        inventory: 0,
+        bundleComponents: [
+          { componentVariant: { id: "one", inventory: 4 }, quantity: 2 },
+          { componentVariant: { id: "two", inventory: 1 }, quantity: 1 },
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it("marks a bundle unavailable when a component has insufficient inventory", () => {
+    expect(
+      variantIsAvailable({
+        inventory: 20,
+        bundleComponents: [{ componentVariant: { id: "one", inventory: 1 }, quantity: 2 }],
+      }),
+    ).toBe(false);
+  });
+
+  it("uses updated bundle components when a refreshed API payload is normalized", () => {
+    const original = {
+      inventory: 0,
+      bundleComponents: [{ componentVariant: { id: "old", inventory: 0 }, quantity: 1 }],
+    };
+    const refreshed = {
+      ...original,
+      bundleComponents: [{ componentVariant: { id: "new", inventory: 3 }, quantity: 1 }],
+    };
+
+    expect(variantIsAvailable(original)).toBe(false);
+    expect(bundleComponentsFrom(refreshed)[0].componentVariantId).toBe("new");
+    expect(variantIsAvailable(refreshed)).toBe(true);
+  });
+
+  it("preserves parent inventory behavior for non-bundle variants", () => {
+    expect(variantIsAvailable({ inventory: 0 })).toBe(false);
+    expect(variantIsAvailable({ inventory: 1 })).toBe(true);
+    expect(variantIsAvailable({})).toBe(false);
+    expect(variantIsAvailable({ inventory: 5, allocatedInventory: 5 })).toBe(false);
+    expect(variantIsAvailable({ inventory: 5, allocatedInventory: 4 })).toBe(true);
+  });
+});

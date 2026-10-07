@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { PortableText } from "next-sanity";
 import type { PortableTextComponents } from "@portabletext/react";
-import { PortableTextBlock } from "@/components/global/components";
-import styles from "./Richtext.module.css";
+import { PortableTextBlock } from "@/components/sections/section-types";
+import styles from "./rich-text.module.css";
 
 interface RichtextProps {
   eyebrow?: string;

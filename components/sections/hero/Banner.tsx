@@ -2,7 +2,7 @@
 "use client";
 
 import { PortableText } from "@portabletext/react";
-import { PortableTextBlock } from "@/components/global/components";
+import { PortableTextBlock } from "@/components/sections/section-types";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -64,7 +64,7 @@ export function Banner({
   secondary_button_link,
   secondary_button_open_in_new_tab = false,
   secondary_button_style = "button",
-  hide_separator
+  hide_separator,
 }: BannerProps) {
   const titleBlocks = Array.isArray(title_array) ? title_array : [];
   const isLoginButton = secondary_button_text?.trim().toLowerCase() === "login";
@@ -87,54 +87,41 @@ export function Banner({
 
   const content = (
     <section className="hero-banner page-width">
-      {image && 
-        <Image
-          src={image}
-          alt={title}
-          fill
-          priority
-          className="hero-banner-bg"
-        />
-      }
-
+      {image && <Image src={image} alt={title} fill priority className="hero-banner-bg" />}
 
       {title_image && (
         <div className="hero-logo">
-          <Image
-            src={title_image}
-            alt={title}
-            width={90}
-            height={90}
-          />
+          <Image src={title_image} alt={title} width={90} height={90} />
         </div>
       )}
 
       <div className="hero-center">
-            {!titleBlocks.length && (
-              <motion.h1
-                className="hero-title"
-                initial={{ y: 8, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-              >
-                {title}
-              </motion.h1>
-            )}
+        {!titleBlocks.length && (
+          <motion.h1
+            className="hero-title"
+            initial={{ y: 8, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            {title}
+          </motion.h1>
+        )}
 
-            {titleBlocks.length > 0 && (
-              <motion.div
-                className="hero-title-array"
-                initial={{ y: 8, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, ease: "easeOut", delay: 0.05 }}
-              >
-                <PortableText value={titleBlocks} />
-              </motion.div>
+        {titleBlocks.length > 0 && (
+          <motion.div
+            className="hero-title-array"
+            initial={{ y: 8, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.05 }}
+          >
+            <PortableText value={titleBlocks} />
+          </motion.div>
         )}
-        
-        {!hide_separator || hide_separator != null && (
-          <span className={`border-separator ${hide_separator}`}></span>
-        )}
+
+        {!hide_separator ||
+          (hide_separator != null && (
+            <span className={`border-separator ${hide_separator}`}></span>
+          ))}
 
         {description?.length > 0 && (
           <motion.div
@@ -147,10 +134,10 @@ export function Banner({
           </motion.div>
         )}
 
-        {(button_text || secondary_button_text) &&
+        {(button_text || secondary_button_text) && (
           <div className="banner-links">
-            {button_text && (
-              isTreatmentButton ? (
+            {button_text &&
+              (isTreatmentButton ? (
                 <TreatmentCtaLink
                   className="banner-button banner-button--primary"
                   defaultLabel={button_text}
@@ -173,10 +160,10 @@ export function Banner({
                 >
                   {button_text}
                 </button>
-              )
-            )}
-            {secondary_button_text && (!isLoginButton || authStatus === "anonymous") && (
-              secondary_button_style === "link" || isLoginButton ? (
+              ))}
+            {secondary_button_text &&
+              (!isLoginButton || authStatus === "anonymous") &&
+              (secondary_button_style === "link" || isLoginButton ? (
                 <Link
                   href={secondaryButtonLink || "#"}
                   className={`banner-button ${secondary_button_style === "link" ? "banner-button--primary" : "banner-button--secondary"}`}
@@ -189,14 +176,15 @@ export function Banner({
                 <button
                   type="button"
                   className="banner-button banner-button--secondary"
-                  onClick={() => handleButtonClick(secondaryButtonLink, secondary_button_open_in_new_tab)}
+                  onClick={() =>
+                    handleButtonClick(secondaryButtonLink, secondary_button_open_in_new_tab)
+                  }
                 >
                   {secondary_button_text}
                 </button>
-              )
-            )}
+              ))}
           </div>
-        }
+        )}
 
         {disclaimer?.length > 0 && (
           <motion.div
@@ -208,20 +196,13 @@ export function Banner({
             <PortableText value={disclaimer} components={disclaimerComponents} />
           </motion.div>
         )}
-        
       </div>
-    <div className="text-img-fullbg_img">
-      {back_image && 
-        <Image
-          className="back_image"
-          src={back_image}
-          alt={title}
-          width={1000}
-          height={1000}
-        />
-      }
+      <div className="text-img-fullbg_img">
+        {back_image && (
+          <Image className="back_image" src={back_image} alt={title} width={1000} height={1000} />
+        )}
         <Image src={doc_img} className="front_image" width={1000} height={1000} alt="" />
-    </div>
+      </div>
     </section>
   );
 

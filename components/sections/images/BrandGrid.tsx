@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { CSSProperties } from "react";
-import styles from "./BrandGrid.module.css";
+import styles from "./brand-grid.module.css";
 
 type Brand = {
   _key?: string;
@@ -56,11 +56,7 @@ export default function BrandGrid({
   };
 
   return (
-    <section
-      className={styles.section}
-      style={sectionStyle}
-      aria-labelledby="brand-grid-heading"
-    >
+    <section className={styles.section} style={sectionStyle} aria-labelledby="brand-grid-heading">
       <div className={styles.container}>
         {heading && (
           <h2 id="brand-grid-heading" className={styles.heading}>
@@ -98,10 +94,7 @@ export default function BrandGrid({
                 {content}
               </Link>
             ) : (
-              <div
-                className={styles.brand}
-                key={brand._key || `${brand.name}-${index}`}
-              >
+              <div className={styles.brand} key={brand._key || `${brand.name}-${index}`}>
                 {content}
               </div>
             );

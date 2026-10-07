@@ -45,10 +45,7 @@ export default function PromotionalBannerSlider({ slides }: { slides: Promotiona
   };
 
   return (
-    <section
-      className="promotional-banner-slider"
-      aria-label="Promotions"
-    >
+    <section className="promotional-banner-slider" aria-label="Promotions">
       <div
         className="promotional-banner-slider__track"
         style={{ transform: `translateX(-${safeActiveIndex * 100}%)` }}
@@ -58,9 +55,7 @@ export default function PromotionalBannerSlider({ slides }: { slides: Promotiona
           const media = (
             <div
               className={`promotional-banner-slider__media${
-                slide.mobileImage
-                  ? " promotional-banner-slider__media--has-mobile"
-                  : ""
+                slide.mobileImage ? " promotional-banner-slider__media--has-mobile" : ""
               }`}
             >
               <Image
@@ -119,9 +114,7 @@ export default function PromotionalBannerSlider({ slides }: { slides: Promotiona
             disabled={safeActiveIndex === 0}
             aria-label="Previous promotion"
           >
-            <span>
-              &#8249;
-            </span>
+            <span>&#8249;</span>
           </button>
           <button
             type="button"
@@ -130,9 +123,7 @@ export default function PromotionalBannerSlider({ slides }: { slides: Promotiona
             disabled={safeActiveIndex === slideCount - 1}
             aria-label="Next promotion"
           >
-            <span>
-              &#8250;
-            </span>
+            <span>&#8250;</span>
           </button>
           <div className="promotional-banner-slider__pagination">
             {visibleSlides.map((slide, index) => (
@@ -140,9 +131,7 @@ export default function PromotionalBannerSlider({ slides }: { slides: Promotiona
                 type="button"
                 key={slide._key || `${slide.image}-${index}`}
                 className={`promotional-banner-slider__dot${
-                  index === safeActiveIndex
-                    ? " promotional-banner-slider__dot--active"
-                    : ""
+                  index === safeActiveIndex ? " promotional-banner-slider__dot--active" : ""
                 }`}
                 onClick={() => setActiveIndex(index)}
                 aria-label={`Go to promotion ${index + 1}`}

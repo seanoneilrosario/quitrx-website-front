@@ -4,7 +4,7 @@ import "./text-image.css";
 
 import Image from "next/image";
 import { PortableText } from "next-sanity";
-import { PortableTextBlock, TextImageBullet } from "@/components/global/components";
+import { PortableTextBlock, TextImageBullet } from "@/components/sections/section-types";
 
 interface TextImageProps {
   heading?: string;
@@ -43,83 +43,58 @@ export default function TextImage({
   paddingBottom = 60,
 }: TextImageProps) {
   return (
-   <section
-  className={`text-img_wrap ${
-    theme === "dark" ? "text-img--dark" : "text-img--light"
-  }`}
-  style={{
-    paddingTop,
-    paddingBottom,
-  }}
->
-  <div className="page-width">
+    <section
+      className={`text-img_wrap ${theme === "dark" ? "text-img--dark" : "text-img--light"}`}
+      style={{
+        paddingTop,
+        paddingBottom,
+      }}
+    >
+      <div className="page-width">
+        <h2 className="text-img_title">{heading}</h2>
 
-    <h2 className="text-img_title">
-      {heading}
-    </h2>
+        <h4 className="text-img_sub-head">{subHeading}</h4>
 
-    <h4 className="text-img_sub-head">
-      {subHeading}
-    </h4>
-
-    <div className="text-img_container">
-
-      <div className="text-img_image">
-
-        {frontImage && (
-          <Image
-            src={frontImage}
-            alt=""
-            width={900}
-            height={900}
-            className={`text-img_img_ppl ${
-              imageTheme === "single" ? "small_img" : ""
-            }`}
-          />
-        )}
-
-        {backImage && imageTheme === "double" && (
-          <Image
-            src={backImage}
-            alt=""
-            width={900}
-            height={900}
-            className="text-img_img_bg"
-          />
-        )}
-
-      </div>
-
-      <div className="text-img_contents">
-
-        {contentTheme === "plaintext" ? (
-          <PortableText value={content ?? []} />
-        ) : (
-          bullets?.map((item, index) => (
-            <div
-              key={index}
-              className="bulleted_content"
-            >
+        <div className="text-img_container">
+          <div className="text-img_image">
+            {frontImage && (
               <Image
-                src="https://cdn.sanity.io/images/bd7slutt/production/fbb85c86f4d81d84d37d52a49bfe93bb84ff51be-10x10.svg"
-                width={20}
-                height={20}
+                src={frontImage}
                 alt=""
-                className="text-img_bullet"
+                width={900}
+                height={900}
+                className={`text-img_img_ppl ${imageTheme === "single" ? "small_img" : ""}`}
               />
+            )}
 
-              <div className="bulleted_content_texts">
-                <PortableText value={item.content ?? []} />
-              </div>
-            </div>
-          ))
-        )}
+            {backImage && imageTheme === "double" && (
+              <Image src={backImage} alt="" width={900} height={900} className="text-img_img_bg" />
+            )}
+          </div>
 
+          <div className="text-img_contents">
+            {contentTheme === "plaintext" ? (
+              <PortableText value={content ?? []} />
+            ) : (
+              bullets?.map((item, index) => (
+                <div key={index} className="bulleted_content">
+                  <Image
+                    src="https://cdn.sanity.io/images/bd7slutt/production/fbb85c86f4d81d84d37d52a49bfe93bb84ff51be-10x10.svg"
+                    width={20}
+                    height={20}
+                    alt=""
+                    className="text-img_bullet"
+                  />
+
+                  <div className="bulleted_content_texts">
+                    <PortableText value={item.content ?? []} />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
-
-    </div>
-
-  </div>
-</section>
+    </section>
   );
 }

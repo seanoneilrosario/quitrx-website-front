@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero-customers";
+import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero/customers";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import OrderHistoryTable from "@/components/account/OrderHistoryTable";
 import type { QuitHeroOrder } from "@/lib/quithero";
-import { hasActiveScript } from "@/lib/script-access";
+import { hasActiveScript } from "@/lib/account/script-access";
 
 function addressLines(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];

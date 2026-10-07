@@ -19,13 +19,17 @@ export default function SiteChrome({ children, navigation, searchPages }: SiteCh
     <>
       {!isAccountRoute && <Header navigation={navigation} searchPages={searchPages} />}
 
-      <div className={isAccountRoute ? "main-sections-wrapper account-main-sections-wrapper" : "main-sections-wrapper"}>
+      <div
+        className={
+          isAccountRoute
+            ? "main-sections-wrapper account-main-sections-wrapper"
+            : "main-sections-wrapper"
+        }
+      >
         {children}
       </div>
 
-      {!isAccountRoute && (
-        <Footer navigation={navigation as FooterProps["navigation"]} />
-      )}
+      {!isAccountRoute && <Footer navigation={navigation as FooterProps["navigation"]} />}
     </>
   );
 }

@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { useAccountCustomer, useCustomerDataInvalidation } from "@/hooks/useAccountCustomer";
-import { buildQuitRxFormUrl } from "@/lib/quitRxFormUrls";
-import "./IntakeForm.css";
-import "./FormBackButton.css";
+import { buildQuitRxFormUrl } from "@/lib/forms/form-urls";
+import "./intake-form.css";
+import "./form-back-button.css";
 import FormBackButton from "./FormBackButton";
 
 const FORM_ID = "n3JR1Lhg5OV91in2ovvhZMReVat5zQRQnwEmd6GYusw";
@@ -35,7 +35,8 @@ export default function IntakeForm({ title }: IntakeFormProps) {
 
   useEffect(() => {
     function resizeForm(event: MessageEvent) {
-      if (event.source !== iframeRef.current?.contentWindow || typeof event.data !== "string") return;
+      if (event.source !== iframeRef.current?.contentWindow || typeof event.data !== "string")
+        return;
       const [formId, height, shouldScroll] = event.data.split("|");
       if (formId !== FORM_ID || !iframeRef.current) return;
       const nextHeight = Number.parseInt(height, 10);

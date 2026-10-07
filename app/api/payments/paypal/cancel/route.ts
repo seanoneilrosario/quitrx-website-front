@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { clearPendingPayPalPayment } from "@/lib/paypal-payment-session";
+import { clearPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
 
 export async function GET(request: NextRequest) {
   await clearPendingPayPalPayment();

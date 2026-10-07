@@ -1,0 +1,96 @@
+.richtext-image {
+  padding: 0 0 70px;
+  background: #f6f5f3;
+}
+
+.richtext-image .page-width {
+  max-width: 950px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* ==========================================
+   Icon
+========================================== */
+
+.richtext-image__icon {
+  margin: 0 auto 35px;
+  width: 110px;
+}
+
+.richtext-image__icon img {
+  width: 100%;
+  display: block;
+  max-width: 100px;
+  height: auto;
+  margin: auto;
+}
+
+/* ==========================================
+   Heading
+========================================== */
+
+.richtext-image__heading {
+  margin: 0 0 30px;
+
+  color: #035c67;
+
+  font-size: 35px;
+
+  line-height: 1.15;
+
+  font-weight: 300;
+}
+
+.richtext-image__heading p {
+  margin: 0;
+}
+
+.richtext-image__heading strong {
+  font-weight: 800;
+}
+
+/* ==========================================
+   Content
+========================================== */
+
+.richtext-image__content {
+  color: #035c67;
+
+  font-size: 20px;
+
+  line-height: 1.55;
+
+  font-weight: 700;
+}
+
+.richtext-image__content p {
+  margin: 0 0 28px;
+}
+
+.richtext-image__content p:last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================
+   Desktop
+========================================== */
+
+@media (min-width: 990px) {
+  .richtext-image {
+    padding: 0 0 110px;
+  }
+
+  .richtext-image__icon {
+    width: 130px;
+    margin-bottom: 40px;
+  }
+
+  .richtext-image__heading {
+    font-size: 45px;
+  }
+
+  .richtext-image__content {
+    font-size: 20px;
+  }
+}

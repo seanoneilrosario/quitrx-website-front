@@ -67,7 +67,9 @@
   border-radius: 999px;
   padding: 0;
   font-size: 42px;
-  transition: background-color .2s, transform .2s;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
   display: flex;
   position: absolute;
   top: 50%;
@@ -78,7 +80,7 @@
 }
 
 .promotional-banner-slider__arrow span {
- display: inline-block;
+  display: inline-block;
   transform: translateY(-4px);
 }
 
@@ -96,7 +98,7 @@
 
 .promotional-banner-slider__arrow:disabled {
   cursor: default;
-  opacity: .35;
+  opacity: 0.35;
   transform: translateY(-50%);
 }
 
@@ -116,7 +118,7 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  opacity: .7;
+  opacity: 0.7;
   background: #fff;
   cursor: pointer;
   border: 1px solid #35659a;
@@ -134,13 +136,11 @@
 }
 
 @media (max-width: 767px) {
-  .promotional-banner-slider__media--has-mobile
-    .promotional-banner-slider__desktop-image {
+  .promotional-banner-slider__media--has-mobile .promotional-banner-slider__desktop-image {
     display: none;
   }
 
-  .promotional-banner-slider__media--has-mobile
-    .promotional-banner-slider__mobile-image {
+  .promotional-banner-slider__media--has-mobile .promotional-banner-slider__mobile-image {
     display: block !important;
   }
 
@@ -191,15 +191,15 @@
 
 .hero-title {
   margin: 0;
-  font-family: 'Quicksand';
+  font-family: "Quicksand";
   font-weight: 400;
   font-size: 50px;
   line-height: 1.1;
-  letter-spacing: -.02em;
+  letter-spacing: -0.02em;
 }
 
 .hero-title-array h2 {
-  font-family: 'Quicksand';
+  font-family: "Quicksand";
   font-size: clamp(28px, 6.2vw, 38px);
   font-weight: 600;
   color: #3effc0;
@@ -222,12 +222,12 @@
 
 .hero-description p:empty {
   display: block;
-  height: 20px
+  height: 20px;
 }
 
 .hero-description p {
   margin: 0;
-  font-family: 'Quicksand';
+  font-family: "Quicksand";
 }
 
 .hero-disclaimer {
@@ -244,19 +244,19 @@
 }
 
 .hero-disclaimer::before {
-    position: absolute;
-    left: -1.5rem;
-    top: 7px;
-    content: '';
-    background: #fff;
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
+  position: absolute;
+  left: -1.5rem;
+  top: 7px;
+  content: "";
+  background: #fff;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
 }
 
 .hero-disclaimer p {
   margin: 0;
-  font-family: 'Quicksand';
+  font-family: "Quicksand";
 }
 
 .hero-disclaimer a {
@@ -273,17 +273,17 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, .6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   background: transparent;
   color: white;
   font-size: 28px;
   cursor: pointer;
   z-index: 2;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .hero-scroll:hover {
-  background: rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .text-img-fullbg_img {
@@ -293,20 +293,20 @@
 }
 
 .text-img-fullbg_img .back_image {
-    position: absolute;
-    left: 0;
-    height: fit-content;
-    width: 100%;
-    z-index: 0;
-    top: -15%;
+  position: absolute;
+  left: 0;
+  height: fit-content;
+  width: 100%;
+  z-index: 0;
+  top: -15%;
 }
 
 .text-img-fullbg_img .front_image {
-    width: 100%;
-    height: fit-content;
-    position: relative;
-    z-index: 1;
-    margin-bottom: -10px;
+  width: 100%;
+  height: fit-content;
+  position: relative;
+  z-index: 1;
+  margin-bottom: -10px;
 }
 
 .border-separator {
@@ -327,17 +327,17 @@
 
 .banner-links a,
 .banner-links button {
-    background: #3effc0;
-    color: #035c67;
-    padding: 8px 20px;
-    border-radius: 8px;
-    border: 1px solid #3effc0;
-    transition: .3s;
-    text-decoration: none;
-    display: inline-block;
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
+  background: #3effc0;
+  color: #035c67;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #3effc0;
+  transition: 0.3s;
+  text-decoration: none;
+  display: inline-block;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .banner-links .banner-button--primary {
@@ -389,8 +389,8 @@
   .hero-disclaimer {
     margin-top: 42px;
     padding-left: 20px;
-    font-size: .7rem;
-    line-height: .9rem;
+    font-size: 0.7rem;
+    line-height: 0.9rem;
     text-align: left;
   }
 }

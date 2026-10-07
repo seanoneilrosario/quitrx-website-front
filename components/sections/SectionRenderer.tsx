@@ -1,0 +1,305 @@
+"use client";
+
+import { JSX, useMemo } from "react";
+import { Banner } from "./hero/Banner";
+import VideoHeroBanner from "./hero/VideoHeroBanner";
+import ImageGrid from "./images/ImageGrid";
+import RichtextWithCta from "./text/RichtextWithCta";
+import RichtextWithGroupedCTA from "./text/RichtextWithGroupedCTA";
+import TwoColumnLayout from "./text/TwoColumnLayout";
+import { ContentSection, SectionType } from "./section-types";
+import HeadingWithLink from "./text/HeadingWithLink";
+import MultiRow from "./images/MultiRow";
+import ContactSection from "./contact/ContactSection";
+import Richtext from "./text/Richtext";
+import TextBlocks from "./text/TextBlocks";
+import EscriptBanner from "./text/EscriptBanner";
+import TextBlocksIcon from "./text/TextBlocksIcon";
+import TextImage from "./images/TextImage";
+import Faq from "./text/Faq";
+import SupportForm from "./forms/SupportForm";
+import FloatingCTA from "./text/FloatingCallToAction";
+import RichtextImage from "./text/RichtextWithImage";
+import PromotionalBannerSlider from "./hero/PromotionalBannerSlider";
+import BrandGrid from "./images/BrandGrid";
+import ProductApiGrid from "./products/ProductApiGrid";
+import IntakeForm from "./forms/IntakeForm";
+import UploadPrescription from "./forms/UploadPrescription";
+import EscriptRequest from "./forms/EscriptRequest";
+
+const sectionRenderers: Record<
+  SectionType,
+  (component: ContentSection, activeSection?: string) => JSX.Element | null
+> = {
+  video_banner: (component) => (
+    <VideoHeroBanner heading={component.heading} video_url={component.video_url || ""} />
+  ),
+  banner: (component) => (
+    <Banner
+      title={component.title || ""}
+      image={component.image || ""}
+      back_image={component.back_image || ""}
+      doc_img={component.doc_img || ""}
+      link={component.link}
+      link_open_in_new_tab={component.link_open_in_new_tab}
+      title_image={component.title_image || ""}
+      description={component.description || []}
+      disclaimer={component.disclaimer || []}
+      title_array={component.title_array || []}
+      button_text={component.button_text || ""}
+      button_url={component.button_url?.slug || ""}
+      button_style={component.button_style || "link"}
+      button_open_in_new_tab={component.button_open_in_new_tab}
+      secondary_button_text={component.secondary_button_text || ""}
+      secondary_button_link={component.secondary_button_link || ""}
+      secondary_button_style={component.secondary_button_style || "button"}
+      secondary_button_open_in_new_tab={component.secondary_button_open_in_new_tab}
+      hide_separator={component.hide_separator}
+    />
+  ),
+  twoColumnLayout: (component) => (
+    <TwoColumnLayout
+      title={component.title || ""}
+      leftDescription={component.leftDescription || []}
+      rightDescription={component.rightDescription || []}
+      layoutPosition={component.layoutPosition}
+    />
+  ),
+  imageGrid: (component) => <ImageGrid rows={component.rows || []} />,
+  richtextImage: (component) => (
+    <RichtextImage
+      image={component.image}
+      title_array={component.title_array || []}
+      content={component.content}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
+    />
+  ),
+  richtext_with_cta: (component) => (
+    <RichtextWithCta
+      title={component.title || ""}
+      description={component.description || []}
+      cta_buttons={component.cta_buttons || []}
+      activeItem={component.activeItem || 0}
+      desktop_left_width={component.desktop_left_width || 0}
+    />
+  ),
+  richtext: (component) => (
+    <Richtext
+      eyebrow={component.eyebrow || ""}
+      title={component.title || ""}
+      rightDescription={component.rightDescription || []}
+      buttonText={component.buttonText || ""}
+      buttonLink={component.buttonLink || ""}
+      buttonOpenInNewTab={component.buttonOpenInNewTab}
+    />
+  ),
+  richtext_with_grouped_cta: (component, activeSection) => (
+    <RichtextWithGroupedCTA
+      title={component.title || ""}
+      cta_groups={component.cta_groups || []}
+      desktop_left_width={component.desktop_left_width || 0}
+      activeSection={activeSection}
+    />
+  ),
+  heading_with_link: (component) => (
+    <HeadingWithLink
+      heading={component.heading || ""}
+      eyebrow={component.eyebrow || ""}
+      eyebrow_max_width={component.eyebrow_max_width || 0}
+      left_description={component.left_description}
+      right_description={component.right_description}
+      button_text={component.button_text || ""}
+      button_link={component.button_link || ""}
+    />
+  ),
+  multi_row: (component) => <MultiRow members={component.members || []} />,
+  contact_section: (component) => (
+    <ContactSection
+      eyebrow={component.eyebrow || ""}
+      heading={component.heading || ""}
+      button_text={component.button_text || ""}
+      offices={component.offices || []}
+      button_link={component.button_link || ""}
+    />
+  ),
+  prescription_comparison: (component) => (
+    <TextBlocks
+      heading={component.heading || ""}
+      description={component.description || []}
+      icon={component.comparisonIcon}
+      audience={component.audience}
+      cardTitle={component.card_title}
+      cardDescription={component.card_description}
+      features={component.comparison_features || []}
+      buttonText={component.comparison_button_text}
+      buttonLink={component.comparison_button_link}
+      disclaimer={component.comparison_disclaimer}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+    />
+  ),
+  escript_banner: (component) => (
+    <EscriptBanner
+      heading={component.heading || ""}
+      description={component.description || []}
+      icon={component.icon}
+      buttonIcon={component.buttonIcon}
+      buttonText={component.button_text || ""}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+    />
+  ),
+  text_block_with_icon: (component) => (
+    <TextBlocksIcon
+      title_array={component.title_array || []}
+      subHeading={component.sub_heading || ""}
+      box={component.box || []}
+      paddingTop={component.paddingTop ?? 60}
+      paddingBottom={component.paddingBottom ?? 60}
+    />
+  ),
+  text_image: (component) => (
+    <TextImage
+      heading={component.heading || ""}
+      subHeading={component.sub_heading || ""}
+      theme={component.theme || "dark"}
+      contentTheme={component.contentTheme || "plaintext"}
+      frontImage={component.frontImage || ""}
+      backImage={component.backImage || ""}
+      content={component.content || []}
+      bullets={component.bullets || []}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+      imageTheme={component.imageTheme || "double"}
+    />
+  ),
+  faq: (component) => (
+    <Faq
+      heading={component.heading || ""}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+      items={component.items || []}
+    />
+  ),
+  supportForm: (component) => (
+    <SupportForm
+      title={component.title || ""}
+      paddingTop={component.paddingTop || 0}
+      paddingBottom={component.paddingBottom || 0}
+    />
+  ),
+  floatingCTA: (component) => (
+    <FloatingCTA
+      icon={component.icon}
+      title_array={component.title_array || []}
+      text={component.text || []}
+      button_text={component.button_text}
+      button_link={component.button_link}
+    />
+  ),
+  promotional_banner_slider: (component) => (
+    <PromotionalBannerSlider slides={component.slides || []} />
+  ),
+  brand_grid: (component) => (
+    <BrandGrid
+      heading={component.heading}
+      brands={component.brands || []}
+      desktopPaddingTop={component.desktopPaddingTop}
+      desktopPaddingBottom={component.desktopPaddingBottom}
+      mobilePaddingTop={component.mobilePaddingTop}
+      mobilePaddingBottom={component.mobilePaddingBottom}
+    />
+  ),
+  product_api_grid: (component) => (
+    <ProductApiGrid
+      heading={component.heading}
+      productLimit={component.productLimit}
+      displayMode={component.displayMode}
+      collection={component.collection}
+      collections={component.collections}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
+      desktopPaddingTop={component.desktopPaddingTop}
+      desktopPaddingBottom={component.desktopPaddingBottom}
+      mobilePaddingTop={component.mobilePaddingTop}
+      mobilePaddingBottom={component.mobilePaddingBottom}
+    />
+  ),
+  intakeForm: (component) => (
+    <IntakeForm
+      title={component.title}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
+    />
+  ),
+  uploadPrescription: (component) => (
+    <UploadPrescription
+      title={component.title}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
+    />
+  ),
+  escriptRequest: (component) => (
+    <EscriptRequest
+      title={component.title}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
+    />
+  ),
+};
+
+export default function SectionRenderer({
+  components,
+  activeSection,
+}: {
+  components: ContentSection[];
+  activeSection?: string;
+}) {
+  const normalizedComponents = useMemo(() => {
+    if (!Array.isArray(components)) {
+      return [] as ContentSection[];
+    }
+
+    let hasProductApiGrid = false;
+
+    return components.filter((component): component is ContentSection => {
+      const isValid =
+        Boolean(component) && typeof component === "object" && typeof component._type === "string";
+
+      if (!isValid) return false;
+      if (component._type !== "product_api_grid") return true;
+      if (hasProductApiGrid) return false;
+
+      hasProductApiGrid = true;
+      return true;
+    });
+  }, [components]);
+
+  const renderedSections = useMemo(
+    () =>
+      normalizedComponents.map((component, index) => {
+        const content = sectionRenderers[component._type as SectionType]?.(
+          component,
+          activeSection,
+        );
+
+        if (!content) {
+          return null;
+        }
+
+        return (
+          <div
+            key={component._key ?? `${component._type}-${index}`}
+            id={component.sectionId || undefined}
+            className={`${component._type}-section`}
+          >
+            {content}
+          </div>
+        );
+      }),
+    [normalizedComponents, activeSection],
+  );
+
+  return <>{renderedSections}</>;
+}

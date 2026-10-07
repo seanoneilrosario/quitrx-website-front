@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PortableText } from "next-sanity";
-import { PortableTextBlock } from "@/components/global/components";
-import "./TextBlocks.css";
+import { PortableTextBlock } from "@/components/sections/section-types";
+import "./text-blocks.css";
 import TreatmentCtaLink from "@/components/commerce/TreatmentCtaLink";
 
 type ComparisonFeature = {
@@ -43,10 +43,7 @@ const TextBlocks = ({
   paddingBottom = 36,
 }: TextBlocksProps) => {
   return (
-    <section
-      className="text-blocks_wrap"
-      style={{ paddingTop, paddingBottom }}
-    >
+    <section className="text-blocks_wrap" style={{ paddingTop, paddingBottom }}>
       <div className="comparison-heading">
         <h2>{heading}</h2>
         {description && <PortableText value={description} />}
@@ -59,9 +56,7 @@ const TextBlocks = ({
               <Image src={icon} width={96} height={96} alt="" />
             </span>
           )}
-          {audience && (
-            <span className="comparison-card__audience">{audience}</span>
-          )}
+          {audience && <span className="comparison-card__audience">{audience}</span>}
         </div>
 
         {cardTitle && <h3>{cardTitle}</h3>}
@@ -94,15 +89,14 @@ const TextBlocks = ({
           </ul>
         )}
 
-        {buttonText && (
-          ["apply free", "get started"].includes(buttonText.trim().toLowerCase()) ? (
+        {buttonText &&
+          (["apply free", "get started"].includes(buttonText.trim().toLowerCase()) ? (
             <TreatmentCtaLink className="comparison-card__button" defaultLabel={buttonText} />
           ) : (
             <Link href={buttonLink || "#"} className="comparison-card__button">
               {buttonText}
             </Link>
-          )
-        )}
+          ))}
 
         {disclaimer && (
           <div className="comparison-card__disclaimer">

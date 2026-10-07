@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { logoutAccount } from "@/app/account/actions";
-import { hasActiveScript } from "@/lib/script-access";
+import { hasActiveScript } from "@/lib/account/script-access";
 
 const navigation = [
   ["/account", "Account Status", "user"],

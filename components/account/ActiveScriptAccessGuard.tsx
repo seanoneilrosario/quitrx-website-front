@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
-import { hasActiveScript } from "@/lib/script-access";
+import { hasActiveScript } from "@/lib/account/script-access";
 
 export default function ActiveScriptAccessGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

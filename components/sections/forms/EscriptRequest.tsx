@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { useAccountCustomer, useCustomerDataInvalidation } from "@/hooks/useAccountCustomer";
-import { buildQuitRxFormUrl } from "@/lib/quitRxFormUrls";
-import "./EscriptRequest.css";
-import "./FormBackButton.css";
+import { buildQuitRxFormUrl } from "@/lib/forms/form-urls";
+import "./escript-request.css";
+import "./form-back-button.css";
 import FormBackButton from "./FormBackButton";
 
 const FORM_ID = "kv_pCXTnqL7KtQx2aQj8yauEXxjqzQKzTTwrIKi8i5c";
@@ -25,7 +25,8 @@ export default function EscriptRequest({ title }: EscriptRequestProps) {
     const url = buildQuitRxFormUrl("escriptRequest", customer);
     const pageUrl = new URL(window.location.href);
     pageUrl.searchParams.forEach((value, key) => {
-      if (key.toLowerCase().startsWith("utm_") || key.toLowerCase() === "gclid") url.searchParams.set(key, value);
+      if (key.toLowerCase().startsWith("utm_") || key.toLowerCase() === "gclid")
+        url.searchParams.set(key, value);
     });
     url.searchParams.set("referrername", window.location.href.slice(0, 1800));
     if (iframeRef.current) iframeRef.current.src = url.toString();
@@ -33,7 +34,8 @@ export default function EscriptRequest({ title }: EscriptRequestProps) {
 
   useEffect(() => {
     function resizeForm(event: MessageEvent) {
-      if (event.source !== iframeRef.current?.contentWindow || typeof event.data !== "string") return;
+      if (event.source !== iframeRef.current?.contentWindow || typeof event.data !== "string")
+        return;
       const [formId, height, shouldScroll] = event.data.split("|");
       if (formId !== FORM_ID || !iframeRef.current) return;
       const nextHeight = Number.parseInt(height, 10);
@@ -46,11 +48,18 @@ export default function EscriptRequest({ title }: EscriptRequestProps) {
     return () => window.removeEventListener("message", resizeForm);
   }, []);
 
-  return <section className="escript-request">
-    <FormBackButton />
-    <div className="escript-request__inner">
-      {title && <h2 className="escript-request__title">{title}</h2>}
-      <iframe ref={iframeRef} className="escript-request__iframe" title="QuitRX eScript Request" allow="geolocation" />
-    </div>
-  </section>;
+  return (
+    <section className="escript-request">
+      <FormBackButton />
+      <div className="escript-request__inner">
+        {title && <h2 className="escript-request__title">{title}</h2>}
+        <iframe
+          ref={iframeRef}
+          className="escript-request__iframe"
+          title="QuitRX eScript Request"
+          allow="geolocation"
+        />
+      </div>
+    </section>
+  );
 }

@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
-import { setCustomerSession } from "@/lib/customer-session";
-import {
-  linkQuitHeroCustomerOAuth,
-  syncQuitHeroCustomer,
-} from "@/lib/quithero-customers";
+import { setCustomerSession } from "@/lib/auth/customer-session";
+import { linkQuitHeroCustomerOAuth, syncQuitHeroCustomer } from "@/lib/quithero/customers";
 
 type FacebookSessionUser = {
   email?: string | null;
@@ -24,15 +21,12 @@ export async function POST(request: Request) {
   }
 
   if (user.provider !== "facebook" || !user.providerAccountId) {
-    return NextResponse.json(
-      { error: "A Facebook login session is required." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "A Facebook login session is required." }, { status: 400 });
   }
 
   let body: { email?: unknown };
   try {
-    body = await request.json() as { email?: unknown };
+    body = (await request.json()) as { email?: unknown };
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }

@@ -1,112 +1,102 @@
-  import { defineQuery } from "next-sanity";
-  import { cache } from "react";
-  import { Metadata } from "next";
-  import { SanityDocument } from "sanity";
-  import { notFound } from "next/navigation";
+import { defineQuery } from "next-sanity";
+import { cache } from "react";
+import { Metadata } from "next";
+import { SanityDocument } from "sanity";
+import { notFound } from "next/navigation";
 
-  import Homepage from "@/components/pages/Home";
-  import { sanityFetch } from "@/sanity/lib/live";
-  import { HOME_QUERY } from "@/sanity/lib/queries";
+import Homepage from "@/components/pages/Home";
+import { sanityFetch } from "@/sanity/lib/live";
+import { HOME_QUERY } from "@/sanity/lib/queries";
 
-  interface HomePageData {
-    title?: string;
-    metaDescription?: string;
-    meta_image?: string;
-  }
+interface HomePageData {
+  title?: string;
+  metaDescription?: string;
+  meta_image?: string;
+}
 
-  export const revalidate = 300;
+export const revalidate = 300;
 
-  const homeQuery = defineQuery(HOME_QUERY);
+const homeQuery = defineQuery(HOME_QUERY);
 
-  const getHomePage = cache(async () => {
-    try {
-      const result = await sanityFetch({
-        query: homeQuery,
-        perspective: "published",
-        stega: false,
-      });
+const getHomePage = cache(async () => {
+  try {
+    const result = await sanityFetch({
+      query: homeQuery,
+      perspective: "published",
+      stega: false,
+    });
 
-      const data = result?.data ?? null;
+    const data = result?.data ?? null;
 
-      if (
-        !data ||
-        (typeof data === "object" &&
-          Object.keys(data).length === 0)
-      ) {
-        return null;
-      }
-
-      return data as SanityDocument;
-    } catch {
+    if (!data || (typeof data === "object" && Object.keys(data).length === 0)) {
       return null;
     }
-  });
 
-  export async function generateMetadata(): Promise<Metadata> {
-    const homeData = (await getHomePage()) as HomePageData | null;
+    return data as SanityDocument;
+  } catch {
+    return null;
+  }
+});
 
-    const metaTitle = "QuitRx";
+export async function generateMetadata(): Promise<Metadata> {
+  const homeData = (await getHomePage()) as HomePageData | null;
 
-    const metaDescription =
-      homeData?.metaDescription ??
-      "Advancing the way Australians quit.";
+  const metaTitle = "QuitRx";
 
-    return {
-      title: {
-        absolute: metaTitle,
-      },
+  const metaDescription = homeData?.metaDescription ?? "Advancing the way Australians quit.";
+
+  return {
+    title: {
+      absolute: metaTitle,
+    },
+    description: metaDescription,
+    alternates: {
+      canonical: "/",
+    },
+
+    openGraph: {
+      title: metaTitle,
       description: metaDescription,
-      alternates: {
-        canonical: "/",
-      },
+      url: "/",
+      siteName: metaTitle,
+      locale: "en_AU",
+      type: "website",
 
-      openGraph: {
-        title: metaTitle,
-        description: metaDescription,
-        url: "/",
-        siteName: metaTitle,
-        locale: "en_AU",
-        type: "website",
+      ...(homeData?.meta_image && {
+        images: [
+          {
+            url: homeData.meta_image,
+            width: 1200,
+            height: 630,
+          },
+        ],
+      }),
+    },
 
-        ...(homeData?.meta_image && {
-          images: [
-            {
-              url: homeData.meta_image,
-              width: 1200,
-              height: 630,
-            },
-          ],
-        }),
-      },
+    twitter: {
+      card: homeData?.meta_image ? "summary_large_image" : "summary",
+      title: metaTitle,
+      description: metaDescription,
+      ...(homeData?.meta_image && {
+        images: [homeData.meta_image],
+      }),
+    },
 
-      twitter: {
-        card: homeData?.meta_image ? "summary_large_image" : "summary",
-        title: metaTitle,
-        description: metaDescription,
-        ...(homeData?.meta_image && {
-          images: [homeData.meta_image],
-        }),
-      },
+    other: {
+      "Permissions-Policy": "payment=(), microphone=(), camera=(), geolocation=()",
+    },
+  };
+}
 
-      other: {
-        "Permissions-Policy":
-          "payment=(), microphone=(), camera=(), geolocation=()",
-      },
-    };
+export default async function Home() {
+  const data = await getHomePage();
+
+  if (!data) {
+    notFound();
   }
 
-  export default async function Home() {
-    const data = await getHomePage();
-
-    if (!data) {
-      notFound();
-    }
-
-    return <Homepage data={data} />;
-  }
+  return <Homepage data={data} />;
+}
 export async function generateStaticParams() {
-
-  return [
-    {slug: "/"}
-  ];
+  return [{ slug: "/" }];
 }

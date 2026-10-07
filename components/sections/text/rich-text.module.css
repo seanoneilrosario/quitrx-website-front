@@ -1,0 +1,126 @@
+.section {
+  width: 100%;
+  padding: clamp(40px, 6vw, 80px) 0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.wrapper {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #182b44;
+  letter-spacing: 0.08em;
+  font-family: "Quicksand";
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(36px, 5vw, 55px);
+  font-weight: 600;
+  line-height: 1.12;
+  color: #035c67;
+  font-family: "Quicksand";
+}
+
+.content {
+  display: grid;
+  gap: 1rem;
+  max-width: 900px;
+}
+
+.description {
+  font-size: clamp(17px, 1.4vw, 19px);
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+  color: #164f56;
+  font-family: "Quicksand";
+}
+
+.description p {
+  margin: 0 0 1.25em;
+}
+
+.description p:last-child {
+  margin-bottom: 0;
+}
+
+.description :global(h2),
+.description :global(h3),
+.description :global(h4) {
+  margin: 1.6em 0 0.55em;
+  color: #035c67;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.description :global(ul),
+.description :global(ol) {
+  margin: 0 0 1.5em;
+  padding-left: 1.5em;
+}
+
+.description :global(ul) {
+  list-style: disc outside;
+}
+
+.description :global(ol) {
+  list-style: decimal outside;
+}
+
+.description :global(li) {
+  margin-bottom: 0.65em;
+  padding-left: 0.35em;
+}
+
+.description :global(li)::marker {
+  color: #50b982;
+  font-weight: 600;
+}
+
+.description :global(strong) {
+  color: #035c67;
+  font-weight: 600;
+}
+
+.description :global(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: fit-content;
+  padding: 0.95rem 1.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: #1f1b17;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-right: 39px;
+    padding-left: 39px;
+  }
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
-import "./SupportForm.css";
+import "./support-form.css";
 
 interface SupportFormProps {
   title: string;
@@ -41,10 +41,7 @@ export default function SupportForm({
       id="contact"
     >
       <div className="page-width">
-
-        <h2 className="support-form__title">
-          {title}
-        </h2>
+        <h2 className="support-form__title">{title}</h2>
 
         <div className="support-form__card">
           <iframe
@@ -54,7 +51,6 @@ export default function SupportForm({
             frameBorder="0"
           />
         </div>
-
       </div>
     </section>
   );

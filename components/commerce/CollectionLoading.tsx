@@ -1,4 +1,4 @@
-import styles from "./collectionCatalog.module.css";
+import styles from "./collection-catalog.module.css";
 import storeStyles from "@/app/store.module.css";
 
 export function CollectionProductSkeletons() {
@@ -25,7 +25,9 @@ export default function CollectionLoading() {
         </header>
         <div className={styles.catalog}>
           <aside className={styles.skeletonFilters} aria-hidden="true">
-            {Array.from({ length: 5 }, (_, index) => <span className={styles.skeletonFilter} key={index} />)}
+            {Array.from({ length: 5 }, (_, index) => (
+              <span className={styles.skeletonFilter} key={index} />
+            ))}
           </aside>
           <section className={styles.results}>
             <div className={styles.skeletonToolbar} aria-hidden="true" />

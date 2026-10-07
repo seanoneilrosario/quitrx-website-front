@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { PortableText } from "@portabletext/react";
-import { PortableTextBlock } from "@/components/global/components";
-import styles from "./ContactSection.module.css";
+import { PortableTextBlock } from "@/components/sections/section-types";
+import styles from "./contact-section.module.css";
 import ContactPopup from "./ContactPopup";
 
 interface Office {
@@ -32,9 +32,7 @@ export default function ContactSection({
     <>
       <section className={styles.section}>
         <div className={styles.wrapper}>
-          <aside className={styles.sidebar}>
-            {eyebrow && <p>{eyebrow}</p>}
-          </aside>
+          <aside className={styles.sidebar}>{eyebrow && <p>{eyebrow}</p>}</aside>
 
           <div className={styles.content}>
             <h2>{heading}</h2>
@@ -51,9 +49,7 @@ export default function ContactSection({
 
                 <PortableText value={office.address} />
 
-                <a href={`tel:${office.phone}`}>
-                  {office.phone}
-                </a>
+                <a href={`tel:${office.phone}`}>{office.phone}</a>
               </div>
             </div>
           ))}
@@ -67,20 +63,49 @@ export default function ContactSection({
             onClick={() => setOpen(true)}
           >
             <span>{button_text}</span>
-            <span className={styles.arrow}><svg className="-rotate-90" xmlns="http://www.w3.org/2000/svg" width="16.516" height="18.102" viewBox="0 0 18.516 18.102">
-                  <g id="Icon_feather-arrow-down" data-name="Icon feather-arrow-down" transform="translate(-6.793 -7)">
-                    <path id="Path_11" data-name="Path 11" d="M18,7.5V24.6" transform="translate(-1.949 0)" fill="none" stroke="#b59a73" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1"/>
-                    <path id="Path_12" data-name="Path 12" d="M24.6,18l-8.551,8.551L7.5,18" transform="translate(0 -1.949)" fill="none" stroke="#b59a73" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1"/>
-                  </g>
-                </svg></span>
+            <span className={styles.arrow}>
+              <svg
+                className="-rotate-90"
+                xmlns="http://www.w3.org/2000/svg"
+                width="16.516"
+                height="18.102"
+                viewBox="0 0 18.516 18.102"
+              >
+                <g
+                  id="Icon_feather-arrow-down"
+                  data-name="Icon feather-arrow-down"
+                  transform="translate(-6.793 -7)"
+                >
+                  <path
+                    id="Path_11"
+                    data-name="Path 11"
+                    d="M18,7.5V24.6"
+                    transform="translate(-1.949 0)"
+                    fill="none"
+                    stroke="#b59a73"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1"
+                  />
+                  <path
+                    id="Path_12"
+                    data-name="Path 12"
+                    d="M24.6,18l-8.551,8.551L7.5,18"
+                    transform="translate(0 -1.949)"
+                    fill="none"
+                    stroke="#b59a73"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1"
+                  />
+                </g>
+              </svg>
+            </span>
           </button>
         </div>
       </section>
 
-      <ContactPopup
-        open={open}
-        onClose={() => setOpen(false)}
-      />
+      <ContactPopup open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

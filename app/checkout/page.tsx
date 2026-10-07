@@ -4,8 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import styles from "./checkout.module.css";
-import { CHECKOUT_SHIPPING, getCheckoutCustomerDefaults } from "@/lib/checkout";
-import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
+import { CHECKOUT_SHIPPING, getCheckoutCustomerDefaults } from "@/lib/checkout/checkout";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/catalog/product-image";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 type CartItem = {
@@ -16,6 +16,11 @@ type CartItem = {
   price?: number | string;
   quantity: number;
   variantId?: string;
+  bundleComponents?: Array<{
+    productName: string;
+    variantName: string;
+    quantity: number;
+  }>;
 };
 
 const CART_KEY = "quitrx-cart";
@@ -59,7 +64,11 @@ export default function CheckoutPage() {
     readCart,
     () => "[]",
   );
-  const paymentStatus = useSyncExternalStore(() => () => undefined, readPaymentStatus, () => null);
+  const paymentStatus = useSyncExternalStore(
+    () => () => undefined,
+    readPaymentStatus,
+    () => null,
+  );
   const items = useMemo<CartItem[]>(() => {
     try {
       return JSON.parse(storedCart);
@@ -74,15 +83,16 @@ export default function CheckoutPage() {
   const shipping = CHECKOUT_SHIPPING[shippingMethod];
   const customerDefaults = useMemo(() => getCheckoutCustomerDefaults(customer), [customer]);
 
-  const paymentNotice = paymentStatus === "success"
-    ? "Payment successful. Your order has been placed."
-    : paymentStatus === "failed"
-      ? "Payment was declined or could not be completed. Please try again."
-      : paymentStatus === "cancelled"
-        ? "Payment was cancelled. Your cart has not been changed."
-        : paymentStatus === "invalid"
-          ? "We couldn't verify that payment session. Please try again."
-          : "";
+  const paymentNotice =
+    paymentStatus === "success"
+      ? "Payment successful. Your order has been placed."
+      : paymentStatus === "failed"
+        ? "Payment was declined or could not be completed. Please try again."
+        : paymentStatus === "cancelled"
+          ? "Payment was cancelled. Your cart has not been changed."
+          : paymentStatus === "invalid"
+            ? "We couldn't verify that payment session. Please try again."
+            : "";
   const displayedNotice = notice || paymentNotice;
 
   useEffect(() => {
@@ -95,11 +105,13 @@ export default function CheckoutPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submissionLock.current) return;
-    const orderItems = items.flatMap((item) => item.variantId
-      ? [{ variantId: item.variantId, quantity: item.quantity }]
-      : []);
+    const orderItems = items.flatMap((item) =>
+      item.variantId ? [{ variantId: item.variantId, quantity: item.quantity }] : [],
+    );
     if (orderItems.length !== items.length) {
-      setNotice("One or more cart items are missing a variant. Please remove them and add them again.");
+      setNotice(
+        "One or more cart items are missing a variant. Please remove them and add them again.",
+      );
       return;
     }
 
@@ -127,11 +139,17 @@ export default function CheckoutPage() {
           },
         }),
       });
-      const result = await response.json().catch(() => ({})) as { error?: string; paymentUrl?: string };
-      if (!response.ok || !result.paymentUrl) throw new Error(result.error || "We couldn't start payment. Please try again.");
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        paymentUrl?: string;
+      };
+      if (!response.ok || !result.paymentUrl)
+        throw new Error(result.error || "We couldn't start payment. Please try again.");
       window.location.assign(result.paymentUrl);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "We couldn't place your order. Please try again.");
+      setNotice(
+        error instanceof Error ? error.message : "We couldn't place your order. Please try again.",
+      );
     } finally {
       submissionLock.current = false;
       setIsSubmitting(false);
@@ -143,7 +161,13 @@ export default function CheckoutPage() {
       <div className={styles.checkoutShell}>
         <section className={styles.formColumn}>
           <Link className={styles.logo} href="/" aria-label="QuitRx homepage">
-            <Image src="/images/quitrx-logo-light.png" width={174} height={71} alt="QuitRx" priority />
+            <Image
+              src="/images/quitrx-logo-light.png"
+              width={174}
+              height={71}
+              alt="QuitRx"
+              priority
+            />
           </Link>
           <Link className={styles.backLink} href="/cart" aria-label="Return to cart">
             <span aria-hidden="true">←</span> Return to cart
@@ -165,15 +189,29 @@ export default function CheckoutPage() {
               <Link href="/collections/all-products">Browse products</Link>
             </div>
           ) : (
-            <form className={styles.form} key={customer?.id ?? customer?.email ?? "guest"} onSubmit={handleSubmit}>
+            <form
+              className={styles.form}
+              key={customer?.id ?? customer?.email ?? "guest"}
+              onSubmit={handleSubmit}
+            >
               <section className={styles.formSection}>
                 <div className={styles.sectionHeading}>
                   <span>1</span>
-                  <div><h2>Contact</h2><p>We&apos;ll send your order updates here.</p></div>
+                  <div>
+                    <h2>Contact</h2>
+                    <p>We&apos;ll send your order updates here.</p>
+                  </div>
                 </div>
                 <label className={styles.fieldWide}>
                   <span>Email address</span>
-                  <input type="email" name="email" autoComplete="email" placeholder="you@example.com" defaultValue={customerDefaults.email} required />
+                  <input
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    defaultValue={customerDefaults.email}
+                    required
+                  />
                 </label>
                 <label className={styles.checkbox}>
                   <input type="checkbox" name="newsletter" defaultChecked />
@@ -184,34 +222,135 @@ export default function CheckoutPage() {
               <section className={styles.formSection}>
                 <div className={styles.sectionHeading}>
                   <span>2</span>
-                  <div><h2>Delivery address</h2><p>Where should we send your order?</p></div>
+                  <div>
+                    <h2>Delivery address</h2>
+                    <p>Where should we send your order?</p>
+                  </div>
                 </div>
                 <div className={styles.fieldGrid}>
-                  <label><span>First name</span><input name="firstName" autoComplete="given-name" defaultValue={customerDefaults.firstName} required /></label>
-                  <label><span>Last name</span><input name="lastName" autoComplete="family-name" defaultValue={customerDefaults.lastName} required /></label>
-                  <label className={styles.fieldWide}><span>Address</span><input name="address" autoComplete="street-address" defaultValue={customerDefaults.address} required /></label>
-                  <label className={styles.fieldWide}><span>Apartment, suite, etc. <em>Optional</em></span><input name="address2" autoComplete="address-line2" defaultValue={customerDefaults.address2} /></label>
-                  <label><span>Suburb</span><input name="city" autoComplete="address-level2" defaultValue={customerDefaults.city} required /></label>
-                  <label><span>State</span><select name="state" autoComplete="address-level1" defaultValue={customerDefaults.state} required><option value="" disabled>Select state</option><option>ACT</option><option>NSW</option><option>NT</option><option>QLD</option><option>SA</option><option>TAS</option><option>VIC</option><option>WA</option></select></label>
-                  <label><span>Postcode</span><input name="postcode" autoComplete="postal-code" inputMode="numeric" defaultValue={customerDefaults.postcode} required /></label>
-                  <label><span>Phone</span><input type="tel" name="phone" autoComplete="tel" defaultValue={customerDefaults.phone} required /></label>
+                  <label>
+                    <span>First name</span>
+                    <input
+                      name="firstName"
+                      autoComplete="given-name"
+                      defaultValue={customerDefaults.firstName}
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span>Last name</span>
+                    <input
+                      name="lastName"
+                      autoComplete="family-name"
+                      defaultValue={customerDefaults.lastName}
+                      required
+                    />
+                  </label>
+                  <label className={styles.fieldWide}>
+                    <span>Address</span>
+                    <input
+                      name="address"
+                      autoComplete="street-address"
+                      defaultValue={customerDefaults.address}
+                      required
+                    />
+                  </label>
+                  <label className={styles.fieldWide}>
+                    <span>
+                      Apartment, suite, etc. <em>Optional</em>
+                    </span>
+                    <input
+                      name="address2"
+                      autoComplete="address-line2"
+                      defaultValue={customerDefaults.address2}
+                    />
+                  </label>
+                  <label>
+                    <span>Suburb</span>
+                    <input
+                      name="city"
+                      autoComplete="address-level2"
+                      defaultValue={customerDefaults.city}
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span>State</span>
+                    <select
+                      name="state"
+                      autoComplete="address-level1"
+                      defaultValue={customerDefaults.state}
+                      required
+                    >
+                      <option value="" disabled>
+                        Select state
+                      </option>
+                      <option>ACT</option>
+                      <option>NSW</option>
+                      <option>NT</option>
+                      <option>QLD</option>
+                      <option>SA</option>
+                      <option>TAS</option>
+                      <option>VIC</option>
+                      <option>WA</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Postcode</span>
+                    <input
+                      name="postcode"
+                      autoComplete="postal-code"
+                      inputMode="numeric"
+                      defaultValue={customerDefaults.postcode}
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span>Phone</span>
+                    <input
+                      type="tel"
+                      name="phone"
+                      autoComplete="tel"
+                      defaultValue={customerDefaults.phone}
+                      required
+                    />
+                  </label>
                 </div>
               </section>
 
               <section className={styles.formSection}>
                 <div className={styles.sectionHeading}>
                   <span>3</span>
-                  <div><h2>Shipping method</h2><p>Choose how quickly your order arrives.</p></div>
+                  <div>
+                    <h2>Shipping method</h2>
+                    <p>Choose how quickly your order arrives.</p>
+                  </div>
                 </div>
                 <div className={styles.shippingOptions}>
                   <label className={shippingMethod === "standard" ? styles.selectedOption : ""}>
-                    <input type="radio" name="shipping" checked={shippingMethod === "standard"} onChange={() => setShippingMethod("standard")} />
-                    <span><strong>Standard shipping</strong><small>3–7 business days</small></span>
+                    <input
+                      type="radio"
+                      name="shipping"
+                      checked={shippingMethod === "standard"}
+                      onChange={() => setShippingMethod("standard")}
+                    />
+                    <span>
+                      <strong>Standard shipping</strong>
+                      <small>3–7 business days</small>
+                    </span>
                     <strong>{money(CHECKOUT_SHIPPING.standard)}</strong>
                   </label>
                   <label className={shippingMethod === "express" ? styles.selectedOption : ""}>
-                    <input type="radio" name="shipping" checked={shippingMethod === "express"} onChange={() => setShippingMethod("express")} />
-                    <span><strong>Express shipping</strong><small>1–3 business days</small></span>
+                    <input
+                      type="radio"
+                      name="shipping"
+                      checked={shippingMethod === "express"}
+                      onChange={() => setShippingMethod("express")}
+                    />
+                    <span>
+                      <strong>Express shipping</strong>
+                      <small>1–3 business days</small>
+                    </span>
                     <strong>{money(CHECKOUT_SHIPPING.express)}</strong>
                   </label>
                 </div>
@@ -220,52 +359,127 @@ export default function CheckoutPage() {
               <section className={styles.formSection}>
                 <div className={styles.sectionHeading}>
                   <span>4</span>
-                  <div><h2>Payment</h2><p>Payment details are encrypted and secure.</p></div>
+                  <div>
+                    <h2>Payment</h2>
+                    <p>Payment details are encrypted and secure.</p>
+                  </div>
                 </div>
                 <div className={styles.paymentOptions}>
                   <label className={paymentMethod === "eway" ? styles.selectedOption : ""}>
-                    <input type="radio" name="paymentMethod" checked={paymentMethod === "eway"} onChange={() => setPaymentMethod("eway")} />
-                    <span><strong>Credit or debit card</strong><small>Pay securely using your credit or debit card.</small></span>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      checked={paymentMethod === "eway"}
+                      onChange={() => setPaymentMethod("eway")}
+                    />
+                    <span>
+                      <strong>Credit or debit card</strong>
+                      <small>Pay securely using your credit or debit card.</small>
+                    </span>
                   </label>
                   <label className={paymentMethod === "paypal" ? styles.selectedOption : ""}>
-                    <input type="radio" name="paymentMethod" checked={paymentMethod === "paypal"} onChange={() => setPaymentMethod("paypal")} />
-                    <span><strong>PayPal</strong><small>You&apos;ll be redirected to PayPal to approve your payment.</small></span>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      checked={paymentMethod === "paypal"}
+                      onChange={() => setPaymentMethod("paypal")}
+                    />
+                    <span>
+                      <strong>PayPal</strong>
+                      <small>You&apos;ll be redirected to PayPal to approve your payment.</small>
+                    </span>
                   </label>
                 </div>
               </section>
 
-              {displayedNotice && <p className={styles.notice} role="status">{displayedNotice}</p>}
-              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>{isSubmitting ? "Processing…" : "Pay Securely Now"} <span aria-hidden="true">→</span></button>
-              <p className={styles.terms}>By continuing, you agree to our <Link href="/terms-and-conditions">terms</Link> and <Link href="/privacy-policy">privacy policy</Link>.</p>
+              {displayedNotice && (
+                <p className={styles.notice} role="status">
+                  {displayedNotice}
+                </p>
+              )}
+              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Processing…" : "Pay Securely Now"}{" "}
+                <span aria-hidden="true">→</span>
+              </button>
+              <p className={styles.terms}>
+                By continuing, you agree to our <Link href="/terms-and-conditions">terms</Link> and{" "}
+                <Link href="/privacy-policy">privacy policy</Link>.
+              </p>
             </form>
           )}
         </section>
 
         <aside className={styles.summaryColumn} aria-label="Order summary">
           <div className={styles.summaryInner}>
-            <h2>Order summary <span>{items.reduce((count, item) => count + item.quantity, 0)} items</span></h2>
+            <h2>
+              Order summary{" "}
+              <span>{items.reduce((count, item) => count + item.quantity, 0)} items</span>
+            </h2>
             <div className={styles.items}>
               {items.map((item) => (
                 <article className={styles.item} key={item.key}>
                   <div className={styles.itemImage}>
-                    <Image src={item.image || DEFAULT_PRODUCT_IMAGE} width={68} height={72} alt="" sizes="68px" />
+                    <Image
+                      src={item.image || DEFAULT_PRODUCT_IMAGE}
+                      width={68}
+                      height={72}
+                      alt=""
+                      sizes="68px"
+                    />
                     <span>{item.quantity}</span>
                   </div>
-                  <div><strong>{item.productName}</strong><small>{item.variantName}</small></div>
+                  <div>
+                    <strong>{item.productName}</strong>
+                    <small>{item.variantName}</small>
+                    {item.bundleComponents?.length ? (
+                      <ol className={styles.itemBundle} aria-label="Bundle selections">
+                        {item.bundleComponents.map((component, index) => (
+                          <li key={`${component.productName}-${component.variantName}-${index}`}>
+                            <span>{component.productName}</span>
+                            {component.variantName !== "Default" && (
+                              <span> - {component.variantName}</span>
+                            )}
+                            <span> &times; {component.quantity * item.quantity}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : null}
+                  </div>
                   <strong>{money(numericPrice(item.price) * item.quantity)}</strong>
                 </article>
               ))}
             </div>
             <div className={styles.discount}>
-              <label><span className="sr-only">Discount code</span><input placeholder="Discount code" /></label>
+              <label>
+                <span className="sr-only">Discount code</span>
+                <input placeholder="Discount code" />
+              </label>
               <button type="button">Apply</button>
             </div>
             <dl className={styles.totals}>
-              <div><dt>Subtotal</dt><dd>{money(subtotal)}</dd></div>
-              <div><dt>Shipping</dt><dd>{money(shipping)}</dd></div>
-              <div className={styles.total}><dt>Total <small>AUD</small></dt><dd>{money(subtotal + shipping)}</dd></div>
+              <div>
+                <dt>Subtotal</dt>
+                <dd>{money(subtotal)}</dd>
+              </div>
+              <div>
+                <dt>Shipping</dt>
+                <dd>{money(shipping)}</dd>
+              </div>
+              <div className={styles.total}>
+                <dt>
+                  Total <small>AUD</small>
+                </dt>
+                <dd>{money(subtotal + shipping)}</dd>
+              </div>
             </dl>
-            <div className={styles.help}><span aria-hidden="true">?</span><p><strong>Need help?</strong><br /><Link href="/contact">Contact our support team</Link></p></div>
+            <div className={styles.help}>
+              <span aria-hidden="true">?</span>
+              <p>
+                <strong>Need help?</strong>
+                <br />
+                <Link href="/contact">Contact our support team</Link>
+              </p>
+            </div>
           </div>
         </aside>
       </div>

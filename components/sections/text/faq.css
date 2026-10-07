@@ -40,7 +40,7 @@
 .faq__icon {
   font-size: 24px;
   color: #777;
-  transition: .25s;
+  transition: 0.25s;
 }
 
 .faq__item.active .faq__icon {
@@ -67,8 +67,7 @@
   color: #222;
 }
 
-@media (max-width:989px) {
-
+@media (max-width: 989px) {
   .faq__heading {
     font-size: 35px;
     margin-bottom: 30px;

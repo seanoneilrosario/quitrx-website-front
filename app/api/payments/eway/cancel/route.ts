@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { clearPendingEwayPayment } from "@/lib/eway-payment-session";
+import { clearPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 
 export async function GET(request: NextRequest) {
   await clearPendingEwayPayment();

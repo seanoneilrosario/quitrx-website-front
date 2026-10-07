@@ -1,8 +1,8 @@
 import Image from "next/image";
 import { PortableText } from "next-sanity";
-import { PortableTextBlock } from "@/components/global/components";
+import { PortableTextBlock } from "@/components/sections/section-types";
 
-import "./richtextwithimage.css";
+import "./richtext-with-image.css";
 
 interface RichtextImageProps {
   image?: string;
@@ -28,15 +28,9 @@ const RichtextImage = ({
       }}
     >
       <div className="page-width">
-
         {image && (
           <div className="richtext-image__icon">
-            <Image
-              src={image}
-              alt=""
-              width={200}
-              height={200}
-            />
+            <Image src={image} alt="" width={200} height={200} />
           </div>
         )}
 
@@ -51,7 +45,6 @@ const RichtextImage = ({
             <PortableText value={content} />
           </div>
         )}
-
       </div>
     </section>
   );

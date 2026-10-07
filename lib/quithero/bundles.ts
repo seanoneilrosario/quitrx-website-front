@@ -1,8 +1,8 @@
 import "server-only";
 
 import { API_BASE, quitHeroFetch } from "./client";
-import { bundleComponentsFrom } from "../quithero-bundle";
-import type { QuitHeroVariant } from "../quithero-types";
+import { bundleComponentsFrom } from "@/lib/catalog/bundles";
+import type { QuitHeroVariant } from "./product-types";
 
 export async function getQuitHeroBundle(productId: string, variantId: string) {
   const payload = await getQuitHeroBundleVariant(productId, variantId);

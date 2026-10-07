@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { useAccountCustomer, useCustomerDataInvalidation } from "@/hooks/useAccountCustomer";
-import { buildQuitRxFormUrl } from "@/lib/quitRxFormUrls";
-import "./UploadPrescription.css";
-import "./FormBackButton.css";
+import { buildQuitRxFormUrl } from "@/lib/forms/form-urls";
+import "./upload-prescription.css";
+import "./form-back-button.css";
 import FormBackButton from "./FormBackButton";
 
 const FORM_ID = "tNPCUM7T9J2EfT3pdRP68U6T6HezBgFAcqRmifGD4eg";
@@ -35,7 +35,8 @@ export default function UploadPrescription({ title }: UploadPrescriptionProps) {
 
   useEffect(() => {
     function resizeForm(event: MessageEvent) {
-      if (event.source !== iframeRef.current?.contentWindow || typeof event.data !== "string") return;
+      if (event.source !== iframeRef.current?.contentWindow || typeof event.data !== "string")
+        return;
       const [formId, height, shouldScroll] = event.data.split("|");
       if (formId !== FORM_ID || !iframeRef.current) return;
       const nextHeight = Number.parseInt(height, 10);

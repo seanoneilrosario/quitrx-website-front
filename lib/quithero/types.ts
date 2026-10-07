@@ -1,4 +1,4 @@
-import type { QuitHeroProduct } from "../quithero-types";
+import type { QuitHeroProduct } from "./product-types";
 export type QuitHeroCollectionProduct =
   | string
   | (QuitHeroProduct & {
@@ -43,4 +43,4 @@ export type QuitHeroCollectionPage = {
   };
 };
 
-export type * from "../quithero-types";
+export type * from "./product-types";

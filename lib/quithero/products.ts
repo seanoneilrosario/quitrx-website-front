@@ -2,9 +2,9 @@ import "server-only";
 
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import type { QuitHeroProduct } from "../quithero-types";
+import type { QuitHeroProduct } from "./product-types";
 import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS } from "./client";
-import { productIsVisible } from "../quithero-bundle";
+import { productIsVisible } from "@/lib/catalog/bundles";
 
 type QuitHeroProductsResponse =
   | QuitHeroProduct[]

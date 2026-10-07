@@ -16,7 +16,10 @@ const PAGE_COMPONENTS = `
     productLimit,
     displayMode,
     "collection": collection->{title, "slug": slug.current, "image": coalesce(image.asset->url, featuredImageUrl)},
-    "collections": collections[]->{title, "slug": slug.current, "image": coalesce(image.asset->url, featuredImageUrl)},
+    "collections": collections[]{
+      _type == "reference" => @->{title, "slug": slug.current, "image": coalesce(image.asset->url, featuredImageUrl)},
+      _type == "apiCollection" => {title, slug, image}
+    },
     "comparisonIcon": comparison_icon.asset->url,
     audience,
     card_title,

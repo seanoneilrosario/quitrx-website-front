@@ -37,7 +37,9 @@ export default function ProductImageZoom({ image, alt }: { image?: string; alt: 
         disabled={!image}
         aria-busy={!imageLoaded}
       >
-        <span className={styles.zoomIcon} aria-hidden="true">+</span>
+        <span className={styles.zoomIcon} aria-hidden="true">
+          +
+        </span>
         {!imageLoaded && <span className={styles.productImageLoader} aria-hidden="true" />}
         <ProductImage
           src={image}
@@ -51,15 +53,37 @@ export default function ProductImageZoom({ image, alt }: { image?: string; alt: 
         />
       </button>
 
-      {open && image && typeof document !== "undefined" && createPortal(
-        <div className={styles.zoomModal} role="dialog" aria-modal="true" aria-label={`${alt} enlarged image`} onClick={() => setOpen(false)}>
-          <button type="button" className={styles.zoomClose} onClick={() => setOpen(false)} aria-label="Close image zoom">
-            <span />
-          </button>
-          <ProductImage src={image} width={1600} height={1600} sizes="92vw" alt={alt} className={styles.zoomedImage} onClick={(event) => event.stopPropagation()} />
-        </div>,
-        document.body,
-      )}
+      {open &&
+        image &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={styles.zoomModal}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${alt} enlarged image`}
+            onClick={() => setOpen(false)}
+          >
+            <button
+              type="button"
+              className={styles.zoomClose}
+              onClick={() => setOpen(false)}
+              aria-label="Close image zoom"
+            >
+              <span />
+            </button>
+            <ProductImage
+              src={image}
+              width={1600}
+              height={1600}
+              sizes="92vw"
+              alt={alt}
+              className={styles.zoomedImage}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

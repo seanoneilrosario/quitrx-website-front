@@ -39,11 +39,7 @@ const getPage = cache(async (slug: string) => {
 
     const data = result?.data ?? null;
 
-    if (
-      !data ||
-      (typeof data === "object" &&
-        Object.keys(data).length === 0)
-    ) {
+    if (!data || (typeof data === "object" && Object.keys(data).length === 0)) {
       return null;
     }
 
@@ -53,11 +49,7 @@ const getPage = cache(async (slug: string) => {
   }
 });
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<Params>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
 
   const page = (await getPage(slug)) as HomePageData | null;
@@ -75,9 +67,7 @@ export async function generateMetadata({
 
   const metaTitle = page.title ?? "QuitRx";
 
-  const metaDescription =
-    page.metaDescription ??
-    "Advancing the way Australians quit.";
+  const metaDescription = page.metaDescription ?? "Advancing the way Australians quit.";
 
   return {
     title: metaTitle,
@@ -122,17 +112,12 @@ export async function generateMetadata({
     },
 
     other: {
-      "Permissions-Policy":
-        "payment=(), microphone=(), camera=(), geolocation=()",
+      "Permissions-Policy": "payment=(), microphone=(), camera=(), geolocation=()",
     },
   };
 }
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<Params>;
-}) {
+export default async function Page({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
 
   const page = await getPage(slug);
@@ -143,9 +128,11 @@ export default async function Page({
 
   const content = <Pages page={page} />;
 
-  return ["pharmacy", "request-script"].includes(slug)
-    ? <ActiveScriptAccessGuard>{content}</ActiveScriptAccessGuard>
-    : content;
+  return ["pharmacy", "request-script"].includes(slug) ? (
+    <ActiveScriptAccessGuard>{content}</ActiveScriptAccessGuard>
+  ) : (
+    content
+  );
 }
 
 export async function generateStaticParams() {
@@ -158,23 +145,13 @@ export async function generateStaticParams() {
       next: {
         revalidate: 300,
       },
-    }
+    },
   );
 
-  const allowedTypes = [
-    "destination",
-    "villa",
-    "chooseyourmood",
-    "collection",
-  ];
+  const allowedTypes = ["destination", "villa", "chooseyourmood", "collection"];
 
   return allSlugs
-    .filter(
-      (item: any) =>
-        allowedTypes.includes(item._type) &&
-        item.slug &&
-        item.slug !== "villas"
-    )
+    .filter((item: any) => allowedTypes.includes(item._type) && item.slug && item.slug !== "villas")
     .map((item: any) => ({
       slug: item.slug,
     }));

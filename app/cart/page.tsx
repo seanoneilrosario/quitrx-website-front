@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import styles from "@/app/store.module.css";
-import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/catalog/product-image";
 
 type CartItem = {
   key: string;
@@ -60,10 +60,17 @@ export default function CartPage() {
       return;
     }
     setStockError("");
-    save(items.map((entry) => entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry));
+    save(
+      items.map((entry) =>
+        entry.key === item.key ? { ...entry, quantity: entry.quantity + 1 } : entry,
+      ),
+    );
   }
 
-  const subtotal = items.reduce((total, item) => total + numericPrice(item.price) * item.quantity, 0);
+  const subtotal = items.reduce(
+    (total, item) => total + numericPrice(item.price) * item.quantity,
+    0,
+  );
 
   return (
     <main className={styles.cartPage}>
@@ -84,7 +91,15 @@ export default function CartPage() {
               {stockError && <p role="alert">{stockError}</p>}
               {items.map((item) => (
                 <article className={styles.cartItem} key={item.key}>
-                  <div className={styles.cartImage}><Image src={item.image || DEFAULT_PRODUCT_IMAGE} width={110} height={110} alt="" sizes="110px" /></div>
+                  <div className={styles.cartImage}>
+                    <Image
+                      src={item.image || DEFAULT_PRODUCT_IMAGE}
+                      width={110}
+                      height={110}
+                      alt=""
+                      sizes="110px"
+                    />
+                  </div>
                   <div className={styles.cartItemInfo}>
                     <h2>{item.productName}</h2>
                     <p>{item.variantName}</p>
@@ -94,19 +109,48 @@ export default function CartPage() {
                         {item.bundleComponents.map((component, index) => (
                           <li key={`${component.productName}-${component.variantName}-${index}`}>
                             <span>{component.productName}</span>
-                            {component.variantName !== "Default" && <span> - {component.variantName}</span>}
-
+                            {component.variantName !== "Default" && (
+                              <span> - {component.variantName}</span>
+                            )}
+                            <span> &times; {component.quantity * item.quantity}</span>
                           </li>
                         ))}
                       </ol>
                     ) : null}
                   </div>
                   <div className={styles.cartQuantity}>
-                    <button type="button" onClick={() => save(items.map((entry) => entry.key === item.key ? { ...entry, quantity: Math.max(1, entry.quantity - 1) } : entry))} aria-label={`Decrease ${item.productName} quantity`}>-</button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        save(
+                          items.map((entry) =>
+                            entry.key === item.key
+                              ? { ...entry, quantity: Math.max(1, entry.quantity - 1) }
+                              : entry,
+                          ),
+                        )
+                      }
+                      aria-label={`Decrease ${item.productName} quantity`}
+                    >
+                      -
+                    </button>
                     <span>{item.quantity}</span>
-                    <button type="button" disabled={item.quantity >= (item.availableStock ?? 0)} onClick={() => increase(item)} aria-label={`Increase ${item.productName} quantity`}>+</button>
+                    <button
+                      type="button"
+                      disabled={item.quantity >= (item.availableStock ?? 0)}
+                      onClick={() => increase(item)}
+                      aria-label={`Increase ${item.productName} quantity`}
+                    >
+                      +
+                    </button>
                   </div>
-                  <button className={styles.removeCartItem} type="button" onClick={() => save(items.filter((entry) => entry.key !== item.key))}>Remove</button>
+                  <button
+                    className={styles.removeCartItem}
+                    type="button"
+                    onClick={() => save(items.filter((entry) => entry.key !== item.key))}
+                  >
+                    Remove
+                  </button>
                 </article>
               ))}
             </div>

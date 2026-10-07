@@ -1,6 +1,6 @@
-import type { QuitHeroProduct } from "../quithero-types";
+import type { QuitHeroProduct } from "./product-types";
 import type { CollectionRule } from "./types";
-import { DEFAULT_PRODUCT_IMAGE } from "../product-image";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/catalog/product-image";
 
 export function productHasTag(product: Pick<QuitHeroProduct, "tags">, expectedTag: string) {
   const expected = expectedTag.trim().toLowerCase();

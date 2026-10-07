@@ -1,7 +1,7 @@
 import Image from "next/image";
-import {PortableTextBlock} from "@/components/global/components";
-import {PortableText} from "@portabletext/react";
-import styles from "./MultiRow.module.css";
+import { PortableTextBlock } from "@/components/sections/section-types";
+import { PortableText } from "@portabletext/react";
+import styles from "./multi-row.module.css";
 import { motion } from "motion/react";
 
 interface Member {
@@ -26,16 +26,14 @@ interface MultiRowProps {
   members: Member[];
 }
 
-export default function MultiRow({members}: MultiRowProps) {
+export default function MultiRow({ members }: MultiRowProps) {
   return (
     <section className={styles.section}>
       <div className={styles.container}>
         {members.map((member, index) => (
           <motion.div
             key={index}
-            className={`${styles.row} ${
-              index !== members.length - 1 ? styles.border : ""
-            }`}
+            className={`${styles.row} ${index !== members.length - 1 ? styles.border : ""}`}
             initial={{ y: 10, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true, amount: 0.12 }}
@@ -48,12 +46,7 @@ export default function MultiRow({members}: MultiRowProps) {
               viewport={{ once: true, amount: 0.12 }}
               transition={{ duration: 0.6, ease: "easeOut", delay: 0.06 + index * 0.03 }}
             >
-              <Image
-                src={member.image.asset.url}
-                alt={member.name}
-                width={420}
-                height={560}
-              />
+              <Image src={member.image.asset.url} alt={member.name} width={420} height={560} />
             </motion.div>
 
             <motion.div

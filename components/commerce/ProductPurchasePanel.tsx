@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import styles from "@/app/store.module.css";
-import { firstAvailableVariantIndex } from "@/lib/frequently-bought-together";
-import { productStatusAllowsPurchase, variantIsAvailable } from "@/lib/quithero-bundle";
-import { buildMultiItemCartPayload } from "@/lib/storefront-cart";
-import type { StorefrontCartItem } from "@/lib/storefront-cart";
-import { getAvailableStock } from "@/lib/available-stock";
+import { firstAvailableVariantIndex } from "@/lib/catalog/frequently-bought-together";
+import { productStatusAllowsPurchase, variantIsAvailable } from "@/lib/catalog/bundles";
+import { buildMultiItemCartPayload } from "@/lib/checkout/storefront-cart";
+import type { StorefrontCartItem } from "@/lib/checkout/storefront-cart";
+import { getAvailableStock } from "@/lib/catalog/available-stock";
 
 type Variant = {
   id?: string;
@@ -130,11 +130,15 @@ export default function ProductPurchasePanel({
   const bundleIsAvailable =
     selectedBundleOptions.length > 0 && selectedBundleOptions.every((option) => option?.available);
   const availableStock = isBundle
-    ? Math.min(...selectedBundleOptions.map((option, index) => option ? Math.floor(option.availableStock / bundleDropdowns[index].quantity) : 0))
+    ? Math.min(
+        ...selectedBundleOptions.map((option, index) =>
+          option ? Math.floor(option.availableStock / bundleDropdowns[index].quantity) : 0,
+        ),
+      )
     : getAvailableStock(selected);
-  const available = productStatusAllowsPurchase(productStatus) && (isBundle
-    ? Boolean(selected?.id) && bundleIsAvailable
-    : variantIsAvailable(selected));
+  const available =
+    productStatusAllowsPurchase(productStatus) &&
+    (isBundle ? Boolean(selected?.id) && bundleIsAvailable : variantIsAvailable(selected));
   const price = formatPrice((selected || variants[0])?.price);
 
   function selectParentVariant(index: number) {
@@ -269,17 +273,15 @@ export default function ProductPurchasePanel({
         </button>
       </div>
 
-      <p className={available ? styles.stockStatus : styles.outOfStock}>
-        {available ? (
-          <>
+      {available ? (
+        availableStock < 50 && (
+          <p className={styles.stockStatus}>
             Low stock! Only <strong>{availableStock}</strong> units left!
-          </>
-        ) : selected ? (
-          "Out of stock"
-        ) : (
-          "Select a bundle"
-        )}
-      </p>
+          </p>
+        )
+      ) : (
+        <p className={styles.outOfStock}>{selected ? "Out of stock" : "Select a bundle"}</p>
+      )}
       {stockError && (
         <p className={styles.outOfStock} role="alert">
           {stockError}
@@ -430,13 +432,7 @@ export default function ProductPurchasePanel({
           disabled={!available}
           onClick={addToCart}
         >
-          {added
-            ? "Added"
-            : !selected
-              ? "Select bundle"
-              : available
-                ? "Add to Cart"
-                : "Sold out"}
+          {added ? "Added" : !selected ? "Select bundle" : available ? "Add to Cart" : "Sold out"}
         </button>
       </div>
     </>

@@ -5,19 +5,14 @@ import {
   findQuitHeroCustomerByOAuth,
   linkQuitHeroCustomerOAuth,
   syncQuitHeroCustomer,
-} from "@/lib/quithero-customers";
-import {
-  CUSTOMER_SESSION_COOKIE,
-  verifySignedCustomerSession,
-} from "@/lib/customer-session";
+} from "@/lib/quithero/customers";
+import { CUSTOMER_SESSION_COOKIE, verifySignedCustomerSession } from "@/lib/auth/customer-session";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   secret:
     process.env.AUTH_SECRET ??
     process.env.AUTH_SESSION_SECRET ??
-    (process.env.NODE_ENV !== "production"
-      ? process.env.QUITHERO_API_KEY
-      : undefined),
+    (process.env.NODE_ENV !== "production" ? process.env.QUITHERO_API_KEY : undefined),
 
   providers: [
     Google,
@@ -44,10 +39,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
   callbacks: {
     async signIn({ user, account }) {
-      if (
-        !account ||
-        !["google", "facebook"].includes(account.provider)
-      ) {
+      if (!account || !["google", "facebook"].includes(account.provider)) {
         return false;
       }
 
@@ -57,10 +49,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       // First, check whether this OAuth account
       // is already linked to a QuitHero customer.
       if (providerAccountId) {
-        const linkedCustomer = await findQuitHeroCustomerByOAuth(
-          provider,
-          providerAccountId,
-        );
+        const linkedCustomer = await findQuitHeroCustomerByOAuth(provider, providerAccountId);
 
         if (linkedCustomer?.email) {
           user.email = linkedCustomer.email;
@@ -76,11 +65,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         if (!customer?.id) return false;
 
         if (providerAccountId) {
-          await linkQuitHeroCustomerOAuth(
-            customer.id,
-            provider,
-            providerAccountId,
-          );
+          await linkQuitHeroCustomerOAuth(customer.id, provider, providerAccountId);
 
           user.id = customer.id;
         }

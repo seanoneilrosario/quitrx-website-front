@@ -1,7 +1,7 @@
 "use client";
 
 import { SanityDocument } from "next-sanity";
-import SpreadComponents from "../global/SpreadComponent";
+import SectionRenderer from "@/components/sections/SectionRenderer";
 
 type HomepagePageProps = {
   data?: SanityDocument | null;
@@ -16,9 +16,7 @@ const Homepage = ({ data }: HomepagePageProps) => {
   }
 
   return (
-    <div className="">
-      {components.length > 0 && <SpreadComponents components={components} />}
-    </div>
+    <div className="">{components.length > 0 && <SectionRenderer components={components} />}</div>
   );
 };
 

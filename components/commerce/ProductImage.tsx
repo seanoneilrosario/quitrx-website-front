@@ -2,7 +2,7 @@
 
 import Image, { type ImageProps } from "next/image";
 import { useState } from "react";
-import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/catalog/product-image";
 
 type ProductImageProps = Omit<ImageProps, "src" | "onError"> & {
   src?: string | null;

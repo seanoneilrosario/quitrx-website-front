@@ -13,7 +13,7 @@ export default function AuthPopupCompletePage() {
     queryFn: async ({ signal }) => {
       const response = await fetch("/api/auth/session", { cache: "no-store", signal });
       if (!response.ok) throw new Error("Unable to check your login.");
-      return await response.json() as { user?: { needsCustomerEmail?: boolean } };
+      return (await response.json()) as { user?: { needsCustomerEmail?: boolean } };
     },
     staleTime: 0,
     gcTime: 0,
@@ -63,7 +63,15 @@ export default function AuthPopupCompletePage() {
     return (
       <main className="customer-login" role="status">
         <section className="customer-login__dialog">
-          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage"><Image src="/images/quitrx-logo-light.png" width={174} height={71} alt="QuitRx" priority /></Link>
+          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">
+            <Image
+              src="/images/quitrx-logo-light.png"
+              width={174}
+              height={71}
+              alt="QuitRx"
+              priority
+            />
+          </Link>
           <div className="customer-login__copy">
             <h1>Signing in</h1>
             <p>{error || sessionError?.message || "Please wait..."}</p>
@@ -77,13 +85,26 @@ export default function AuthPopupCompletePage() {
     return (
       <main className="customer-login" role="dialog" aria-modal="true">
         <section className="customer-login__dialog">
-          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage"><Image src="/images/quitrx-logo-light.png" width={174} height={71} alt="QuitRx" priority /></Link>
+          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">
+            <Image
+              src="/images/quitrx-logo-light.png"
+              width={174}
+              height={71}
+              alt="QuitRx"
+              priority
+            />
+          </Link>
           <div className="customer-login__copy">
             <h1>Almost there</h1>
-            <p>Enter your email address once to connect your Facebook account to your QuitRx customer account.</p>
+            <p>
+              Enter your email address once to connect your Facebook account to your QuitRx customer
+              account.
+            </p>
           </div>
           <form onSubmit={submitEmail} className="customer-login__form">
-            <label className="sr-only" htmlFor="facebook-link-email">Email address</label>
+            <label className="sr-only" htmlFor="facebook-link-email">
+              Email address
+            </label>
             <div className="customer-login__field">
               <input
                 id="facebook-link-email"
@@ -98,10 +119,18 @@ export default function AuthPopupCompletePage() {
                 disabled={pending}
               />
               <button type="submit" disabled={pending} aria-label="Connect Facebook account">
-                {pending ? <span className="customer-login__spinner" /> : <span aria-hidden="true">→</span>}
+                {pending ? (
+                  <span className="customer-login__spinner" />
+                ) : (
+                  <span aria-hidden="true">→</span>
+                )}
               </button>
             </div>
-            {error && <p className="customer-login__error" role="alert">{error}</p>}
+            {error && (
+              <p className="customer-login__error" role="alert">
+                {error}
+              </p>
+            )}
           </form>
         </section>
       </main>

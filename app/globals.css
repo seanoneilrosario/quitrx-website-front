@@ -3,27 +3,28 @@
 @import "../components/sections/hero/hero-sections.css";
 
 @font-face {
-  font-family: 'Quicksand';
-  src: url('/fonts/Quicksand-Regular.eot');
-  src: url('/fonts/Quicksand-Regular.eot?#iefix') format('embedded-opentype'),
-    url('/fonts/Quicksand-Regular.woff2') format('woff2'),
-    url('/fonts/Quicksand-Regular.woff') format('woff');
+  font-family: "Quicksand";
+  src: url("/fonts/Quicksand-Regular.eot");
+  src:
+    url("/fonts/Quicksand-Regular.eot?#iefix") format("embedded-opentype"),
+    url("/fonts/Quicksand-Regular.woff2") format("woff2"),
+    url("/fonts/Quicksand-Regular.woff") format("woff");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Quicksand';
-  src: url('/fonts/Quicksand-SemiBold.ttf') format('truetype');
+  font-family: "Quicksand";
+  src: url("/fonts/Quicksand-SemiBold.ttf") format("truetype");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Quicksand';
-  src: url('/fonts/Quicksand-Bold.ttf') format('truetype');
+  font-family: "Quicksand";
+  src: url("/fonts/Quicksand-Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -82,11 +83,11 @@ option {
 .page-width {
   max-width: 130rem;
   margin: 0 auto;
-  padding: 0 1.5rem
+  padding: 0 1.5rem;
 }
 
 .main-sections-wrapper {
-  padding-top: 133px;
+  padding-top: 160px;
 }
 
 .main-sections-wrapper.account-main-sections-wrapper {
@@ -199,12 +200,12 @@ blockquote {
   .page-width {
     max-width: 1560px;
     margin: 0 auto;
-    padding: 0 5rem
+    padding: 0 5rem;
   }
 }
 
 @media (min-width: 1024px) {
- .main-sections-wrapper {
+  .main-sections-wrapper {
     padding-top: 188px;
   }
 
@@ -213,7 +214,7 @@ blockquote {
   }
 }
 
-.account-page .site-marquee, 
+.account-page .site-marquee,
 .account-page .site-header {
   display: none !important;
 }

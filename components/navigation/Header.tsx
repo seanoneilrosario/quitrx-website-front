@@ -5,9 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { catalogListQuery } from "@/lib/catalog-queries";
+import { catalogListQuery } from "@/lib/catalog/catalog-queries";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
-import { DEFAULT_PRODUCT_IMAGE } from "@/lib/product-image";
+import { DEFAULT_PRODUCT_IMAGE } from "@/lib/catalog/product-image";
 type NavigationMenuItem = {
   title?: string | null;
   href?: string | null;
@@ -176,7 +176,11 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartStockError, setCartStockError] = useState("");
-  const { customer: accountIdentity, loading: accountLoading, error: accountError } = useAccountCustomer();
+  const {
+    customer: accountIdentity,
+    loading: accountLoading,
+    error: accountError,
+  } = useAccountCustomer();
   const [searchTerm, setSearchTerm] = useState("");
   const {
     data: searchPayload,
@@ -332,7 +336,9 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
       <div className="site-marquee">
         <div className="site-marquee__track">
           <span className="site-marquee__item site-marquee__item--desktop">{MARQUEE_TEXT}</span>
-          <span className="site-marquee__item site-marquee__item--mobile">{MOBILE_MARQUEE_TEXT}</span>
+          <span className="site-marquee__item site-marquee__item--mobile">
+            {MOBILE_MARQUEE_TEXT}
+          </span>
         </div>
       </div>
       <header
@@ -389,7 +395,11 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                     </svg>
                   )}
                   <span>
-                    {isAuthenticated ? (accountFirstName ? `Hi, ${accountFirstName}` : "Hi") : "Login"}
+                    {isAuthenticated
+                      ? accountFirstName
+                        ? `Hi, ${accountFirstName}`
+                        : "Hi"
+                      : "Login"}
                   </span>
                 </Link>
               )}
@@ -604,9 +614,9 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
           {cartItems.length === 0 ? (
             <div className="cart-drawer__empty">
               <p>Your cart is empty.</p>
-              <button type="button" onClick={() => setIsCartOpen(false)}>
+              <Link href="/pharmacy" onClick={() => setIsCartOpen(false)}>
                 Continue shopping
-              </button>
+              </Link>
             </div>
           ) : (
             <>
@@ -634,7 +644,7 @@ export default function Header({ navigation, searchPages = [] }: HeaderProps) {
                               {component.variantName !== "Default" && (
                                 <span> - {component.variantName}</span>
                               )}
-
+                              <span> &times; {component.quantity * item.quantity}</span>
                             </li>
                           ))}
                         </ol>

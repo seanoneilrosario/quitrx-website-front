@@ -3,21 +3,16 @@ import { cache } from "react";
 import { draftMode } from "next/headers";
 import { defineQuery } from "next-sanity";
 
-import { DisableDraftMode } from "@/components/global/DisableDraftMode";
-import type { ThemeSettings } from "@/components/global/ThemeProvider";
-import WebsiteShell from "@/components/global/WebsiteShell";
-import { getInitialAccount } from "@/lib/account-data";
-import type {
-  NavigationData,
-  SearchPage,
-} from "@/components/navigation/Header";
+import { DisableDraftMode } from "@/components/cms/DisableDraftMode";
+import type { ThemeSettings } from "@/components/providers/ThemeProvider";
+import WebsiteShell from "@/components/layout/WebsiteShell";
+import { getInitialAccount } from "@/lib/account/account-data";
+import type { NavigationData, SearchPage } from "@/components/navigation/Header";
 
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { HEADER_SEARCH_QUERY, NAVIGATION, SETTINGS } from "@/sanity/lib/queries";
 
 import "./globals.css";
-
-
 
 export const revalidate = 300;
 
@@ -44,8 +39,7 @@ export const metadata: Metadata = {
   },
 
   other: {
-    "Permissions-Policy":
-      "payment=(), microphone=(), camera=(), geolocation=()",
+    "Permissions-Policy": "payment=(), microphone=(), camera=(), geolocation=()",
   },
 };
 
@@ -79,11 +73,7 @@ const getSearchPages = cache(async () => {
   return result?.data ?? [];
 });
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode();
 
   const [navigation, settings, searchPages, initialCustomer] = await Promise.all([
@@ -95,11 +85,7 @@ export default async function RootLayout({
   ]);
 
   return (
-    <html
-      lang="en"
-      className="h-full antialiased"
-      suppressHydrationWarning
-    >
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
         <WebsiteShell
           initialCustomer={initialCustomer}

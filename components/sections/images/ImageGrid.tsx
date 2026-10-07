@@ -1,32 +1,32 @@
-import Image from 'next/image'
-import { urlFor } from '@/sanity/lib/image'
-import './ImageGrid.css'
+import Image from "next/image";
+import { urlFor } from "@/sanity/lib/image";
+import "./image-grid.css";
 
 interface GridImage {
   image: {
     asset: {
-      _id: string
-      url: string
-    }
+      _id: string;
+      url: string;
+    };
     hotspot?: {
-      x: number
-      y: number
-      height: number
-      width: number
-    }
-  }
-  alt: string
-  caption?: string
-  link?: string
+      x: number;
+      y: number;
+      height: number;
+      width: number;
+    };
+  };
+  alt: string;
+  caption?: string;
+  link?: string;
 }
 
 interface GridRow {
-  columns: number
-  images: GridImage[]
+  columns: number;
+  images: GridImage[];
 }
 
 interface ImageGridProps {
-  rows: GridRow[]
+  rows: GridRow[];
 }
 
 export default function ImageGrid({ rows }: ImageGridProps) {

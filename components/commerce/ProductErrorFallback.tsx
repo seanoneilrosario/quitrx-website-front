@@ -21,7 +21,9 @@ export default function ProductErrorFallback({ error, reset }: ProductErrorFallb
         <h1>We couldn&apos;t load this product</h1>
         <p>The product service may be taking longer than expected. Please try again.</p>
         <div className={styles.productErrorActions}>
-          <button type="button" onClick={reset}>Try again</button>
+          <button type="button" onClick={reset}>
+            Try again
+          </button>
           <Link href="/collections/all-products">View all products</Link>
         </div>
       </div>

@@ -1,15 +1,17 @@
 # QuitHero data: where to find things
 
-| Task | File |
-| --- | --- |
-| Fetch products, a single product, or a page of products | [products.ts](./products.ts) |
-| Fetch collections and their products | [collections.ts](./collections.ts) |
-| API URL, authentication, retries, cache durations | [client.ts](./client.ts) |
-| Collection types and shared product type exports | [types.ts](./types.ts) |
-| Product images, prices, tags, collection rules | [helpers.ts](./helpers.ts) |
-| Fetch or update bundles | [bundles.ts](./bundles.ts) |
-| Fetch recommendation IDs from Sanity | [recommendations.ts](./recommendations.ts) |
-| Fetch or create orders | [orders.ts](./orders.ts) |
+| Task                                                    | File                                       |
+| ------------------------------------------------------- | ------------------------------------------ |
+| Fetch products, a single product, or a page of products | [products.ts](./products.ts)               |
+| Fetch collections and their products                    | [collections.ts](./collections.ts)         |
+| API URL, authentication, retries, cache durations       | [client.ts](./client.ts)                   |
+| Collection types and shared product type exports        | [types.ts](./types.ts)                     |
+| Product images, prices, tags, collection rules          | [helpers.ts](./helpers.ts)                 |
+| Fetch or update bundles                                 | [bundles.ts](./bundles.ts)                 |
+| Fetch recommendation IDs from Sanity                    | [recommendations.ts](./recommendations.ts) |
+| Fetch or create orders                                  | [orders.ts](./orders.ts)                   |
+| Find, synchronize, or update customers                  | [customers.ts](./customers.ts)             |
+| Product and variant response types                      | [product-types.ts](./product-types.ts)     |
 
 ## Server fetching examples
 
@@ -38,28 +40,32 @@ resolver with Sanity assignment and dynamic-rule fallbacks.
 
 ## Browser fetching examples
 
-Browser query definitions live in [catalog-queries.ts](../catalog-queries.ts).
+Browser query definitions live in [catalog-queries.ts](../catalog/catalog-queries.ts).
 Use them inside client components under the app's query provider:
 
 ```tsx
 "use client";
 
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
-import { productDetailQuery, collectionProductsQuery } from "@/lib/catalog-queries";
+import { productDetailQuery, collectionProductsQuery } from "@/lib/catalog/catalog-queries";
 
 export function CatalogExample() {
   const product = useQuery(productDetailQuery("product-slug"));
   const collection = useInfiniteQuery(collectionProductsQuery("collection-slug"));
-  return <button onClick={() => collection.fetchNextPage()}
-    disabled={!collection.hasNextPage || collection.isFetchingNextPage}>
-    {product.data?.product.name ?? "Load more products"}
-  </button>;
+  return (
+    <button
+      onClick={() => collection.fetchNextPage()}
+      disabled={!collection.hasNextPage || collection.isFetchingNextPage}
+    >
+      {product.data?.product.name ?? "Load more products"}
+    </button>
+  );
 }
 ```
 
 These queries call `app/api/quithero-products/` and
 `app/api/quithero-collections/`. Collection pagination requests fresh server data;
-browser cache settings are in `lib/query-cache.ts`.
+browser cache settings are in `lib/query/query-cache.ts`.
 
 ## Pages and display components
 
@@ -67,7 +73,7 @@ browser cache settings are in `lib/query-cache.ts`.
 - `app/product/[handle]/page.tsx`: product page entry point.
 - `components/commerce/CollectionCatalog.tsx`: collection display and pagination.
 - `components/commerce/ProductDetail.tsx`: product display.
-- `lib/product-detail-data.ts`: prepares product details, bundles, and recommendations.
+- `lib/catalog/product-detail-data.ts`: prepares product details, bundles, and recommendations.
 
 Existing imports from `@/lib/quithero` still work through compatibility exports.
 For new server code, import from the specific file above so the data source is clear.

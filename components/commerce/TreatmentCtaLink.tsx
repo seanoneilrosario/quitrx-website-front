@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
-import { hasActiveScript } from "@/lib/script-access";
+import { hasActiveScript } from "@/lib/account/script-access";
 
 type TreatmentCtaLinkProps = {
   className?: string;

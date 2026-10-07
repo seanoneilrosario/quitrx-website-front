@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
-import { COLLECTION_PAGE_SIZE } from "@/lib/catalog-pagination";
-import { getFastQuitHeroCollectionPage, getQuitHeroCollectionPage, getQuitHeroCollection, getQuitHeroProducts } from "@/lib/quithero";
+import { COLLECTION_PAGE_SIZE } from "@/lib/catalog/catalog-pagination";
+import {
+  getFastQuitHeroCollectionPage,
+  getQuitHeroCollectionPage,
+  getQuitHeroCollection,
+  getQuitHeroProducts,
+} from "@/lib/quithero";
 
 export async function GET(request: Request) {
   try {
@@ -23,7 +28,11 @@ export async function GET(request: Request) {
       const fresh = searchParams.get("fresh") === "1";
       const loadPage = fresh ? getQuitHeroCollectionPage : getFastQuitHeroCollectionPage;
       return NextResponse.json(await loadPage(collectionSlug, page, limit), {
-        headers: { "cache-control": fresh ? "private, no-store" : "public, s-maxage=300, stale-while-revalidate=600" },
+        headers: {
+          "cache-control": fresh
+            ? "private, no-store"
+            : "public, s-maxage=300, stale-while-revalidate=600",
+        },
       });
     }
 
@@ -34,7 +43,10 @@ export async function GET(request: Request) {
     if (collectionSlugs.length) {
       const collections = await Promise.all(collectionSlugs.map(getQuitHeroCollection));
       if (collections.some((collection) => !collection)) {
-        return NextResponse.json({ error: "One or more collections were not found." }, { status: 404 });
+        return NextResponse.json(
+          { error: "One or more collections were not found." },
+          { status: 404 },
+        );
       }
       const products = collections.flatMap((collection) => collection?.products ?? []);
       const uniqueProducts = Array.from(

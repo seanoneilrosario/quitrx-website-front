@@ -2,13 +2,18 @@ import "server-only";
 
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import type { QuitHeroProduct } from "../quithero-types";
+import type { QuitHeroProduct } from "./product-types";
 import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS } from "./client";
 import { client } from "@/sanity/lib/client";
-import { productIsVisible } from "../quithero-bundle";
+import { productIsVisible } from "@/lib/catalog/bundles";
 import { getQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
 import { productMatchesCollectionRules } from "./helpers";
-import type { QuitHeroCollection, QuitHeroCollectionPage, QuitHeroCollectionProduct, CollectionRule } from "./types";
+import type {
+  QuitHeroCollection,
+  QuitHeroCollectionPage,
+  QuitHeroCollectionProduct,
+  CollectionRule,
+} from "./types";
 
 type QuitHeroCollectionsResponse =
   | QuitHeroCollection[]

@@ -11,10 +11,7 @@ export async function GET(request: NextRequest) {
 
   const apiKey = process.env.QUITHERO_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "QUITHERO_API_KEY is not configured." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "QUITHERO_API_KEY is not configured." }, { status: 500 });
   }
 
   const search = request.nextUrl.searchParams.get("search")?.trim();

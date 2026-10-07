@@ -1,5 +1,5 @@
 import { getQuitHeroBundle, getQuitHeroProducts, patchQuitHeroBundle } from "@/lib/quithero";
-import { getAvailableStock } from "@/lib/available-stock";
+import { getAvailableStock } from "@/lib/catalog/available-stock";
 
 type BundlePayloadComponent = {
   componentVariantId: string;
@@ -17,21 +17,35 @@ export async function GET(
       getQuitHeroBundle(productId, variantId),
       getQuitHeroProducts(),
     ]);
-    const variants = new Map(products.flatMap((product) => (product.variants || []).flatMap((variant) =>
-      variant.id ? [[variant.id, { product, variant }] as const] : [],
-    )));
+    const variants = new Map(
+      products.flatMap((product) =>
+        (product.variants || []).flatMap((variant) =>
+          variant.id ? [[variant.id, { product, variant }] as const] : [],
+        ),
+      ),
+    );
 
     const bundleComponents = components.flatMap((component, componentIndex) => {
       const match = variants.get(component.componentVariantId);
-      const productId = match?.product.id || component.componentVariant?.product?.id || component.componentVariantId;
-      const productName = match?.product.name || component.componentVariant?.product?.name || "Bundle item";
-      const choices = (match?.product.variants || []).flatMap((variant) => variant.id ? [{
-        variantId: variant.id,
-        productId,
-        productName,
-        variantName: variant.name || "Default",
-        available: getAvailableStock(variant) > 0,
-      }] : []);
+      const productId =
+        match?.product.id ||
+        component.componentVariant?.product?.id ||
+        component.componentVariantId;
+      const productName =
+        match?.product.name || component.componentVariant?.product?.name || "Bundle item";
+      const choices = (match?.product.variants || []).flatMap((variant) =>
+        variant.id
+          ? [
+              {
+                variantId: variant.id,
+                productId,
+                productName,
+                variantName: variant.name || "Default",
+                available: getAvailableStock(variant) > 0,
+              },
+            ]
+          : [],
+      );
 
       return Array.from({ length: component.quantity }, (_, unitIndex) => ({
         id: `${component.position}-${componentIndex}-${unitIndex}`,
@@ -57,14 +71,18 @@ export async function PATCH(
 ) {
   try {
     const { productId, variantId } = await params;
-    const payload = await request.json() as unknown;
-    if (!Array.isArray(payload) || !payload.every((component): component is BundlePayloadComponent =>
-      Boolean(component)
-      && typeof component === "object"
-      && typeof component.componentVariantId === "string"
-      && Number.isInteger(component.position)
-      && Number(component.quantity) > 0,
-    )) {
+    const payload = (await request.json()) as unknown;
+    if (
+      !Array.isArray(payload) ||
+      !payload.every(
+        (component): component is BundlePayloadComponent =>
+          Boolean(component) &&
+          typeof component === "object" &&
+          typeof component.componentVariantId === "string" &&
+          Number.isInteger(component.position) &&
+          Number(component.quantity) > 0,
+      )
+    ) {
       return Response.json({ error: "Invalid bundle payload." }, { status: 400 });
     }
 
