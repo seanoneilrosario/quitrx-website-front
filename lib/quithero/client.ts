@@ -1,4 +1,7 @@
 import "server-only";
+import { createRequestGate } from "./request-gate";
+
+const requestGate = createRequestGate();
 
 export const API_BASE = (
   process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au"
@@ -29,7 +32,10 @@ function retryDelayFrom(response: Response, fallback: number) {
   return fallback;
 }
 
-export async function quitHeroFetch<T>(path: string): Promise<T> {
+export async function quitHeroFetch<T>(
+  path: string,
+  options?: { beforeRequest?: () => void },
+): Promise<T> {
   const apiKey = process.env.QUITHERO_API_KEY;
 
   if (!apiKey) {
@@ -42,13 +48,24 @@ export async function quitHeroFetch<T>(path: string): Promise<T> {
     try {
       const startedAt = Date.now();
 
-      response = await fetch(`${API_BASE}${path}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-        },
-        cache: "no-store",
+      response = await requestGate.run(async () => {
+        options?.beforeRequest?.();
+        const result = await fetch(`${API_BASE}${path}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+          },
+          cache: "no-store",
+        });
+        if (result.status === 429) {
+          const seconds = Number(result.headers.get("retry-after"));
+          const date = Date.parse(result.headers.get("retry-after") ?? "");
+          const cooldown =
+            seconds > 0 ? seconds * 1000 : Number.isFinite(date) ? date - Date.now() : 30_000;
+          requestGate.cooldown(Math.max(1000, cooldown));
+        }
+        return result;
       });
 
       console.log("[QuitHero API]", {
@@ -57,6 +74,9 @@ export async function quitHeroFetch<T>(path: string): Promise<T> {
         duration: `${Date.now() - startedAt}ms`,
       });
     } catch (error) {
+      // Stop queued work and budget failures immediately; do not create retry storms.
+      if (error instanceof Error && /rate limited|request limit reached/.test(error.message))
+        throw error;
       lastError = error;
       const retryDelay = RETRY_DELAYS_MS[attempt];
       if (retryDelay === undefined) break;
@@ -76,7 +96,7 @@ export async function quitHeroFetch<T>(path: string): Promise<T> {
 
     const error = new Error(`QuitHero request failed with ${response.status}.`);
 
-    if (response.status !== 429 && response.status < 500) throw error;
+    if (response.status < 500) throw error;
     lastError = error;
     const retryDelay = RETRY_DELAYS_MS[attempt];
     if (retryDelay === undefined) break;

@@ -1,6 +1,8 @@
 import "server-only";
 
 import { cache } from "react";
+import { toCollectionProduct } from "@/lib/catalog/collection-product";
+import { ALL_PRODUCTS_PAGE_SIZE } from "@/lib/catalog/catalog-pagination";
 import { unstable_cache } from "next/cache";
 import type { QuitHeroProduct } from "./product-types";
 import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS } from "./client";
@@ -65,7 +67,10 @@ export async function getQuitHeroCollectionPage(
   limit: number,
 ): Promise<QuitHeroCollectionPage> {
   const normalizedPage = Math.max(1, Math.floor(page));
-  const normalizedLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+  const normalizedLimit = Math.max(
+    1,
+    Math.min(slug === "all-products" ? ALL_PRODUCTS_PAGE_SIZE : 100, Math.floor(limit)),
+  );
 
   type QuitHeroPagination = {
     page: number;
@@ -95,7 +100,7 @@ export async function getQuitHeroCollectionPage(
         name: "All Products",
         slug,
       },
-      products,
+      products: products.map(toCollectionProduct),
       pagination: {
         page: normalizedPage,
         limit: normalizedLimit,
@@ -123,23 +128,38 @@ export async function getQuitHeroCollectionPage(
     collection: {
       name: response.data.name,
       slug: response.data.slug,
-      description: response.data.description ?? undefined,
     },
-    products: response.data.products ?? [],
+    products: (response.data.products ?? []).map(toCollectionProduct),
     pagination: response.pagination,
   };
 }
 
 const getCachedQuitHeroCollectionPage = unstable_cache(
   getQuitHeroCollectionPage,
-  ["quithero-collection-page", COLLECTION_PRODUCT_FIELDS],
+  ["quithero-collection-page-summary-v3", COLLECTION_PRODUCT_FIELDS],
   {
     revalidate: QUITHERO_CATALOG_CACHE_SECONDS,
     tags: ["quithero-products", "quithero-collections"],
   },
 );
 
-export const getFastQuitHeroCollectionPage = cache(getCachedQuitHeroCollectionPage);
+const pendingPages = new Map<string, Promise<QuitHeroCollectionPage>>();
+
+export const getFastQuitHeroCollectionPage = cache((slug: string, page: number, limit: number) => {
+  const normalizedPage = Math.max(1, Math.floor(page));
+  const normalizedLimit = Math.max(
+    1,
+    Math.min(slug === "all-products" ? ALL_PRODUCTS_PAGE_SIZE : 100, Math.floor(limit)),
+  );
+  const key = JSON.stringify([slug, normalizedPage, normalizedLimit]);
+  const pending = pendingPages.get(key);
+  if (pending) return pending;
+  const request = getCachedQuitHeroCollectionPage(slug, normalizedPage, normalizedLimit).finally(
+    () => pendingPages.delete(key),
+  );
+  pendingPages.set(key, request);
+  return request;
+});
 
 export async function getQuitHeroCollection(slug: string) {
   if (slug === "all-products") {

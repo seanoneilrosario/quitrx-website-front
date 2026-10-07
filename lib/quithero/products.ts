@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import type { QuitHeroProduct } from "./product-types";
+import type { QuitHeroProduct, QuitHeroImage, QuitHeroVariant } from "./product-types";
 import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS } from "./client";
 import { productIsVisible } from "@/lib/catalog/bundles";
 
@@ -44,7 +44,35 @@ async function loadQuitHeroProducts() {
   return products;
 }
 
+async function loadProductRelation<T>(
+  path: string,
+  productId: string,
+  beforeRequest: () => void,
+): Promise<T[]> {
+  const items: T[] = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const params = new URLSearchParams({ productId, page: String(page), limit: "100" });
+    const response = await quitHeroFetch<{ data: T[]; pagination?: { totalPages?: number } }>(
+      `${path}?${params}`,
+      { beforeRequest },
+    );
+    items.push(...response.data);
+    totalPages = response.pagination?.totalPages ?? 1;
+    page += 1;
+  } while (page <= totalPages);
+  return items;
+}
+
 export async function loadQuitHeroProductsPage(page: number, limit: number, search?: string) {
+  // Count actual network attempts, including retries and relation pagination.
+  let requests = 0;
+  const beforeRequest = () => {
+    if (requests >= 100)
+      throw new Error("Collection request limit reached. Please try again later.");
+    requests += 1;
+  };
   const query = new URLSearchParams({
     page: String(page),
     limit: String(limit),
@@ -53,9 +81,25 @@ export async function loadQuitHeroProductsPage(page: number, limit: number, sear
 
   if (search) query.set("search", search);
 
-  const payload = await quitHeroFetch<QuitHeroProductsResponse>(`/products?${query}`);
+  const payload = await quitHeroFetch<QuitHeroProductsResponse>(`/products?${query}`, {
+    beforeRequest,
+  });
 
   const products = productsFrom(payload);
+
+  // /products is a scalar-only list. Load only the missing card relations for
+  // this page, with bounded concurrency; never fetch product detail endpoints.
+  for (const product of products) {
+    if (!product.id) continue;
+    const [images, variants] = await Promise.all([
+      product.images ??
+        loadProductRelation<QuitHeroImage>("/product-images", product.id, beforeRequest),
+      product.variants ??
+        loadProductRelation<QuitHeroVariant>("/product-variants", product.id, beforeRequest),
+    ]);
+    product.images = images;
+    product.variants = variants;
+  }
 
   const total = Array.isArray(payload)
     ? products.length

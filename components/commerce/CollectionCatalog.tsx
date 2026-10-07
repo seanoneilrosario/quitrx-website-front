@@ -55,7 +55,9 @@ export default function CollectionCatalog({
 }) {
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
-  const [initialDataUpdatedAt] = useState(() => (isBrowserReload() ? 0 : Date.now()));
+  const [initialDataUpdatedAt] = useState(() =>
+    collectionSlug !== "all-products" && isBrowserReload() ? 0 : Date.now(),
+  );
   const {
     data,
     error,

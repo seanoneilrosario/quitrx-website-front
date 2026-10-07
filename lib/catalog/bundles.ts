@@ -47,6 +47,7 @@ export type BundleAwareVariant = {
 };
 
 type BundleAwareProduct = {
+  available?: boolean;
   status?: string;
   sourceSystem?: string;
   productType?: string | { name?: string; slug?: string };
@@ -299,6 +300,7 @@ export function productStatusAllowsPurchase(status?: string) {
 
 export function productIsAvailable(product: BundleAwareProduct) {
   if (!productStatusAllowsPurchase(product.status)) return false;
+  if (typeof product.available === "boolean") return product.available;
 
   const productType =
     typeof product.productType === "string"

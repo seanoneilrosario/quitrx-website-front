@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1) {
         return NextResponse.json({ error: "Invalid pagination parameters." }, { status: 400 });
       }
-      const fresh = searchParams.get("fresh") === "1";
+      const fresh = collectionSlug !== "all-products" && searchParams.get("fresh") === "1";
       const loadPage = fresh ? getQuitHeroCollectionPage : getFastQuitHeroCollectionPage;
       return NextResponse.json(await loadPage(collectionSlug, page, limit), {
         headers: {

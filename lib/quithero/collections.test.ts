@@ -4,7 +4,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("@/sanity/lib/client", () => ({ client: { withConfig: vi.fn() } }));
 
-import { getQuitHeroCollectionPage } from "./collections";
+import { getFastQuitHeroCollectionPage, getQuitHeroCollectionPage } from "./collections";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -12,30 +12,72 @@ afterEach(() => {
 });
 
 describe("all-products pagination", () => {
+  it("shares simultaneous loads after normalizing the server and browser limits", async () => {
+    vi.stubEnv("QUITHERO_API_KEY", "test-key");
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async () =>
+        Response.json({ data: [], pagination: { total: 0, totalPages: 1 } }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    await Promise.all([
+      getFastQuitHeroCollectionPage("all-products", 1, 100),
+      getFastQuitHeroCollectionPage("all-products", 1, 15),
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+  it("caps actual backend attempts at 100", async () => {
+    vi.stubEnv("QUITHERO_API_KEY", "test-key");
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async (url: string) =>
+        Response.json(
+          new URL(url).pathname === "/products"
+            ? { data: [{ id: "one", images: [] }], pagination: { totalPages: 1 } }
+            : { data: [], pagination: { totalPages: 200 } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(getQuitHeroCollectionPage("all-products", 1, 100)).rejects.toThrow(
+      "Collection request limit reached",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(100);
+  });
   it("requests only the visible page even when the catalog has many pages", async () => {
     vi.stubEnv("QUITHERO_API_KEY", "test-key");
     const fetchMock = vi.fn().mockResolvedValue(
       Response.json({
-        products: [{ id: "one", name: "Product one" }],
+        products: [{ id: "one", name: "Product one", images: [], variants: [] }],
         pagination: { totalPages: 50 },
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
     const result = await getQuitHeroCollectionPage("all-products", 1, 100);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toMatch(/\/products\?page=1&limit=100$/);
-    expect(result.pagination).toEqual({ page: 1, limit: 100, totalPages: 50, hasNextPage: true });
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/products\?page=1&limit=15&status=active$/);
+    expect(result.pagination).toEqual({
+      page: 1,
+      limit: 15,
+      total: 1,
+      totalPages: 50,
+      hasNextPage: true,
+    });
     expect(result.products).toHaveLength(1);
   });
 
-  it("preserves bundle stock hydration and detects the final page", async () => {
+  it("does not fetch product details for bundles and detects the final page", async () => {
     vi.stubEnv("QUITHERO_API_KEY", "test-key");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
         Response.json({
           products: [
-            { id: "bundle", tags: ["bundle"], variants: [{ id: "variant", inventory: 0 }] },
+            {
+              id: "bundle",
+              images: [],
+              tags: ["bundle"],
+              variants: [{ id: "variant", inventory: 0 }],
+            },
           ],
           pagination: { totalPages: 2 },
         }),
@@ -43,9 +85,10 @@ describe("all-products pagination", () => {
       .mockResolvedValueOnce(Response.json({ id: "variant", inventory: 4 }));
     vi.stubGlobal("fetch", fetchMock);
     const result = await getQuitHeroCollectionPage("all-products", 2, 10);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[0][0]).toMatch(/\/products\?page=2&limit=10$/);
-    expect(result.products[0].variants?.[0].inventory).toBe(4);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/products\?page=2&limit=10&status=active$/);
+    expect(result.products[0].isBundle).toBe(true);
+    expect(result.products[0].available).toBe(false);
     expect(result.pagination.hasNextPage).toBe(false);
   });
 });

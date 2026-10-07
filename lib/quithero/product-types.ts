@@ -34,6 +34,8 @@ export type QuitHeroTag = { name?: string; slug?: string };
 export type QuitHeroProductTag = QuitHeroTag & { tag?: QuitHeroTag };
 
 export type QuitHeroProduct = {
+  available?: boolean;
+  isBundle?: boolean;
   id?: string;
   name?: string;
   handle?: string;

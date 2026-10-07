@@ -2,7 +2,7 @@ import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import type { QuitHeroCollectionPage } from "@/lib/quithero";
 import type { ProductDetailData } from "./product-detail-data";
 import { API_STALE_TIME } from "@/lib/query/query-cache";
-import { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
+import { ALL_PRODUCTS_PAGE_SIZE, COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 
 export type CollectionPageResponse = QuitHeroCollectionPage;
 export { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
@@ -35,21 +35,23 @@ export function catalogListQuery(
 }
 
 export function collectionProductsQuery(slug: string) {
+  const allProducts = slug === "all-products";
+  const pageSize = allProducts ? ALL_PRODUCTS_PAGE_SIZE : COLLECTION_PAGE_SIZE;
   return infiniteQueryOptions({
-    queryKey: ["api", "/api/quithero-products", "collection", slug, COLLECTION_PAGE_SIZE] as const,
+    queryKey: ["api", "/api/quithero-products", "collection-summary-v3", slug, pageSize] as const,
     initialPageParam: 1,
     queryFn: ({ pageParam, signal }) => {
       const params = new URLSearchParams({
         collectionPage: slug,
         page: String(pageParam),
-        limit: String(COLLECTION_PAGE_SIZE),
+        limit: String(pageSize),
       });
-      // Every network fetch bypasses HTTP and server catalog caches.
-      params.set("fresh", "1");
+      // All Products reuses the server cache because it requires relation requests.
+      if (!allProducts) params.set("fresh", "1");
       return getCatalogData<CollectionPageResponse>(
         `/api/quithero-products?${params}`,
         signal,
-        true,
+        !allProducts,
       );
     },
     getNextPageParam: (lastPage) =>
@@ -57,6 +59,9 @@ export function collectionProductsQuery(slug: string) {
         ? lastPage.pagination.page + 1
         : undefined,
     staleTime: API_STALE_TIME,
+    ...(allProducts
+      ? { retry: false, refetchOnWindowFocus: false, refetchOnReconnect: false }
+      : {}),
   });
 }
 

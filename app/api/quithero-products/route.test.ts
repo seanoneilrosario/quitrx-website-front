@@ -12,16 +12,18 @@ import { GET } from "./route";
 
 beforeEach(() => vi.resetAllMocks());
 describe("collection refresh endpoint", () => {
-  it("bypasses the server cache for fresh reads and prevents CDN caching", async () => {
-    vi.mocked(getQuitHeroCollectionPage).mockResolvedValue({ products: [{ id: "new" }] } as never);
+  it("keeps expensive all-products reads cached even when fresh is requested", async () => {
+    vi.mocked(getFastQuitHeroCollectionPage).mockResolvedValue({
+      products: [{ id: "new" }],
+    } as never);
     const response = await GET(
       new Request(
         "https://example.com/api/quithero-products?collectionPage=all-products&page=1&limit=100&fresh=1",
       ),
     );
-    expect(getQuitHeroCollectionPage).toHaveBeenCalledWith("all-products", 1, 100);
-    expect(getFastQuitHeroCollectionPage).not.toHaveBeenCalled();
-    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(getFastQuitHeroCollectionPage).toHaveBeenCalledWith("all-products", 1, 100);
+    expect(getQuitHeroCollectionPage).not.toHaveBeenCalled();
+    expect(response.headers.get("cache-control")).toContain("s-maxage=300");
     expect(await response.json()).toEqual({ products: [{ id: "new" }] });
   });
   it("retains server caching for regular collection reads", async () => {

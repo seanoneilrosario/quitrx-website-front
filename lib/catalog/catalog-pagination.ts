@@ -1,1 +1,2 @@
 export const COLLECTION_PAGE_SIZE = 100;
+export const ALL_PRODUCTS_PAGE_SIZE = 15;

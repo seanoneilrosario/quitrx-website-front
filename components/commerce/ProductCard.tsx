@@ -56,6 +56,7 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
           ),
     ) ?? [];
   const isBundle =
+    product.isBundle ||
     [productType, ...tags].some((value) => value.trim().toLowerCase() === "bundle") ||
     variants.some(
       (variant) =>
@@ -108,7 +109,7 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
 
   return (
     <article className={styles.productCard}>
-      <Link href={productUrl} className={styles.productLink} onClick={lockedClick}>
+      <Link href={productUrl} prefetch={false} className={styles.productLink} onClick={lockedClick}>
         <span className={styles.productImageWrap}>
           {locked && <span className={styles.scriptRequired}>Script required</span>}
           {locked ? (
@@ -142,7 +143,12 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
           Add to cart
         </button>
       ) : (
-        <Link href={productUrl} className={styles.chooseButton} onClick={lockedClick}>
+        <Link
+          href={productUrl}
+          prefetch={false}
+          className={styles.chooseButton}
+          onClick={lockedClick}
+        >
           {locked ? "View product" : isAvailable ? "Choose options" : "Sold out"}
         </Link>
       )}
