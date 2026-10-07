@@ -1,0 +1,73 @@
+# QuitHero data: where to find things
+
+| Task | File |
+| --- | --- |
+| Fetch products, a single product, or a page of products | [products.ts](./products.ts) |
+| Fetch collections and their products | [collections.ts](./collections.ts) |
+| API URL, authentication, retries, cache durations | [client.ts](./client.ts) |
+| Collection types and shared product type exports | [types.ts](./types.ts) |
+| Product images, prices, tags, collection rules | [helpers.ts](./helpers.ts) |
+| Fetch or update bundles | [bundles.ts](./bundles.ts) |
+| Fetch recommendation IDs from Sanity | [recommendations.ts](./recommendations.ts) |
+| Fetch or create orders | [orders.ts](./orders.ts) |
+
+## Server fetching examples
+
+Use these in server components or API route handlers. The API key stays on the server.
+
+```ts
+import { getQuitHeroProduct, getQuitHeroProducts } from "@/lib/quithero/products";
+import {
+  getQuitHeroCollections,
+  getFastQuitHeroCollectionPage,
+  getQuitHeroCollectionPage,
+} from "@/lib/quithero/collections";
+
+const product = await getQuitHeroProduct("product-slug"); // Can be undefined.
+const products = await getQuitHeroProducts(); // Entire catalog, cached.
+const collections = await getQuitHeroCollections();
+const page = await getFastQuitHeroCollectionPage("collection-slug", 1, 24);
+const freshPage = await getQuitHeroCollectionPage("collection-slug", 1, 24);
+const allProductsPage = await getFastQuitHeroCollectionPage("all-products", 1, 24);
+```
+
+Product lists and cached collection pages use a 300-second server cache. Single
+products and collection lists use 60 seconds. The fresh collection-page function
+bypasses that server cache. `getQuitHeroCollection` is the older full-catalog
+resolver with Sanity assignment and dynamic-rule fallbacks.
+
+## Browser fetching examples
+
+Browser query definitions live in [catalog-queries.ts](../catalog-queries.ts).
+Use them inside client components under the app's query provider:
+
+```tsx
+"use client";
+
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { productDetailQuery, collectionProductsQuery } from "@/lib/catalog-queries";
+
+export function CatalogExample() {
+  const product = useQuery(productDetailQuery("product-slug"));
+  const collection = useInfiniteQuery(collectionProductsQuery("collection-slug"));
+  return <button onClick={() => collection.fetchNextPage()}
+    disabled={!collection.hasNextPage || collection.isFetchingNextPage}>
+    {product.data?.product.name ?? "Load more products"}
+  </button>;
+}
+```
+
+These queries call `app/api/quithero-products/` and
+`app/api/quithero-collections/`. Collection pagination requests fresh server data;
+browser cache settings are in `lib/query-cache.ts`.
+
+## Pages and display components
+
+- `app/collections/[slug]/page.tsx`: collection page entry point.
+- `app/product/[handle]/page.tsx`: product page entry point.
+- `components/commerce/CollectionCatalog.tsx`: collection display and pagination.
+- `components/commerce/ProductDetail.tsx`: product display.
+- `lib/product-detail-data.ts`: prepares product details, bundles, and recommendations.
+
+Existing imports from `@/lib/quithero` still work through compatibility exports.
+For new server code, import from the specific file above so the data source is clear.

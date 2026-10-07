@@ -2,6 +2,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+For collection and product fetching, see the [QuitHero file guide and examples](lib/quithero/README.md).
+
 Create a local `.env` file with the server-only QuitHero configuration:
 
 ```env
