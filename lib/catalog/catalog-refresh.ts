@@ -18,7 +18,9 @@ export function collectionCacheForRestore(snapshot: string | null, reload: boole
         !(
           query.queryKey?.[0] === "api" &&
           query.queryKey?.[1] === "/api/quithero-products" &&
-          query.queryKey?.[2] === "collection"
+          (query.queryKey?.[2] === "collection" ||
+            (typeof query.queryKey?.[2] === "string" &&
+              query.queryKey[2].startsWith("collection-summary-")))
         ),
     );
     return JSON.stringify(persisted);

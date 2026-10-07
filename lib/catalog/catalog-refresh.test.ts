@@ -23,6 +23,10 @@ describe("browser reload collection cache", () => {
             queryKey: ["api", "/api/quithero-products", "collection", "all-products", 100],
             state: { data: { pages: ["deleted-product"] } },
           },
+          {
+            queryKey: ["api", "/api/quithero-products", "collection-summary-v3", "all-products", 15],
+            state: { data: { pages: ["stale-summary"] } },
+          },
           { queryKey: ["api", "/api/quithero-collections"], state: { data: [] } },
         ],
       },
