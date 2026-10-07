@@ -5,6 +5,8 @@ import { unstable_cache } from "next/cache";
 import type { QuitHeroProduct, QuitHeroImage, QuitHeroVariant } from "./product-types";
 import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS } from "./client";
 import { productIsVisible } from "@/lib/catalog/bundles";
+import { productCardCache } from "./card-cache";
+import { toCollectionProduct } from "@/lib/catalog/collection-product";
 
 type QuitHeroProductsResponse =
   | QuitHeroProduct[]
@@ -65,7 +67,12 @@ async function loadProductRelation<T>(
   return items;
 }
 
-export async function loadQuitHeroProductsPage(page: number, limit: number, search?: string) {
+export async function loadQuitHeroProductsPage(
+  page: number,
+  limit: number,
+  search?: string,
+  fresh = false,
+) {
   // Count actual network attempts, including retries and relation pagination.
   let requests = 0;
   const beforeRequest = () => {
@@ -85,20 +92,31 @@ export async function loadQuitHeroProductsPage(page: number, limit: number, sear
     beforeRequest,
   });
 
-  const products = productsFrom(payload);
+  const listedProducts = productsFrom(payload);
+  const products: QuitHeroProduct[] = [];
 
   // /products is a scalar-only list. Load only the missing card relations for
   // this page, with bounded concurrency; never fetch product detail endpoints.
-  for (const product of products) {
-    if (!product.id) continue;
-    const [images, variants] = await Promise.all([
-      product.images ??
-        loadProductRelation<QuitHeroImage>("/product-images", product.id, beforeRequest),
-      product.variants ??
-        loadProductRelation<QuitHeroVariant>("/product-variants", product.id, beforeRequest),
-    ]);
-    product.images = images;
-    product.variants = variants;
+  for (const product of listedProducts) {
+    if (!product.id) {
+      products.push(toCollectionProduct(product));
+      continue;
+    }
+    const productId = product.id;
+    const card = await productCardCache.get(
+      productId,
+      async () => {
+        const [images, variants] = await Promise.all([
+          product.images ??
+            loadProductRelation<QuitHeroImage>("/product-images", productId, beforeRequest),
+          product.variants ??
+            loadProductRelation<QuitHeroVariant>("/product-variants", productId, beforeRequest),
+        ]);
+        return toCollectionProduct({ ...product, images, variants });
+      },
+      fresh,
+    );
+    products.push(card);
   }
 
   const total = Array.isArray(payload)

@@ -55,9 +55,7 @@ export default function CollectionCatalog({
 }) {
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
-  const [initialDataUpdatedAt] = useState(() =>
-    collectionSlug !== "all-products" && isBrowserReload() ? 0 : Date.now(),
-  );
+  const [initialDataUpdatedAt] = useState(() => (isBrowserReload() ? 0 : Date.now()));
   const {
     data,
     error,
@@ -68,7 +66,7 @@ export default function CollectionCatalog({
     fetchNextPage,
     refetch,
   } = useInfiniteQuery({
-    ...collectionProductsQuery(collectionSlug),
+    ...collectionProductsQuery(collectionSlug, initialDataUpdatedAt === 0),
     initialData: initialPage
       ? {
           pages: [initialPage],

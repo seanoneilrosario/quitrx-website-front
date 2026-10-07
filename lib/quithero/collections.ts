@@ -1,11 +1,12 @@
 import "server-only";
 
 import { cache } from "react";
-import { toCollectionProduct } from "@/lib/catalog/collection-product";
+import { cacheProductCard } from "./card-cache";
+import { createSummaryCache } from "./summary-cache";
 import { ALL_PRODUCTS_PAGE_SIZE } from "@/lib/catalog/catalog-pagination";
 import { unstable_cache } from "next/cache";
 import type { QuitHeroProduct } from "./product-types";
-import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS } from "./client";
+import { quitHeroFetch, QUITHERO_CACHE_SECONDS } from "./client";
 import { client } from "@/sanity/lib/client";
 import { productIsVisible } from "@/lib/catalog/bundles";
 import { getQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
@@ -61,10 +62,11 @@ const getCachedQuitHeroCollections = unstable_cache(
 
 export const getQuitHeroCollections = cache(getCachedQuitHeroCollections);
 
-export async function getQuitHeroCollectionPage(
+async function loadCollectionPage(
   slug: string,
   page: number,
   limit: number,
+  fresh = false,
 ): Promise<QuitHeroCollectionPage> {
   const normalizedPage = Math.max(1, Math.floor(page));
   const normalizedLimit = Math.max(
@@ -84,6 +86,8 @@ export async function getQuitHeroCollectionPage(
     const { products, total, totalPages } = await loadQuitHeroProductsPage(
       normalizedPage,
       normalizedLimit,
+      undefined,
+      fresh,
     );
 
     console.log("[All Products Pagination]", {
@@ -100,7 +104,7 @@ export async function getQuitHeroCollectionPage(
         name: "All Products",
         slug,
       },
-      products: products.map(toCollectionProduct),
+      products,
       pagination: {
         page: normalizedPage,
         limit: normalizedLimit,
@@ -129,37 +133,34 @@ export async function getQuitHeroCollectionPage(
       name: response.data.name,
       slug: response.data.slug,
     },
-    products: (response.data.products ?? []).map(toCollectionProduct),
+    products: (response.data.products ?? []).map(cacheProductCard),
     pagination: response.pagination,
   };
 }
 
-const getCachedQuitHeroCollectionPage = unstable_cache(
-  getQuitHeroCollectionPage,
-  ["quithero-collection-page-summary-v3", COLLECTION_PRODUCT_FIELDS],
-  {
-    revalidate: QUITHERO_CATALOG_CACHE_SECONDS,
-    tags: ["quithero-products", "quithero-collections"],
-  },
-);
+const collectionPageCache = createSummaryCache<QuitHeroCollectionPage>(100);
 
-const pendingPages = new Map<string, Promise<QuitHeroCollectionPage>>();
-
-export const getFastQuitHeroCollectionPage = cache((slug: string, page: number, limit: number) => {
+function collectionPage(slug: string, page: number, limit: number, fresh: boolean) {
   const normalizedPage = Math.max(1, Math.floor(page));
   const normalizedLimit = Math.max(
     1,
     Math.min(slug === "all-products" ? ALL_PRODUCTS_PAGE_SIZE : 100, Math.floor(limit)),
   );
   const key = JSON.stringify([slug, normalizedPage, normalizedLimit]);
-  const pending = pendingPages.get(key);
-  if (pending) return pending;
-  const request = getCachedQuitHeroCollectionPage(slug, normalizedPage, normalizedLimit).finally(
-    () => pendingPages.delete(key),
+  return collectionPageCache.get(
+    key,
+    () => loadCollectionPage(slug, normalizedPage, normalizedLimit, fresh),
+    fresh,
   );
-  pendingPages.set(key, request);
-  return request;
-});
+}
+
+// Fresh reads replace the same snapshot used by subsequent normal navigation.
+export function getQuitHeroCollectionPage(slug: string, page: number, limit: number) {
+  return collectionPage(slug, page, limit, true);
+}
+export const getFastQuitHeroCollectionPage = cache((slug: string, page: number, limit: number) =>
+  collectionPage(slug, page, limit, false),
+);
 
 export async function getQuitHeroCollection(slug: string) {
   if (slug === "all-products") {

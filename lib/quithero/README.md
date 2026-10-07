@@ -38,6 +38,20 @@ products and collection lists use 60 seconds. The fresh collection-page function
 bypasses that server cache. `getQuitHeroCollection` is the older full-catalog
 resolver with Sanity assignment and dynamic-rule fallbacks.
 
+Collection card caching uses `card-cache.ts` and `summary-cache.ts`. Each server
+process retains up to 1,000 compact product cards and 100 collection pages for
+five minutes. Concurrent requests share in-flight work. Named collection reads
+seed product cards; All Products reuses those cards instead of fetching their
+images and variants again. Failed refreshes leave successful entries intact.
+These caches are process-local and reset on restart; replicas do not share them.
+
+All Products remains limited to 15 products per batch, with the existing
+100-attempt ceiling and two concurrent backend requests. A browser reload
+refreshes its first batch, replacing the server page snapshot and the browser
+snapshot after success. Later batches reuse caches. Collection API responses
+disable HTTP caching so a CDN cannot hide an explicit refresh. Full product
+details use their separate cache and are not fetched to populate these cards.
+
 ## Browser fetching examples
 
 Browser query definitions live in [catalog-queries.ts](../catalog/catalog-queries.ts).

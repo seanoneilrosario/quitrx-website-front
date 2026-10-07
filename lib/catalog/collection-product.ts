@@ -28,14 +28,16 @@ export function toCollectionProduct(product: QuitHeroProduct): QuitHeroProduct {
     // List endpoints omit bundle configuration but include the variant's stock.
     // Use component stock when supplied; otherwise use the listed variant stock.
     available:
-      productStatusAllowsPurchase(product.status) &&
-      (product.variants ?? []).some(variantIsAvailable),
+      product.available ??
+      (productStatusAllowsPurchase(product.status) &&
+        (product.variants ?? []).some(variantIsAvailable)),
     isBundle:
-      [type, ...tags].some((value) => value?.trim().toLowerCase() === "bundle") ||
-      (product.variants ?? []).some(
-        (variant) =>
-          bundleComponentsFrom(variant).length > 0 || bundleDropdownsFrom(variant).length > 0,
-      ),
+      product.isBundle ??
+      ([type, ...tags].some((value) => value?.trim().toLowerCase() === "bundle") ||
+        (product.variants ?? []).some(
+          (variant) =>
+            bundleComponentsFrom(variant).length > 0 || bundleDropdownsFrom(variant).length > 0,
+        )),
     variants: product.variants?.map((variant) => ({
       id: variant.id,
       name: variant.name,

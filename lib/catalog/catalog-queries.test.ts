@@ -21,6 +21,28 @@ function page(
 }
 
 describe("catalog API queries", () => {
+  it("refreshes the first All Products batch on reload without refreshing later batches", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(page(1, true)))
+      .mockResolvedValueOnce(Response.json(page(2, false)));
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new QueryClient();
+    const observer = new InfiniteQueryObserver(
+      client,
+      collectionProductsQuery("all-products", true),
+    );
+    const unsubscribe = observer.subscribe(() => {});
+    try {
+      await vi.waitFor(() => expect(observer.getCurrentResult().isSuccess).toBe(true));
+      await observer.fetchNextPage();
+      expect(fetchMock.mock.calls[0][0]).toContain("page=1&limit=15&fresh=1");
+      expect(fetchMock.mock.calls[1][0]).not.toContain("fresh=1");
+    } finally {
+      unsubscribe();
+      client.clear();
+    }
+  });
   it("seeds collection data, appends pages, and stops at the end", async () => {
     const fetchMock = vi.fn().mockImplementation(async () => Response.json(page(2, false)));
     vi.stubGlobal("fetch", fetchMock);

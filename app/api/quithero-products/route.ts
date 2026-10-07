@@ -25,13 +25,13 @@ export async function GET(request: Request) {
       if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1) {
         return NextResponse.json({ error: "Invalid pagination parameters." }, { status: 400 });
       }
-      const fresh = collectionSlug !== "all-products" && searchParams.get("fresh") === "1";
+      const fresh = searchParams.get("fresh") === "1";
       const loadPage = fresh ? getQuitHeroCollectionPage : getFastQuitHeroCollectionPage;
       return NextResponse.json(await loadPage(collectionSlug, page, limit), {
         headers: {
-          "cache-control": fresh
-            ? "private, no-store"
-            : "public, s-maxage=300, stale-while-revalidate=600",
+          // Server caches own freshness. A second CDN cache could serve an old
+          // snapshot after a successful explicit refresh.
+          "cache-control": "private, no-store",
         },
       });
     }

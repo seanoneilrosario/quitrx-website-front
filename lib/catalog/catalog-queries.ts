@@ -34,11 +34,11 @@ export function catalogListQuery(
   });
 }
 
-export function collectionProductsQuery(slug: string) {
+export function collectionProductsQuery(slug: string, refreshOnReload = false) {
   const allProducts = slug === "all-products";
   const pageSize = allProducts ? ALL_PRODUCTS_PAGE_SIZE : COLLECTION_PAGE_SIZE;
   return infiniteQueryOptions({
-    queryKey: ["api", "/api/quithero-products", "collection-summary-v3", slug, pageSize] as const,
+    queryKey: ["api", "/api/quithero-products", "collection-summary-v4", slug, pageSize] as const,
     initialPageParam: 1,
     queryFn: ({ pageParam, signal }) => {
       const params = new URLSearchParams({
@@ -46,12 +46,13 @@ export function collectionProductsQuery(slug: string) {
         page: String(pageParam),
         limit: String(pageSize),
       });
-      // All Products reuses the server cache because it requires relation requests.
-      if (!allProducts) params.set("fresh", "1");
+      // Refresh the first batch on reload; later batches reuse product caches.
+      const fresh = !allProducts || (refreshOnReload && pageParam === 1);
+      if (fresh) params.set("fresh", "1");
       return getCatalogData<CollectionPageResponse>(
         `/api/quithero-products?${params}`,
         signal,
-        !allProducts,
+        fresh,
       );
     },
     getNextPageParam: (lastPage) =>
