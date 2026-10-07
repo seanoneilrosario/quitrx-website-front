@@ -12,8 +12,8 @@
 | Fetch or create orders                                  | [orders.ts](./orders.ts)                   |
 | Find, synchronize, or update customers                  | [customers.ts](./customers.ts)             |
 | Product and variant response types                      | [product-types.ts](./product-types.ts)     |
-| Product card caching and shared cache implementation | [cache/](./cache/) |
-| Backend concurrency and cooldown | [request-gate.ts](./request-gate.ts) |
+| Product card caching and shared cache implementation    | [cache/](./cache/)                         |
+| Backend concurrency and cooldown                        | [request-gate.ts](./request-gate.ts)       |
 
 ## Server fetching examples
 
@@ -47,13 +47,12 @@ seed product cards; All Products reuses those cards instead of fetching their
 images and variants again. Failed refreshes leave successful entries intact.
 These caches are process-local and reset on restart; replicas do not share them.
 
-All Products remains limited to 15 products per batch, with the existing
-100-attempt ceiling and two concurrent backend requests. Reloads and navigation
-reuse valid cached snapshots. The explicit Refresh products button replaces the
-first batch after success and discards old subsequent pages; failure preserves
-the existing display. Later batches reuse caches. Collection API responses
-disable HTTP caching so a CDN cannot hide an explicit refresh. Full product
-details use their separate cache and are not fetched to populate these cards.
+Collections display 15 products per numbered page. The URL stores the page and
+filter/sort selections. Browser queries cache each collection/page separately;
+there is no scroll-triggered fetching or product-link prefetching. Filters and
+sorting operate on the selected page, not the entire catalog. Collection API
+responses disable HTTP caching while server product/page caches retain their
+five-minute lifetime. Full product details keep their separate cache.
 
 ## Browser fetching examples
 
@@ -63,18 +62,15 @@ Use them inside client components under the app's query provider:
 ```tsx
 "use client";
 
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
-import { productDetailQuery, collectionProductsQuery } from "@/lib/catalog/catalog-queries";
+import { useQuery } from "@tanstack/react-query";
+import { productDetailQuery, collectionPageQuery } from "@/lib/catalog/catalog-queries";
 
 export function CatalogExample() {
   const product = useQuery(productDetailQuery("product-slug"));
-  const collection = useInfiniteQuery(collectionProductsQuery("collection-slug"));
+  const collection = useQuery(collectionPageQuery("collection-slug", 1));
   return (
-    <button
-      onClick={() => collection.fetchNextPage()}
-      disabled={!collection.hasNextPage || collection.isFetchingNextPage}
-    >
-      {product.data?.product.name ?? "Load more products"}
+    <button onClick={() => collection.refetch()} disabled={collection.isFetching}>
+      {product.data?.product.name ?? "Reload page"}
     </button>
   );
 }

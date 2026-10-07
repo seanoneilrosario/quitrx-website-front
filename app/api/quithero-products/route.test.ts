@@ -31,7 +31,7 @@ describe("collection refresh endpoint", () => {
     const response = await GET(
       new Request("https://example.com/api/quithero-products?collectionPage=brand-a"),
     );
-    expect(getFastQuitHeroCollectionPage).toHaveBeenCalledWith("brand-a", 1, 100);
+    expect(getFastQuitHeroCollectionPage).toHaveBeenCalledWith("brand-a", 1, 15);
     expect(getQuitHeroCollectionPage).not.toHaveBeenCalled();
     expect(response.headers.get("cache-control")).toBe("private, no-store");
   });

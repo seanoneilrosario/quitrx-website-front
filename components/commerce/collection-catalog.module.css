@@ -61,6 +61,29 @@
   cursor: pointer;
 }
 
+.pagination {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pagination a {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px solid #7eb6bd;
+  border-radius: 8px;
+  color: #176976;
+  text-decoration: none;
+}
+
+.pagination a[aria-current="page"] {
+  background: #176976;
+  color: #fff;
+}
+
+.pagination [aria-disabled="true"] {
+  opacity: 0.5;
+}
+
 .pagination button:disabled {
   cursor: default;
   opacity: 0.45;

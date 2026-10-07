@@ -92,8 +92,9 @@ The storefront uses the shared TanStack Query provider for account, OAuth sessio
 product, collection, search, and order API reads. Account data comes from
 `/api/account/me` using `useQuery`; refreshes and invalidation update that shared
 cache. Session storage is not used as the source of authenticated account state.
-Collection pages use `useInfiniteQuery` with a cache per collection and a server-loaded
-first page. Product detail pages seed `useQuery` with server-loaded details and
+Collection pages use `useQuery` with a cache per collection/page and 15 products
+per numbered page. The URL preserves page, filters, and sorting; only the selected
+page is fetched. Filtering and sorting apply to that page. Product detail pages seed `useQuery` with server-loaded details and
 refresh through `/api/quithero-products/[slug]`, including bundle choices and
 related products. Product and collection grids also fetch through `useQuery`.
 

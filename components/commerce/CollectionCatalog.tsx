@@ -1,13 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  collectionProductsQuery,
-  refreshCollection,
-  type CollectionPageResponse,
-} from "@/lib/catalog/catalog-queries";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { collectionPageQuery, type CollectionPageResponse } from "@/lib/catalog/catalog-queries";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { parseCollectionPage, collectionPageNumbers } from "@/lib/catalog/catalog-pagination";
 import type { QuitHeroProduct, QuitHeroVariant } from "@/lib/quithero";
 import { productIsAvailable } from "@/lib/catalog/bundles";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
@@ -18,7 +16,6 @@ import styles from "./collection-catalog.module.css";
 import storeStyles from "@/app/store.module.css";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
-const DISPLAY_PAGE_SIZE = 15;
 
 function variantPrices(product: QuitHeroProduct) {
   return (product.variants ?? []).flatMap((variant) => {
@@ -55,64 +52,47 @@ export default function CollectionCatalog({
 }) {
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
-  const queryClient = useQueryClient();
-  const [refreshing, setRefreshing] = useState(false);
-  const [refreshError, setRefreshError] = useState("");
-  const {
-    data,
-    error,
-    isPending,
-    isFetching,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    ...collectionProductsQuery(collectionSlug),
-    initialData: initialPage
-      ? {
-          pages: [initialPage],
-          pageParams: [1],
-        }
-      : undefined,
+  const searchParams = useSearchParams();
+  const page = parseCollectionPage(searchParams.get("page"));
+  const { data, error, isPending, isFetching, refetch } = useQuery({
+    ...collectionPageQuery(collectionSlug, page),
+    initialData: initialPage?.pagination.page === page ? initialPage : undefined,
   });
-  const products = useMemo(() => {
-    const allProducts = data?.pages.flatMap((page) => page.products) ?? [];
-
-    return Array.from(
-      new Map(allProducts.map((product) => [product.id ?? product.slug, product])).values(),
-    ).filter((product) => product.status !== "ARCHIVED");
-  }, [data]);
-  const collection = data?.pages[0]?.collection ?? {
-    name: collectionSlug.replaceAll("-", " "),
-    description: "",
-  };
-  const productsLoading = isPending || isFetchingNextPage;
+  const products = useMemo(
+    () => (data?.products ?? []).filter((product) => product.status !== "ARCHIVED"),
+    [data],
+  );
+  const collection = data?.collection ?? { name: collectionSlug.replaceAll("-", " ") };
+  const productsLoading = isPending;
   const productsError = error?.message ?? "";
-  const [brands, setBrands] = useState<string[]>([]);
-  const [sizes, setSizes] = useState<string[]>([]);
-  const [colors, setColors] = useState<string[]>([]);
-  const [availability, setAvailability] = useState("all");
-  const [sort, setSort] = useState<Sort>("featured");
+  const brands = searchParams.getAll("brand");
+  const sizes = searchParams.getAll("size");
+  const colors = searchParams.getAll("color");
+  const availability = searchParams.get("availability") || "all";
+  const sort = (searchParams.get("sort") || "featured") as Sort;
+  const rawPrice = searchParams.get("maxPrice");
+  const maxPrice = rawPrice !== null && Number.isFinite(Number(rawPrice)) ? Number(rawPrice) : null;
+  function setFilter(key: string, values: string[]) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(key);
+    values.forEach((value) => params.append(key, value));
+    window.history.replaceState(null, "", `${window.location.pathname}?${params}`);
+  }
+  const setBrands = (values: string[]) => setFilter("brand", values);
+  const setSizes = (values: string[]) => setFilter("size", values);
+  const setColors = (values: string[]) => setFilter("color", values);
+  const setAvailability = (value: string) => setFilter("availability", [value]);
+  const setSort = (value: Sort) => setFilter("sort", [value]);
+  const setMaxPrice = (value: number) => setFilter("maxPrice", [String(value)]);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [displayPage, setDisplayPage] = useState({ key: "", count: DISPLAY_PAGE_SIZE });
-  const [infiniteScrollReady, setInfiniteScrollReady] = useState(false);
-  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const [lockedProductName, setLockedProductName] = useState<string>();
   const priceCeiling = useMemo(
     () => Math.ceil(Math.max(...products.flatMap(variantPrices), 0)),
     [products],
   );
-  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const hasActiveFilters = Boolean(
     brands.length || sizes.length || colors.length || maxPrice !== null || availability !== "all",
   );
-
-  useEffect(() => {
-    const enableInfiniteScroll = () => setInfiniteScrollReady(true);
-    window.addEventListener("scroll", enableInfiniteScroll, { passive: true, once: true });
-    return () => window.removeEventListener("scroll", enableInfiniteScroll);
-  }, []);
 
   useEffect(() => {
     if (!lockedProductName) return;
@@ -130,11 +110,9 @@ export default function CollectionCatalog({
   }, [lockedProductName]);
 
   const clearFilters = () => {
-    setBrands([]);
-    setSizes([]);
-    setColors([]);
-    setMaxPrice(null);
-    setAvailability("all");
+    const params = new URLSearchParams(searchParams.toString());
+    ["brand", "size", "color", "availability", "maxPrice"].forEach((key) => params.delete(key));
+    window.history.replaceState(null, "", `${window.location.pathname}?${params}`);
   };
 
   const facets = useMemo(
@@ -176,64 +154,23 @@ export default function CollectionCatalog({
       return 0;
     });
   }, [availability, brands, colors, maxPrice, products, sizes, sort]);
-  const displayKey = JSON.stringify([
-    collectionSlug,
-    brands,
-    sizes,
-    colors,
-    maxPrice,
-    availability,
-    sort,
-  ]);
-  const displayCount = displayPage.key === displayKey ? displayPage.count : DISPLAY_PAGE_SIZE;
-  const visibleProducts = filteredProducts.slice(0, displayCount);
-  const hasHiddenProducts = displayCount < filteredProducts.length;
-  const canLoadMore = hasHiddenProducts || hasNextPage;
-
-  const loadMore = useCallback(async () => {
-    if (isFetching || refreshing) return;
-    if (hasHiddenProducts) {
-      setDisplayPage({ key: displayKey, count: displayCount + DISPLAY_PAGE_SIZE });
-    } else if (hasNextPage) {
-      const result = await fetchNextPage({ cancelRefetch: false });
-      if (!result.isError) {
-        setDisplayPage({ key: displayKey, count: visibleProducts.length + DISPLAY_PAGE_SIZE });
-      }
-    }
-  }, [
-    isFetching,
-    refreshing,
-    hasHiddenProducts,
-    displayKey,
-    displayCount,
-    hasNextPage,
-    fetchNextPage,
-    visibleProducts.length,
-  ]);
-
-  useEffect(() => {
-    const trigger = loadMoreTriggerRef.current;
-
-    if (!infiniteScrollReady || !trigger || isFetching || error || !canLoadMore) {
+  const visibleProducts = filteredProducts;
+  const totalPages = Math.max(
+    1,
+    data?.pagination.totalPages ?? initialPage?.pagination.totalPages ?? 1,
+  );
+  function pageHref(target: number) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(target));
+    return `?${params}`;
+  }
+  function navigate(event: React.MouseEvent<HTMLAnchorElement>, target: number) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
       return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          void loadMore();
-        }
-      },
-      {
-        rootMargin: "300px",
-        threshold: 0,
-      },
-    );
-
-    observer.observe(trigger);
-
-    return () => observer.disconnect();
-  }, [error, canLoadMore, infiniteScrollReady, isFetching, loadMore]);
+    event.preventDefault();
+    window.history.pushState(null, "", pageHref(target));
+    document.getElementById("collection-results")?.scrollIntoView({ block: "start" });
+  }
 
   const toggle = (value: string, values: string[], setValues: (values: string[]) => void) => {
     setValues(
@@ -288,7 +225,7 @@ export default function CollectionCatalog({
           <div className={styles.drawerHeader}>
             <div>
               <strong>Filter and sort</strong>
-              <span> {data?.pages[0]?.pagination?.total ?? products.length} products</span>
+              <span> {data?.pagination.total ?? products.length} products</span>
             </div>
             <button type="button" aria-label="Close filters" onClick={() => setFiltersOpen(false)}>
               <span />
@@ -384,36 +321,14 @@ export default function CollectionCatalog({
           </details>
         </aside>
 
-        <section className={styles.results}>
+        <section id="collection-results" className={styles.results}>
           <div className={styles.mobileFilterBar}>
             <button type="button" onClick={() => setFiltersOpen(true)}>
               <span className={styles.filterIcon} aria-hidden="true" />
               Filter and sort
             </button>
-            <strong>{data?.pages[0]?.pagination?.total ?? products.length} products</strong>
+            <strong>{data?.pagination.total ?? products.length} products</strong>
           </div>
-          {/* <div className={styles.refreshControls}>
-            <button
-              type="button"
-              disabled={isFetching || refreshing}
-              onClick={async () => {
-                setRefreshing(true);
-                setRefreshError("");
-                try {
-                  await refreshCollection(queryClient, collectionSlug);
-                  setDisplayPage({ key: displayKey, count: DISPLAY_PAGE_SIZE });
-                } catch (error) {
-                  setRefreshError(
-                    error instanceof Error ? error.message : "Unable to refresh products.",
-                  );
-                } finally {
-                  setRefreshing(false);
-                }
-              }}
-            >
-              {refreshing ? "Refreshing?" : "Refresh products"}
-            </button>
-          </div> */}
           <div className={styles.toolbar}>
             <label>
               Sort by:
@@ -429,7 +344,6 @@ export default function CollectionCatalog({
               {filteredProducts.length} product{filteredProducts.length === 1 ? "" : "s"}
             </span>
           </div>
-          {refreshError && <p role="alert">{refreshError}</p>}
           <div className={styles.productGrid} aria-busy={productsLoading && !products.length}>
             {productsLoading && !products.length ? (
               <CollectionProductSkeletons />
@@ -445,7 +359,7 @@ export default function CollectionCatalog({
             )}
           </div>
           {!productsLoading && !productsError && !visibleProducts.length && (
-            <p className={styles.empty}>No products match these filters.</p>
+            <p className={styles.empty}>No products on this page match these filters.</p>
           )}
           {productsError && (
             <div className={styles.empty} role="alert">
@@ -454,19 +368,47 @@ export default function CollectionCatalog({
                 type="button"
                 disabled={isFetching}
                 onClick={() => {
-                  if (data && hasNextPage) loadMore();
-                  else void refetch();
+                  void refetch();
                 }}
               >
                 Try again
               </button>
             </div>
           )}
-          {(canLoadMore || productsLoading) && (
-            <div ref={loadMoreTriggerRef} className={styles.pagination} aria-live="polite">
-              {productsLoading ? <span>Loading...</span> : <span>Loading more products...</span>}
-            </div>
-          )}
+          <nav className={styles.pagination} aria-label="Collection pages">
+            {page > 1 ? (
+              <a href={pageHref(page - 1)} onClick={(event) => navigate(event, page - 1)}>
+                Previous
+              </a>
+            ) : (
+              <span aria-disabled="true">Previous</span>
+            )}
+            {collectionPageNumbers(page, totalPages).map((number, index, numbers) => (
+              <span key={number}>
+                {index > 0 && number - numbers[index - 1] > 1 && (
+                  <span aria-hidden="true"> ? </span>
+                )}
+                <a
+                  href={pageHref(number)}
+                  aria-label={`Page ${number}`}
+                  aria-current={number === page ? "page" : undefined}
+                  onClick={(event) => navigate(event, number)}
+                >
+                  {number}
+                </a>
+              </span>
+            ))}
+            {page < totalPages ? (
+              <a href={pageHref(page + 1)} onClick={(event) => navigate(event, page + 1)}>
+                Next
+              </a>
+            ) : (
+              <span aria-disabled="true">Next</span>
+            )}
+          </nav>
+          {/* <p aria-live="polite">
+            Page {page} of {totalPages}. Filters and sorting apply to this page. 
+          </p> */}
         </section>
 
         {lockedProductName && (

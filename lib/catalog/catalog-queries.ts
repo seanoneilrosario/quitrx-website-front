@@ -1,8 +1,8 @@
-import { infiniteQueryOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 import type { QuitHeroCollectionPage } from "@/lib/quithero";
 import type { ProductDetailData } from "./product-detail-data";
 import { API_STALE_TIME } from "@/lib/query/query-cache";
-import { ALL_PRODUCTS_PAGE_SIZE, COLLECTION_PAGE_SIZE } from "./catalog-pagination";
+import { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 
 export type CollectionPageResponse = QuitHeroCollectionPage;
 export { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
@@ -34,32 +34,6 @@ export function catalogListQuery(
   });
 }
 
-export function collectionProductsQuery(slug: string) {
-  const allProducts = slug === "all-products";
-  const pageSize = allProducts ? ALL_PRODUCTS_PAGE_SIZE : COLLECTION_PAGE_SIZE;
-  return infiniteQueryOptions({
-    queryKey: ["api", "/api/quithero-products", "collection-summary-v5", slug, pageSize] as const,
-    initialPageParam: 1,
-    queryFn: ({ pageParam, signal }) => {
-      const params = new URLSearchParams({
-        collectionPage: slug,
-        page: String(pageParam),
-        limit: String(pageSize),
-      });
-
-      return getCatalogData<CollectionPageResponse>(`/api/quithero-products?${params}`, signal);
-    },
-    getNextPageParam: (lastPage) =>
-      lastPage.pagination.hasNextPage && lastPage.products.length > 0
-        ? lastPage.pagination.page + 1
-        : undefined,
-    staleTime: API_STALE_TIME,
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
-}
-
 export function productDetailQuery(slug: string) {
   const url = `/api/quithero-products/${encodeURIComponent(slug)}`;
   return queryOptions({
@@ -69,20 +43,26 @@ export function productDetailQuery(slug: string) {
   });
 }
 
-// Replace the snapshot only after success; never mix pages from two snapshots.
-export async function refreshCollection(queryClient: QueryClient, slug: string) {
-  const options = collectionProductsQuery(slug);
-  await queryClient.cancelQueries({ queryKey: options.queryKey, exact: true });
+export function collectionPageQuery(slug: string, page: number) {
   const params = new URLSearchParams({
     collectionPage: slug,
-    page: "1",
-    limit: String(slug === "all-products" ? ALL_PRODUCTS_PAGE_SIZE : COLLECTION_PAGE_SIZE),
-    fresh: "1",
+    page: String(page),
+    limit: String(COLLECTION_PAGE_SIZE),
   });
-  const page = await getCatalogData<CollectionPageResponse>(
-    `/api/quithero-products?${params}`,
-    new AbortController().signal,
-    true,
-  );
-  queryClient.setQueryData(options.queryKey, { pages: [page], pageParams: [1] });
+  return queryOptions({
+    queryKey: [
+      "api",
+      "/api/quithero-products",
+      "collection-page-v1",
+      slug,
+      page,
+      COLLECTION_PAGE_SIZE,
+    ] as const,
+    queryFn: ({ signal }) =>
+      getCatalogData<CollectionPageResponse>(`/api/quithero-products?${params}`, signal),
+    staleTime: API_STALE_TIME,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 }

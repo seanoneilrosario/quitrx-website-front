@@ -1,17 +1,20 @@
 import CollectionCatalog from "@/components/commerce/CollectionCatalog";
 import Link from "next/link";
-import { COLLECTION_PAGE_SIZE } from "@/lib/catalog/catalog-pagination";
+import { COLLECTION_PAGE_SIZE, parseCollectionPage } from "@/lib/catalog/catalog-pagination";
 import { getFastQuitHeroCollectionPage } from "@/lib/quithero";
 import styles from "../../store.module.css";
 
 type CollectionPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string | string[] }>;
 };
 
-export default async function CollectionPage({ params }: CollectionPageProps) {
+export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
   const { slug } = await params;
 
-  const initialPage = await getFastQuitHeroCollectionPage(slug, 1, COLLECTION_PAGE_SIZE);
+  const query = await searchParams;
+  const page = parseCollectionPage(Array.isArray(query.page) ? query.page[0] : query.page);
+  const initialPage = await getFastQuitHeroCollectionPage(slug, page, COLLECTION_PAGE_SIZE);
 
   return (
     <main className={styles.page}>
