@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { isBrowserReload } from "@/lib/catalog/catalog-refresh";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import {
   collectionProductsQuery,
+  refreshCollection,
   type CollectionPageResponse,
 } from "@/lib/catalog/catalog-queries";
 import Link from "next/link";
@@ -55,7 +55,9 @@ export default function CollectionCatalog({
 }) {
   const { customer } = useAccountCustomer();
   const productsLocked = !hasActiveScript(customer);
-  const [initialDataUpdatedAt] = useState(() => (isBrowserReload() ? 0 : Date.now()));
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState("");
   const {
     data,
     error,
@@ -66,15 +68,13 @@ export default function CollectionCatalog({
     fetchNextPage,
     refetch,
   } = useInfiniteQuery({
-    ...collectionProductsQuery(collectionSlug, initialDataUpdatedAt === 0),
+    ...collectionProductsQuery(collectionSlug),
     initialData: initialPage
       ? {
           pages: [initialPage],
           pageParams: [1],
         }
       : undefined,
-    // Cached server HTML must not suppress the fresh request on a browser reload.
-    initialDataUpdatedAt,
   });
   const products = useMemo(() => {
     const allProducts = data?.pages.flatMap((page) => page.products) ?? [];
@@ -191,7 +191,7 @@ export default function CollectionCatalog({
   const canLoadMore = hasHiddenProducts || hasNextPage;
 
   const loadMore = useCallback(async () => {
-    if (isFetching) return;
+    if (isFetching || refreshing) return;
     if (hasHiddenProducts) {
       setDisplayPage({ key: displayKey, count: displayCount + DISPLAY_PAGE_SIZE });
     } else if (hasNextPage) {
@@ -202,6 +202,7 @@ export default function CollectionCatalog({
     }
   }, [
     isFetching,
+    refreshing,
     hasHiddenProducts,
     displayKey,
     displayCount,
@@ -391,6 +392,28 @@ export default function CollectionCatalog({
             </button>
             <strong>{data?.pages[0]?.pagination?.total ?? products.length} products</strong>
           </div>
+          <div className={styles.refreshControls}>
+            <button
+              type="button"
+              disabled={isFetching || refreshing}
+              onClick={async () => {
+                setRefreshing(true);
+                setRefreshError("");
+                try {
+                  await refreshCollection(queryClient, collectionSlug);
+                  setDisplayPage({ key: displayKey, count: DISPLAY_PAGE_SIZE });
+                } catch (error) {
+                  setRefreshError(
+                    error instanceof Error ? error.message : "Unable to refresh products.",
+                  );
+                } finally {
+                  setRefreshing(false);
+                }
+              }}
+            >
+              {refreshing ? "Refreshing?" : "Refresh products"}
+            </button>
+          </div>
           <div className={styles.toolbar}>
             <label>
               Sort by:
@@ -406,6 +429,7 @@ export default function CollectionCatalog({
               {filteredProducts.length} product{filteredProducts.length === 1 ? "" : "s"}
             </span>
           </div>
+          {refreshError && <p role="alert">{refreshError}</p>}
           <div className={styles.productGrid} aria-busy={productsLoading && !products.length}>
             {productsLoading && !products.length ? (
               <CollectionProductSkeletons />

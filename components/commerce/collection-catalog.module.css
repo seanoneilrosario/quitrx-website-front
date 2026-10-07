@@ -207,6 +207,27 @@
   letter-spacing: 0.01em;
 }
 
+.refreshControls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.refreshControls button {
+  padding: 8px 14px;
+  border: 1px solid #7eb6bd;
+  border-radius: 999px;
+  background: #fff;
+  color: #176976;
+  font: inherit;
+  cursor: pointer;
+}
+
+.refreshControls button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .toolbar label {
   display: flex;
   gap: 12px;

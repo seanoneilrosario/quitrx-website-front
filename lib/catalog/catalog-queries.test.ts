@@ -3,6 +3,7 @@ import { InfiniteQueryObserver, QueryClient } from "@tanstack/react-query";
 import {
   collectionProductsQuery,
   productDetailQuery,
+  refreshCollection,
   type CollectionPageResponse,
 } from "./catalog-queries";
 
@@ -21,25 +22,23 @@ function page(
 }
 
 describe("catalog API queries", () => {
-  it("refreshes the first All Products batch on reload without refreshing later batches", async () => {
+  it("explicit refresh replaces all loaded pages only after a successful response", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(Response.json(page(1, true)))
-      .mockResolvedValueOnce(Response.json(page(2, false)));
+      .mockResolvedValueOnce(new Response(null, { status: 502 }))
+      .mockResolvedValueOnce(Response.json(page(1, true)));
     vi.stubGlobal("fetch", fetchMock);
     const client = new QueryClient();
-    const observer = new InfiniteQueryObserver(
-      client,
-      collectionProductsQuery("all-products", true),
-    );
-    const unsubscribe = observer.subscribe(() => {});
+    const key = collectionProductsQuery("all-products").queryKey;
+    const original = { pages: [page(1, true), page(2, false)], pageParams: [1, 2] };
+    client.setQueryData(key, original);
     try {
-      await vi.waitFor(() => expect(observer.getCurrentResult().isSuccess).toBe(true));
-      await observer.fetchNextPage();
-      expect(fetchMock.mock.calls[0][0]).toContain("page=1&limit=15&fresh=1");
-      expect(fetchMock.mock.calls[1][0]).not.toContain("fresh=1");
+      await expect(refreshCollection(client, "all-products")).rejects.toThrow();
+      expect(client.getQueryData(key)).toEqual(original);
+      await refreshCollection(client, "all-products");
+      expect(client.getQueryData(key)).toEqual({ pages: [page(1, true)], pageParams: [1] });
+      expect(fetchMock.mock.calls[1][0]).toContain("page=1&limit=15&fresh=1");
     } finally {
-      unsubscribe();
       client.clear();
     }
   });
@@ -60,10 +59,8 @@ describe("catalog API queries", () => {
       expect(observer.getCurrentResult().hasNextPage).toBe(false);
       await observer.fetchNextPage();
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0][0]).toContain(
-        "collectionPage=brand-a&page=2&limit=100&fresh=1",
-      );
-      expect(fetchMock.mock.calls[0][1].cache).toBe("no-store");
+      expect(fetchMock.mock.calls[0][0]).toContain("collectionPage=brand-a&page=2&limit=100");
+      expect(fetchMock.mock.calls[0][0]).not.toContain("fresh=1");
     } finally {
       unsubscribe();
       client.clear();
@@ -118,27 +115,19 @@ describe("catalog API queries", () => {
   });
 });
 
-it("reload fetches fresh collection data once and caches the replacement for navigation", async () => {
+it("browser reload reuses a valid collection snapshot without fetching", async () => {
   vi.stubGlobal("window", { performance: { getEntriesByType: () => [{ type: "reload" }] } });
-  const fetchMock = vi
-    .fn()
-    .mockResolvedValue(Response.json(page(1, false, [{ id: "new-product" }])));
+  const fetchMock = vi.fn();
   vi.stubGlobal("fetch", fetchMock);
   const client = new QueryClient();
   const observer = new InfiniteQueryObserver(client, {
     ...collectionProductsQuery("brand-a"),
-    initialData: { pages: [page(1, true, [{ id: "deleted-product" }])], pageParams: [1] },
-    initialDataUpdatedAt: 0,
+    initialData: { pages: [page(1, true)], pageParams: [1] },
   });
   const unsubscribe = observer.subscribe(() => {});
   try {
-    await vi.waitFor(() => expect(observer.getCurrentResult().isFetching).toBe(false));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toContain("limit=100&fresh=1");
-    expect(fetchMock.mock.calls[0][1].cache).toBe("no-store");
-    expect(observer.getCurrentResult().data?.pages[0].products).toEqual([{ id: "new-product" }]);
     await client.fetchInfiniteQuery(collectionProductsQuery("brand-a"));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalled();
   } finally {
     unsubscribe();
     client.clear();
