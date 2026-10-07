@@ -5,7 +5,7 @@ import { unstable_cache } from "next/cache";
 import type { QuitHeroProduct, QuitHeroImage, QuitHeroVariant } from "./product-types";
 import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS } from "./client";
 import { productIsVisible } from "@/lib/catalog/bundles";
-import { productCardCache } from "./card-cache";
+import { productCardCache } from "./cache/card-cache";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
 
 type QuitHeroProductsResponse =

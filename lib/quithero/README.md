@@ -12,6 +12,8 @@
 | Fetch or create orders                                  | [orders.ts](./orders.ts)                   |
 | Find, synchronize, or update customers                  | [customers.ts](./customers.ts)             |
 | Product and variant response types                      | [product-types.ts](./product-types.ts)     |
+| Product card caching and shared cache implementation | [cache/](./cache/) |
+| Backend concurrency and cooldown | [request-gate.ts](./request-gate.ts) |
 
 ## Server fetching examples
 
@@ -38,7 +40,7 @@ products and collection lists use 60 seconds. The fresh collection-page function
 bypasses that server cache. `getQuitHeroCollection` is the older full-catalog
 resolver with Sanity assignment and dynamic-rule fallbacks.
 
-Collection card caching uses `card-cache.ts` and `summary-cache.ts`. Each server
+Collection card caching uses `cache/card-cache.ts` and `cache/summary-cache.ts`. Each server
 process retains up to 1,000 compact product cards and 100 collection pages for
 five minutes. Concurrent requests share in-flight work. Named collection reads
 seed product cards; All Products reuses those cards instead of fetching their

@@ -9,7 +9,7 @@ vi.mock("./client", () => ({
 import { quitHeroFetch } from "./client";
 import { loadQuitHeroProductsPage } from "./products";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
-import { cacheProductCard } from "./card-cache";
+import { cacheProductCard } from "./cache/card-cache";
 afterEach(() => vi.resetAllMocks());
 
 it("loads missing card relations only for the requested page and paginates variants", async () => {

@@ -36,6 +36,7 @@ lib/
   payments/             eWAY and PayPal clients and payment sessions
   query/                Shared query cache policy
   quithero/             QuitHero API clients and response types
+    cache/              Bounded server cache and reusable product card snapshots
 sanity/
   lib/                  Sanity client, image helpers, live queries, and GROQ
   schemas/

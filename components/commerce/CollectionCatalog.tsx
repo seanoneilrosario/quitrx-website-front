@@ -392,7 +392,7 @@ export default function CollectionCatalog({
             </button>
             <strong>{data?.pages[0]?.pagination?.total ?? products.length} products</strong>
           </div>
-          <div className={styles.refreshControls}>
+          {/* <div className={styles.refreshControls}>
             <button
               type="button"
               disabled={isFetching || refreshing}
@@ -413,7 +413,7 @@ export default function CollectionCatalog({
             >
               {refreshing ? "Refreshing?" : "Refresh products"}
             </button>
-          </div>
+          </div> */}
           <div className={styles.toolbar}>
             <label>
               Sort by:

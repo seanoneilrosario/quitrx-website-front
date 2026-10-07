@@ -1,5 +1,5 @@
 import "server-only";
-import type { QuitHeroProduct } from "./product-types";
+import type { QuitHeroProduct } from "../product-types";
 import { createSummaryCache } from "./summary-cache";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
 

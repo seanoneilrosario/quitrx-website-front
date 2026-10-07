@@ -1,8 +1,8 @@
 import "server-only";
 
 import { cache } from "react";
-import { cacheProductCard } from "./card-cache";
-import { createSummaryCache } from "./summary-cache";
+import { cacheProductCard } from "./cache/card-cache";
+import { createSummaryCache } from "./cache/summary-cache";
 import { ALL_PRODUCTS_PAGE_SIZE } from "@/lib/catalog/catalog-pagination";
 import { unstable_cache } from "next/cache";
 import type { QuitHeroProduct } from "./product-types";
