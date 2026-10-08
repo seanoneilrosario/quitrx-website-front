@@ -226,9 +226,15 @@ export default function CollectionCatalog({
             )
           : undefined,
 
-      attributeFilters: searchParams
-        .getAll("attributeFilters")
-        .filter(Boolean),
+      attributeFilters: (() => {
+        const values = searchParams
+          .getAll("attributeFilters")
+          .filter(Boolean);
+
+        return values.length
+          ? [values.join(",")]
+          : [];
+      })(),
     }),
     [searchParams],
   );
