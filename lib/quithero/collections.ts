@@ -62,10 +62,22 @@ const getCachedQuitHeroCollections = unstable_cache(
 
 export const getQuitHeroCollections = cache(getCachedQuitHeroCollections);
 
+type QuitHeroCollectionFilters = {
+  brandId?: string[];
+  productTypeId?: string[];
+  status?: string[];
+  sourceSystem?: string[];
+  tags?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  attributeFilters?: string[];
+};
+
 async function loadCollectionPage(
   slug: string,
   page: number,
   limit: number,
+  filters: QuitHeroCollectionFilters = {},
   fresh = false,
 ): Promise<QuitHeroCollectionPage> {
   const normalizedPage = Math.max(1, Math.floor(page));
@@ -115,6 +127,45 @@ async function loadCollectionPage(
     };
   }
 
+  const params = new URLSearchParams({
+    page: String(normalizedPage),
+    limit: String(normalizedLimit),
+    status: "active",
+    productFields: "images,brand,status,slug,name",
+  });
+
+  filters.brandId?.forEach((value) => {
+    params.append("brandId", value);
+  });
+
+  filters.productTypeId?.forEach((value) => {
+    params.append("productTypeId", value);
+  });
+
+  filters.status?.forEach((value) => {
+    params.append("status", value);
+  });
+
+  filters.sourceSystem?.forEach((value) => {
+    params.append("sourceSystem", value);
+  });
+
+  filters.tags?.forEach((value) => {
+    params.append("tags", value);
+  });
+
+  if (filters.minPrice !== undefined) {
+    params.set("minPrice", String(filters.minPrice));
+  }
+
+  if (filters.maxPrice !== undefined) {
+    params.set("maxPrice", String(filters.maxPrice));
+  }
+
+  filters.attributeFilters?.forEach((value) => {
+    params.append("attributeFilters", value);
+  });
+
   const response = await quitHeroFetch<{
     data: {
       id: string;
@@ -125,7 +176,7 @@ async function loadCollectionPage(
     };
     pagination: QuitHeroPagination;
   }>(
-    `/collections/${encodeURIComponent(slug)}?page=${normalizedPage}&limit=${normalizedLimit}&status=active&productFields=${COLLECTION_PRODUCT_FIELDS}`,
+    `/collections/${encodeURIComponent(slug)}?${params.toString()}`,
   );
 
   return {
@@ -140,26 +191,68 @@ async function loadCollectionPage(
 
 const collectionPageCache = createSummaryCache<QuitHeroCollectionPage>(100);
 
-function collectionPage(slug: string, page: number, limit: number, fresh: boolean) {
+function collectionPage(
+  slug: string,
+  page: number,
+  limit: number,
+  filters: QuitHeroCollectionFilters,
+  fresh: boolean,
+) {
   const normalizedPage = Math.max(1, Math.floor(page));
   const normalizedLimit = Math.max(
     1,
     Math.min(slug === "all-products" ? ALL_PRODUCTS_PAGE_SIZE : 100, Math.floor(limit)),
   );
-  const key = JSON.stringify([slug, normalizedPage, normalizedLimit]);
+  const key = JSON.stringify([
+    slug,
+    normalizedPage,
+    normalizedLimit,
+    filters,
+  ]);
   return collectionPageCache.get(
     key,
-    () => loadCollectionPage(slug, normalizedPage, normalizedLimit, fresh),
+    () =>
+    loadCollectionPage(
+      slug,
+      normalizedPage,
+      normalizedLimit,
+      filters,
+      fresh,
+    ),
     fresh,
   );
 }
 
 // Fresh reads replace the same snapshot used by subsequent normal navigation.
-export function getQuitHeroCollectionPage(slug: string, page: number, limit: number) {
-  return collectionPage(slug, page, limit, true);
+export function getQuitHeroCollectionPage(
+  slug: string,
+  page: number,
+  limit: number,
+  filters: QuitHeroCollectionFilters = {},
+) {
+  return collectionPage(
+    slug,
+    page,
+    limit,
+    filters,
+    true,
+  );
 }
-export const getFastQuitHeroCollectionPage = cache((slug: string, page: number, limit: number) =>
-  collectionPage(slug, page, limit, false),
+
+export const getFastQuitHeroCollectionPage = cache(
+  (
+    slug: string,
+    page: number,
+    limit: number,
+    filters: QuitHeroCollectionFilters = {},
+  ) =>
+    collectionPage(
+      slug,
+      page,
+      limit,
+      filters,
+      false,
+    ),
 );
 
 export async function getQuitHeroCollection(slug: string) {

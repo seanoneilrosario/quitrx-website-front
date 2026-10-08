@@ -7,6 +7,44 @@ import { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 export type CollectionPageResponse = QuitHeroCollectionPage;
 export { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 
+export type CollectionFilterValue = {
+  value: string;
+  label?: string;
+  count: number;
+};
+
+export type CollectionAvailableFilter = {
+  key: string;
+  label: string;
+  type:
+    | "BRAND"
+    | "PRODUCT_TYPE"
+    | "STATUS"
+    | "PRICE"
+    | "AVAILABILITY"
+    | "SOURCE_SYSTEM"
+    | "TAG"
+    | "ATTRIBUTE";
+  attributeId?: string;
+  attributeSlug?: string;
+  values?: CollectionFilterValue[];
+  range?: {
+    min: string;
+    max: string;
+  };
+};
+
+export type CollectionAvailableFiltersResponse = {
+  data: {
+    collection: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+    filters: CollectionAvailableFilter[];
+  };
+};
+
 async function getCatalogData<T>(url: string, signal: AbortSignal, fresh = false): Promise<T> {
   const response = await fetch(url, { signal, ...(fresh ? { cache: "no-store" as const } : {}) });
   if (!response.ok)
@@ -43,23 +81,181 @@ export function productDetailQuery(slug: string) {
   });
 }
 
-export function collectionPageQuery(slug: string, page: number) {
+export type CollectionPageFilters = {
+  brandId?: string[];
+  productTypeId?: string[];
+  status?: string[];
+  sourceSystem?: string[];
+  tags?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  attributeFilters?: string[];
+};
+
+export function collectionPageQuery(
+  slug: string,
+  page: number,
+  filters: CollectionPageFilters = {},
+) {
   const params = new URLSearchParams({
     collectionPage: slug,
     page: String(page),
     limit: String(COLLECTION_PAGE_SIZE),
   });
+
+  filters.brandId?.forEach((value) => {
+    params.append("brandId", value);
+  });
+
+  filters.productTypeId?.forEach((value) => {
+    params.append("productTypeId", value);
+  });
+
+  filters.status?.forEach((value) => {
+    params.append("status", value);
+  });
+
+  filters.sourceSystem?.forEach((value) => {
+    params.append("sourceSystem", value);
+  });
+
+  filters.tags?.forEach((value) => {
+    params.append("tags", value);
+  });
+
+  if (filters.minPrice !== undefined) {
+    params.set("minPrice", String(filters.minPrice));
+  }
+
+  if (filters.maxPrice !== undefined) {
+    params.set("maxPrice", String(filters.maxPrice));
+  }
+
+  filters.attributeFilters?.forEach((value) => {
+    params.append("attributeFilters", value);
+  });
+
   return queryOptions({
     queryKey: [
       "api",
       "/api/quithero-products",
-      "collection-page-v1",
+      "collection-page-v2",
       slug,
       page,
       COLLECTION_PAGE_SIZE,
+      filters,
     ] as const,
     queryFn: ({ signal }) =>
-      getCatalogData<CollectionPageResponse>(`/api/quithero-products?${params}`, signal),
+      getCatalogData<CollectionPageResponse>(
+        `/api/quithero-products?${params}`,
+        signal,
+      ),
+    staleTime: API_STALE_TIME,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+}
+
+export function collectionAvailableFiltersQuery(
+  slug: string,
+  filters: CollectionPageFilters = {},
+) {
+  const params = new URLSearchParams();
+
+  if (filters.brandId?.length) {
+    filters.brandId.forEach((value) => {
+      params.append('brandId', value);
+    });
+  }
+
+  if (filters.productTypeId?.length) {
+    filters.productTypeId.forEach(
+      (value) => {
+        params.append(
+          'productTypeId',
+          value,
+        );
+      },
+    );
+  }
+
+  if (filters.status?.length) {
+    filters.status.forEach((value) => {
+      params.append('status', value);
+    });
+  }
+
+  if (filters.sourceSystem?.length) {
+    filters.sourceSystem.forEach(
+      (value) => {
+        params.append(
+          'sourceSystem',
+          value,
+        );
+      },
+    );
+  }
+
+  if (filters.tags?.length) {
+    filters.tags.forEach((value) => {
+      params.append('tags', value);
+    });
+  }
+
+  if (
+    filters.minPrice !== undefined
+  ) {
+    params.set(
+      'minPrice',
+      String(filters.minPrice),
+    );
+  }
+
+  if (
+    filters.maxPrice !== undefined
+  ) {
+    params.set(
+      'maxPrice',
+      String(filters.maxPrice),
+    );
+  }
+
+  if (
+    filters.attributeFilters?.length
+  ) {
+    filters.attributeFilters.forEach(
+      (value) => {
+        params.append(
+          'attributeFilters',
+          value,
+        );
+      },
+    );
+  }
+
+  const query =
+    params.toString();
+
+  const url =
+    `/api/quithero-collection-filters?collection=${encodeURIComponent(slug)}` +
+    (query ? `&${query}` : '');
+
+  return queryOptions({
+    queryKey: [
+      'api',
+      '/api/quithero-collection-filters',
+      slug,
+      filters,
+    ] as const,
+
+    queryFn: ({ signal }) =>
+      getCatalogData<CollectionAvailableFiltersResponse>(
+        url,
+        signal,
+        true,
+      ),
+
     staleTime: API_STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
