@@ -85,13 +85,10 @@ export default defineType({
             defineField({
               name: "link",
               title: "Link",
-              description: "Use an internal path such as /starter-packs or a full external URL.",
-              type: "url",
-              validation: (Rule) =>
-                Rule.required().uri({
-                  allowRelative: true,
-                  scheme: ["http", "https", "mailto", "tel"],
-                }),
+              description:
+                "Use an internal path such as starter-packs or /starter-packs, or a full external URL.",
+              type: "string",
+              validation: (Rule) => Rule.required(),
             }),
             defineField({
               name: "openInNewTab",

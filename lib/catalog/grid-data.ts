@@ -101,10 +101,19 @@ export function collectionCardsFrom(payload: unknown): CollectionCardData[] {
     ];
   });
 }
+
+function normalizeCardLink(link?: string) {
+  const value = link?.trim();
+  if (!value) return;
+  if (/^(?:https?:\/\/|mailto:|tel:|\/|#)/i.test(value)) return value;
+  return `/${value}`;
+}
+
 export function selectedCollectionCards(collections: GridCollection[]): CollectionCardData[] {
   return collections.flatMap((collection) => {
     const href =
-      collection.link || (collection.slug ? `/collections/${collection.slug}` : undefined);
+      normalizeCardLink(collection.link) ||
+      (collection.slug ? `/collections/${collection.slug}` : undefined);
     return href
       ? [
           {

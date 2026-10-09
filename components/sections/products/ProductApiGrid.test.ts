@@ -71,7 +71,7 @@ describe("product grid access and selection", () => {
     const html = renderToStaticMarkup(
       createElement(ProductApiGrid, {
         collections: [
-          { title: "Starter Packs", link: "/starter-packs" },
+          { title: "Starter Packs", link: "starter-packs" },
           { title: "Partner", link: "https://example.com", openInNewTab: true },
         ],
       }),
