@@ -7,6 +7,7 @@ import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS }
 import { productIsVisible } from "@/lib/catalog/bundles";
 import { productCardCache } from "./cache/card-cache";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
+import { QuitHeroCollectionFilters } from "./collections";
 
 type QuitHeroProductsResponse =
   | QuitHeroProduct[]
@@ -72,6 +73,7 @@ export async function loadQuitHeroProductsPage(
   limit: number,
   search?: string,
   fresh = false,
+  filters: QuitHeroCollectionFilters = {},
 ) {
   // Count actual network attempts, including retries and relation pagination.
   let requests = 0;
@@ -87,6 +89,28 @@ export async function loadQuitHeroProductsPage(
   });
 
   if (search) query.set("search", search);
+
+  // Multiple selected brands use the products endpoint's brandIds parameter.
+  filters.brandId?.forEach((brandId) => {
+    query.append("brandIds", brandId);
+  });
+
+  // Combine attribute selections into one comma-separated parameter.
+  const attributeFilters = [
+    ...new Set(
+      (filters.attributeFilters ?? [])
+        .flatMap((value) => value.split(","))
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (attributeFilters.length) {
+    query.set(
+      "attributeFilters",
+      attributeFilters.join(","),
+    );
+  }
 
   const payload = await quitHeroFetch<QuitHeroProductsResponse>(`/products?${query}`, {
     beforeRequest,

@@ -62,7 +62,7 @@ const getCachedQuitHeroCollections = unstable_cache(
 
 export const getQuitHeroCollections = cache(getCachedQuitHeroCollections);
 
-type QuitHeroCollectionFilters = {
+export type QuitHeroCollectionFilters = {
   brandId?: string[];
   productTypeId?: string[];
   status?: string[];
@@ -95,11 +95,13 @@ async function loadCollectionPage(
   };
 
   if (slug === "all-products") {
-    const { products, total, totalPages } = await loadQuitHeroProductsPage(
+    const { products, total, totalPages } =
+    await loadQuitHeroProductsPage(
       normalizedPage,
       normalizedLimit,
       undefined,
       fresh,
+      filters,
     );
 
     console.log("[All Products Pagination]", {
