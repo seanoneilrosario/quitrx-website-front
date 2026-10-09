@@ -62,19 +62,57 @@ export function productIsVisible(product: Pick<BundleAwareProduct, "status" | "s
 
 export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] {
   if (!payload || typeof payload !== "object") return [];
-  const dropdowns = (payload as Record<string, unknown>).bundleDropdowns;
-  if (!Array.isArray(dropdowns)) return [];
+  const record = payload as Record<string, unknown>;
+  const data =
+    record.data && typeof record.data === "object" && !Array.isArray(record.data)
+      ? (record.data as Record<string, unknown>)
+      : undefined;
+  const bundle =
+    record.bundle && typeof record.bundle === "object" && !Array.isArray(record.bundle)
+      ? (record.bundle as Record<string, unknown>)
+      : undefined;
+  const dropdowns = Array.isArray(payload)
+    ? payload
+    : ([
+        record.bundleDropdowns,
+        record.bundleSelections,
+        record.selections,
+        bundle?.bundleDropdowns,
+        bundle?.bundleSelections,
+        bundle?.selections,
+        data?.bundleDropdowns,
+        data?.bundleSelections,
+        data?.selections,
+      ].find(Array.isArray) ?? []);
 
   return dropdowns.flatMap((value) => {
     if (!value || typeof value !== "object") return [];
     const dropdown = value as Record<string, unknown>;
-    const name = String(dropdown.name ?? "").trim();
-    const options = recordsFrom(dropdown.options).flatMap((option) => {
-      const componentVariantId = String(option.componentVariantId ?? "").trim();
-      const componentVariant =
+    const name = String(
+      dropdown.name ?? dropdown.selectionName ?? dropdown.label ?? dropdown.title ?? "",
+    ).trim();
+    const rawOptions =
+      dropdown.options ??
+      dropdown.variants ??
+      dropdown.allowedVariants ??
+      dropdown.allowedChildVariants;
+    const options = recordsFrom(rawOptions).flatMap((option) => {
+      const nestedVariant =
         option.componentVariant && typeof option.componentVariant === "object"
-          ? (option.componentVariant as QuitHeroBundleDropdown["options"][number]["componentVariant"])
-          : undefined;
+          ? (option.componentVariant as Record<string, unknown>)
+          : option.variant && typeof option.variant === "object"
+            ? (option.variant as Record<string, unknown>)
+            : undefined;
+      const componentVariantId = String(
+        option.componentVariantId ??
+          option.variantId ??
+          option.childVariantId ??
+          nestedVariant?.id ??
+          "",
+      ).trim();
+      const componentVariant = nestedVariant
+        ? (nestedVariant as QuitHeroBundleDropdown["options"][number]["componentVariant"])
+        : undefined;
       return componentVariantId
         ? [{ componentVariantId, ...(componentVariant ? { componentVariant } : {}) }]
         : [];

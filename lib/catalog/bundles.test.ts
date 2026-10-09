@@ -47,6 +47,57 @@ describe("bundleDropdownsFrom", () => {
     ]);
   });
 
+  it("normalizes dashboard bundle selections from a nested API response", () => {
+    expect(
+      bundleDropdownsFrom({
+        data: {
+          selections: [
+            {
+              name: "Choose bottle one",
+              quantity: 1,
+              options: [
+                {
+                  variantId: "mint-3mg",
+                  variant: { id: "mint-3mg", name: "Mint 3mg", inventory: 4 },
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    ).toEqual([
+      {
+        name: "Choose bottle one",
+        quantity: 1,
+        options: [
+          {
+            componentVariantId: "mint-3mg",
+            componentVariant: { id: "mint-3mg", name: "Mint 3mg", inventory: 4 },
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("normalizes dashboard bundleSelections nested under bundle", () => {
+    expect(
+      bundleDropdownsFrom({
+        bundle: {
+          bundleSelections: [
+            {
+              name: "Choose bottle two",
+              options: [
+                {
+                  componentVariant: { id: "menthol-6mg", name: "Menthol 6mg", inventory: 2 },
+                },
+              ],
+            },
+          ],
+        },
+      })[0]?.options[0]?.componentVariantId,
+    ).toBe("menthol-6mg");
+  });
+
   it("ignores malformed dropdowns and options", () => {
     expect(
       bundleDropdownsFrom({
