@@ -3,10 +3,33 @@ import {
   bundleComponentsFrom,
   bundleDropdownsFrom,
   bundleSlotsFrom,
+  productIsBundle,
   productIsAvailable,
   productIsVisible,
   variantIsAvailable,
 } from "./bundles";
+
+describe("productIsBundle", () => {
+  it("recognizes dashboard-created bundles without requiring a bundle tag", () => {
+    expect(productIsBundle({ isBundle: true })).toBe(true);
+    expect(productIsBundle({ productType: "Bundle" })).toBe(true);
+    expect(productIsBundle({ productType: { name: "Bundle" } })).toBe(true);
+  });
+
+  it("recognizes embedded bundle configuration", () => {
+    expect(
+      productIsBundle({
+        variants: [
+          {
+            bundleDropdowns: [
+              { name: "Selection", options: [{ componentVariantId: "component" }] },
+            ],
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+});
 
 describe("bundleDropdownsFrom", () => {
   it("preserves selection quantities and requires enough component stock", () => {

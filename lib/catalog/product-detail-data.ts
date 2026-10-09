@@ -6,9 +6,8 @@ import {
   getPrimaryImage,
   getQuitHeroBundleVariant,
   getQuitHeroProductById,
-  productHasTag,
 } from "@/lib/quithero";
-import { bundleDropdownsFrom, productIsVisible } from "./bundles";
+import { bundleDropdownsFrom, productIsBundle, productIsVisible } from "./bundles";
 import { getAvailableStock } from "./available-stock";
 import { productDescriptionSections } from "./product-description-sections";
 
@@ -19,7 +18,7 @@ export async function getProductDetailData(product: QuitHeroProduct) {
     product.description || product.shortDescription,
   );
 
-  const isBundle = productHasTag(product, "bundle");
+  const isBundle = productIsBundle(product);
   const productId = product.id || product.slug || product.name || "product";
   const variants = product.variants || [];
 

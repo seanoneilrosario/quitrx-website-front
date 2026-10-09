@@ -48,6 +48,7 @@ export type BundleAwareVariant = {
 
 type BundleAwareProduct = {
   available?: boolean;
+  isBundle?: boolean;
   status?: string;
   sourceSystem?: string;
   productType?: string | { name?: string; slug?: string };
@@ -58,6 +59,31 @@ type BundleAwareProduct = {
 export function productIsVisible(product: Pick<BundleAwareProduct, "status" | "sourceSystem">) {
   const status = product.status?.trim().toLowerCase();
   return status !== "archived";
+}
+
+export function productIsBundle(product: BundleAwareProduct) {
+  if (product.isBundle === true) return true;
+
+  const productType =
+    typeof product.productType === "string"
+      ? product.productType
+      : product.productType?.name || product.productType?.slug || "";
+  const tags =
+    product.tags?.flatMap((tag) =>
+      typeof tag === "string"
+        ? [tag]
+        : [tag.name, tag.slug, tag.tag?.name, tag.tag?.slug].filter((value): value is string =>
+            Boolean(value),
+          ),
+    ) ?? [];
+
+  return (
+    [productType, ...tags].some((value) => value.trim().toLowerCase() === "bundle") ||
+    product.variants?.some(
+      (variant) =>
+        bundleComponentsFrom(variant).length > 0 || bundleDropdownsFrom(variant).length > 0,
+    ) === true
+  );
 }
 
 export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] {
@@ -302,21 +328,7 @@ export function productIsAvailable(product: BundleAwareProduct) {
   if (!productStatusAllowsPurchase(product.status)) return false;
   if (typeof product.available === "boolean") return product.available;
 
-  const productType =
-    typeof product.productType === "string"
-      ? product.productType
-      : product.productType?.name || product.productType?.slug || "";
-  const tags =
-    product.tags?.flatMap((tag) =>
-      typeof tag === "string"
-        ? [tag]
-        : [tag.name, tag.slug, tag.tag?.name, tag.tag?.slug].filter((value): value is string =>
-            Boolean(value),
-          ),
-    ) ?? [];
-  const isBundle = [productType, ...tags].some((value) => value.trim().toLowerCase() === "bundle");
-
-  if (isBundle) {
+  if (productIsBundle(product)) {
     return (
       product.variants?.some((variant) => {
         const hasBundleConfiguration =
