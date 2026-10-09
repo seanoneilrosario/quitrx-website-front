@@ -77,12 +77,18 @@ export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] 
         record.bundleDropdowns,
         record.bundleSelections,
         record.selections,
+        record.bundleSlots,
+        record.slots,
         bundle?.bundleDropdowns,
         bundle?.bundleSelections,
         bundle?.selections,
+        bundle?.bundleSlots,
+        bundle?.slots,
         data?.bundleDropdowns,
         data?.bundleSelections,
         data?.selections,
+        data?.bundleSlots,
+        data?.slots,
       ].find(Array.isArray) ?? []);
 
   return dropdowns.flatMap((value) => {
@@ -95,14 +101,23 @@ export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] 
       dropdown.options ??
       dropdown.variants ??
       dropdown.allowedVariants ??
-      dropdown.allowedChildVariants;
-    const options = recordsFrom(rawOptions).flatMap((option) => {
+      dropdown.allowedChildVariants ??
+      dropdown.allowedVariantIds ??
+      dropdown.allowedChildVariantIds ??
+      dropdown.variantIds;
+    const options = (Array.isArray(rawOptions) ? rawOptions : []).flatMap((value) => {
+      const option =
+        value && typeof value === "object"
+          ? (value as Record<string, unknown>)
+          : ({ variantId: value } as Record<string, unknown>);
       const nestedVariant =
         option.componentVariant && typeof option.componentVariant === "object"
           ? (option.componentVariant as Record<string, unknown>)
           : option.variant && typeof option.variant === "object"
             ? (option.variant as Record<string, unknown>)
-            : undefined;
+            : option.id
+              ? option
+              : undefined;
       const componentVariantId = String(
         option.componentVariantId ??
           option.variantId ??
@@ -117,7 +132,7 @@ export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] 
         ? [{ componentVariantId, ...(componentVariant ? { componentVariant } : {}) }]
         : [];
     });
-    const rawQuantity = Number(dropdown.quantity ?? 1);
+    const rawQuantity = Number(dropdown.quantity ?? dropdown.requiredQuantity ?? 1);
     const quantity = Number.isSafeInteger(rawQuantity) && rawQuantity > 0 ? rawQuantity : 1;
     return name && options.length ? [{ name, quantity, options }] : [];
   });

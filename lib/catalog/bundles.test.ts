@@ -98,6 +98,45 @@ describe("bundleDropdownsFrom", () => {
     ).toBe("menthol-6mg");
   });
 
+  it("normalizes dashboard bundle slots and allowed variants", () => {
+    expect(
+      bundleDropdownsFrom({
+        bundleSlots: [
+          {
+            label: "Bottle one",
+            allowedChildVariants: [
+              { id: "mint-3mg", name: "Mint 3mg", inventory: 4 },
+              { variantId: "menthol-6mg", name: "Menthol 6mg", inventory: 2 },
+            ],
+          },
+          {
+            label: "Bottle two",
+            allowedVariantIds: ["mint-3mg", "menthol-6mg"],
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        name: "Bottle one",
+        quantity: 1,
+        options: [
+          {
+            componentVariantId: "mint-3mg",
+            componentVariant: { id: "mint-3mg", name: "Mint 3mg", inventory: 4 },
+          },
+          {
+            componentVariantId: "menthol-6mg",
+          },
+        ],
+      },
+      {
+        name: "Bottle two",
+        quantity: 1,
+        options: [{ componentVariantId: "mint-3mg" }, { componentVariantId: "menthol-6mg" }],
+      },
+    ]);
+  });
+
   it("ignores malformed dropdowns and options", () => {
     expect(
       bundleDropdownsFrom({
