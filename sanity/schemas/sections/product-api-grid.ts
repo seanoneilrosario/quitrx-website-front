@@ -65,6 +65,50 @@ export default defineType({
           title: "Existing Sanity collection",
           to: [{ type: "productCollection" }],
         },
+        {
+          name: "customLink",
+          title: "Custom link",
+          type: "object",
+          fields: [
+            defineField({
+              name: "title",
+              title: "Title",
+              type: "string",
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: "image",
+              title: "Image",
+              type: "image",
+              options: { hotspot: true },
+            }),
+            defineField({
+              name: "link",
+              title: "Link",
+              description: "Use an internal path such as /starter-packs or a full external URL.",
+              type: "url",
+              validation: (Rule) =>
+                Rule.required().uri({
+                  allowRelative: true,
+                  scheme: ["http", "https", "mailto", "tel"],
+                }),
+            }),
+            defineField({
+              name: "openInNewTab",
+              title: "Open in a new tab",
+              type: "boolean",
+              initialValue: false,
+            }),
+          ],
+          preview: {
+            select: { title: "title", subtitle: "link", media: "image" },
+            prepare: ({ title, subtitle, media }) => ({
+              title: title || "Custom link",
+              subtitle,
+              media,
+            }),
+          },
+        },
       ],
       validation: (Rule) =>
         Rule.unique().custom((items) => {

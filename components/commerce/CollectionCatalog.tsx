@@ -1159,7 +1159,7 @@ export default function CollectionCatalog({
                         aria-hidden="true"
                       >
                         {" "}
-                        ?{" "}
+                        ...{" "}
                       </span>
                     )}
 

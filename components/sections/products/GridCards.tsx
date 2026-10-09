@@ -5,9 +5,14 @@ import type { CollectionCardData, ProductCardData } from "@/lib/catalog/grid-dat
 import styles from "./product-api-grid.module.css";
 
 export function CollectionGridCard({ collection }: { collection: CollectionCardData }) {
-  const { slug, title, image, count, placeholder } = collection;
+  const { href, title, image, count, openInNewTab, placeholder } = collection;
   return (
-    <Link href={`/collections/${slug}`} className={styles.card}>
+    <Link
+      href={href}
+      className={styles.card}
+      target={openInNewTab ? "_blank" : undefined}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
+    >
       <div className={styles.imageWrap}>
         {image ? (
           <Image

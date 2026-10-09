@@ -165,7 +165,13 @@ export interface ContentSection {
   productLimit?: number;
   displayMode?: "collections" | "products";
   collection?: { title?: string; slug?: string; image?: string };
-  collections?: Array<{ title?: string; slug?: string; image?: string }>;
+  collections?: Array<{
+    title?: string;
+    slug?: string;
+    image?: string;
+    link?: string;
+    openInNewTab?: boolean;
+  }>;
   comparisonIcon?: string;
   audience?: string;
   card_title?: string;

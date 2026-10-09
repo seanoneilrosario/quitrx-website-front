@@ -15,8 +15,8 @@ vi.mock("@tanstack/react-query", async (original) => ({
   useQuery: (...args: unknown[]) => state.query(...args),
 }));
 vi.mock("next/link", () => ({
-  default: ({ href, children }: { href: string; children: ReactNode }) =>
-    createElement("a", { href }, children),
+  default: ({ href, children, ...props }: { href: string; children: ReactNode }) =>
+    createElement("a", { href, ...props }, children),
 }));
 vi.mock("next/image", () => ({ default: () => null }));
 vi.mock("@/components/commerce/ProductImage", () => ({ default: () => null }));
@@ -63,6 +63,22 @@ describe("product grid access and selection", () => {
       renderToStaticMarkup(createElement(ProductApiGrid, { collection: { slug: "legacy" } })),
     ).toContain("/collections/legacy");
     expect(state.query).not.toHaveBeenCalled();
+  });
+
+  it("supports custom internal and external collection-card links", () => {
+    state.account.customer = { id: "customer" };
+    state.activeScript = true;
+    const html = renderToStaticMarkup(
+      createElement(ProductApiGrid, {
+        collections: [
+          { title: "Starter Packs", link: "/starter-packs" },
+          { title: "Partner", link: "https://example.com", openInNewTab: true },
+        ],
+      }),
+    );
+    expect(html).toContain('href="/starter-packs"');
+    expect(html).toContain('href="https://example.com"');
+    expect(html).toContain('target="_blank"');
   });
 
   it("renders API products and encodes their links when access is available", () => {

@@ -44,7 +44,7 @@ function CatalogGrid({ mode, limit }: { mode: "collections" | "products"; limit:
       )}
       <div className={styles.grid}>
         {collections.slice(0, limit).map((collection) => (
-          <CollectionGridCard key={collection.slug} collection={collection} />
+          <CollectionGridCard key={collection.href} collection={collection} />
         ))}
         {products.slice(0, limit).map((product) => (
           <ProductGridCard key={product.id} product={product} />
@@ -91,7 +91,7 @@ export default function ProductApiGrid({
       return (
         <div className={styles.grid}>
           {selectedCollectionCards(selections.slice(0, productLimit)).map((item) => (
-            <CollectionGridCard key={item.slug} collection={item} />
+            <CollectionGridCard key={item.href} collection={item} />
           ))}
         </div>
       );

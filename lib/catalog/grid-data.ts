@@ -1,9 +1,17 @@
-export type GridCollection = { title?: string; slug?: string; image?: string };
+export type GridCollection = {
+  title?: string;
+  slug?: string;
+  image?: string;
+  link?: string;
+  openInNewTab?: boolean;
+};
 export type CollectionCardData = {
-  slug: string;
+  slug?: string;
+  href: string;
   title: string;
   image?: string;
   count?: number;
+  openInNewTab?: boolean;
   placeholder: "title" | "all";
 };
 export type ProductCardData = {
@@ -80,6 +88,7 @@ export function collectionCardsFrom(payload: unknown): CollectionCardData[] {
     return [
       {
         slug,
+        href: `/collections/${slug}`,
         title: isAll
           ? "All Products"
           : text(collection, ["name", "title"]) || text(brand, ["name"]) || "Collection",
@@ -93,16 +102,20 @@ export function collectionCardsFrom(payload: unknown): CollectionCardData[] {
   });
 }
 export function selectedCollectionCards(collections: GridCollection[]): CollectionCardData[] {
-  return collections.flatMap((collection) =>
-    collection.slug
+  return collections.flatMap((collection) => {
+    const href =
+      collection.link || (collection.slug ? `/collections/${collection.slug}` : undefined);
+    return href
       ? [
           {
             slug: collection.slug,
+            href,
             title: collection.title || "Collection",
             image: collection.image,
+            openInNewTab: collection.openInNewTab,
             placeholder: "title" as const,
           },
         ]
-      : [],
-  );
+      : [];
+  });
 }
