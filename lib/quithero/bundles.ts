@@ -9,9 +9,9 @@ export async function getQuitHeroBundle(productId: string, variantId: string) {
   return bundleComponentsFrom(payload);
 }
 
-export async function getQuitHeroBundleVariant(productId: string, variantId: string) {
+export async function getQuitHeroBundleVariant(_productId: string, variantId: string) {
   return quitHeroFetch<QuitHeroVariant>(
-    `/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}/bundle`,
+    `/products/variants/${encodeURIComponent(variantId)}/bundle`,
   );
 }
 

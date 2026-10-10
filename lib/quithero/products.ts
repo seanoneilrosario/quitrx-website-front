@@ -196,7 +196,10 @@ const getCachedQuitHeroProduct = unstable_cache(
 export const getQuitHeroProduct = cache(async (handle: string) => getCachedQuitHeroProduct(handle));
 
 async function loadQuitHeroProductById(id: string) {
-  return quitHeroFetch<QuitHeroProduct>(`/products/${encodeURIComponent(id)}`);
+  const response = await quitHeroFetch<{ data?: QuitHeroProduct } & QuitHeroProduct>(
+    `/products/${encodeURIComponent(id)}`,
+  );
+  return response.data ?? response;
 }
 
 function getCachedQuitHeroProductById(id: string) {

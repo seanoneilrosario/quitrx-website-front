@@ -273,24 +273,6 @@ export default function ProductPurchasePanel({
         </button>
       </div>
 
-      {available ? (
-        availableStock < 50 && (
-          <p className={styles.stockStatus}>
-            Low stock! Only <strong>{availableStock}</strong> units left!
-          </p>
-        )
-      ) : (
-        <p className={styles.outOfStock}>{selected ? "Out of stock" : "Select a bundle"}</p>
-      )}
-      {stockError && (
-        <p className={styles.outOfStock} role="alert">
-          {stockError}
-        </p>
-      )}
-      <span className={styles.stockBar} aria-hidden="true">
-        <span />
-      </span>
-
       {isBundle && bundleDropdowns.length > 0 && (
         <section className={styles.bundleProducts} aria-label="Bundle includes">
           {bundleDropdowns.map((dropdown, dropdownIndex) => (
@@ -318,6 +300,27 @@ export default function ProductPurchasePanel({
             </label>
           ))}
         </section>
+      )}
+
+      {!isBundle &&
+        (available ? (
+          availableStock < 50 && (
+            <p className={styles.stockStatus}>
+              Low stock! Only <strong>{availableStock}</strong> units left!
+            </p>
+          )
+        ) : (
+          <p className={styles.outOfStock}>{selected ? "Out of stock" : "Select a bundle"}</p>
+        ))}
+      {stockError && (
+        <p className={styles.outOfStock} role="alert">
+          {stockError}
+        </p>
+      )}
+      {!isBundle && (
+        <span className={styles.stockBar} aria-hidden="true">
+          <span />
+        </span>
       )}
 
       {relatedProducts.length > 0 && (

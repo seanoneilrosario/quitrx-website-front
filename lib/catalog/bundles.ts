@@ -91,7 +91,19 @@ export function bundleDropdownsFrom(payload: unknown): QuitHeroBundleDropdown[] 
         data?.slots,
       ].find(Array.isArray) ?? []);
 
-  return dropdowns.flatMap((value) => {
+  const orderedDropdowns = dropdowns
+    .map((value, index) => ({
+      value,
+      index,
+      position:
+        value && typeof value === "object"
+          ? Number((value as Record<string, unknown>).position ?? index)
+          : index,
+    }))
+    .sort((left, right) => left.position - right.position || left.index - right.index)
+    .map(({ value }) => value);
+
+  return orderedDropdowns.flatMap((value) => {
     if (!value || typeof value !== "object") return [];
     const dropdown = value as Record<string, unknown>;
     const name = String(

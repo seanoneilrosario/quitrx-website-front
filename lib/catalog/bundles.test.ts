@@ -47,6 +47,36 @@ describe("bundleDropdownsFrom", () => {
     ]);
   });
 
+  it("uses the dashboard selection order and preserves each selection's option order", () => {
+    expect(
+      bundleDropdownsFrom({
+        bundleDropdowns: [
+          {
+            name: "Bottle two",
+            position: 2,
+            options: [{ componentVariantId: "menthol" }, { componentVariantId: "mint" }],
+          },
+          {
+            name: "Bottle one",
+            position: 1,
+            options: [{ componentVariantId: "mint" }, { componentVariantId: "menthol" }],
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        name: "Bottle one",
+        quantity: 1,
+        options: [{ componentVariantId: "mint" }, { componentVariantId: "menthol" }],
+      },
+      {
+        name: "Bottle two",
+        quantity: 1,
+        options: [{ componentVariantId: "menthol" }, { componentVariantId: "mint" }],
+      },
+    ]);
+  });
+
   it("normalizes dashboard bundle selections from a nested API response", () => {
     expect(
       bundleDropdownsFrom({

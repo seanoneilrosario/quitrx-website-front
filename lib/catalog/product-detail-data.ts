@@ -48,10 +48,27 @@ export async function getProductDetailData(product: QuitHeroProduct) {
       ? await getQuitHeroBundleVariant(product.id, variants[0].id).catch(() => variants[0])
       : variants[0];
 
-  // Build lookup from the current product + related products.
+  const rawBundleDropdowns = bundleDropdownsFrom(bundleVariant);
+  const bundleProductIds = Array.from(
+    new Set(
+      rawBundleDropdowns.flatMap((dropdown) =>
+        dropdown.options.flatMap((option) =>
+          option.componentVariant?.product?.id ? [option.componentVariant.product.id] : [],
+        ),
+      ),
+    ),
+  );
+  const bundleProductsData = await Promise.all(
+    bundleProductIds.map((id) => getQuitHeroProductById(id).catch(() => undefined)),
+  );
+
+  // Build lookup from the current product, recommendations, and bundle option products.
   const productsForLookup = [
     product,
     ...relatedProductsData.filter(
+      (item): item is QuitHeroProduct => item !== undefined && productIsVisible(item),
+    ),
+    ...bundleProductsData.filter(
       (item): item is QuitHeroProduct => item !== undefined && productIsVisible(item),
     ),
   ];
@@ -64,13 +81,13 @@ export async function getProductDetailData(product: QuitHeroProduct) {
     ),
   );
 
-  const bundleDropdowns = bundleDropdownsFrom(bundleVariant).map((dropdown) => ({
+  const bundleDropdowns = rawBundleDropdowns.map((dropdown) => ({
     name: dropdown.name,
     quantity: dropdown.quantity,
     options: dropdown.options.map(({ componentVariantId, componentVariant }) => {
       const match = variantLookup.get(componentVariantId);
 
-      const variant = componentVariant ?? match?.variant;
+      const variant = match?.variant ?? componentVariant;
       const product = componentVariant?.product ?? match?.product;
 
       const availableStock = getAvailableStock(variant);
