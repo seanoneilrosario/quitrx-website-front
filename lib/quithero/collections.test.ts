@@ -106,6 +106,7 @@ describe("collection product fields", () => {
 
     await getQuitHeroCollectionPage("e-liquids", 1, 24);
 
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
     expect(requestUrl.pathname).toBe("/collections/e-liquids");
     expect(requestUrl.searchParams.get("productFields")).toBe(

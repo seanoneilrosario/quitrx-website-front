@@ -133,7 +133,7 @@ async function loadCollectionPage(
     page: String(normalizedPage),
     limit: String(normalizedLimit),
     status: "active",
-    productFields: "images,brand,status,slug,name",
+    productFields: COLLECTION_PRODUCT_FIELDS,
   });
 
   filters.brandId?.forEach((value) => {
