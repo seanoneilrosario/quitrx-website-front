@@ -17,42 +17,43 @@ function checkoutUrl(request: NextRequest, payment: string) {
   return url;
 }
 
-export async function GET(request: NextRequest) {
-  const accessCode = request.nextUrl.searchParams.get("AccessCode")?.trim();
+async function finalizeEwayPayment(accessCode?: string) {
   const pending = await getPendingEwayPayment();
   if (!accessCode || !pending || pending.accessCode !== accessCode) {
-    return NextResponse.redirect(checkoutUrl(request, "invalid"));
+    return "invalid" as const;
   }
 
-  try {
-    const result = await getEwayPaymentResult(accessCode);
-    const expectedCents = Math.round(pending.total * 100);
-    if (
-      !result.TransactionStatus ||
-      result.TotalAmount !== expectedCents ||
-      !result.TransactionID
-    ) {
-      await clearPendingEwayPayment();
-      return NextResponse.redirect(checkoutUrl(request, "failed"));
-    }
-
-    const orderPayload: QuitHeroOrderPayload = {
-      source: "NATIVE",
-      currencyCode: "AUD",
-      subtotal: pending.subtotal,
-      total: pending.total,
-      customerId: pending.customerId,
-      items: pending.items,
-    };
-    let order = await findRecentlyCreatedQuitHeroOrder(
-      orderPayload,
-      pending.createdAt - 5_000,
-    ).catch(() => undefined);
-    if (!order) order = (await createQuitHeroOrder(orderPayload)) as QuitHeroOrder | undefined;
-    void order;
-
+  const result = await getEwayPaymentResult(accessCode);
+  const expectedCents = Math.round(pending.total * 100);
+  if (!result.TransactionStatus || result.TotalAmount !== expectedCents || !result.TransactionID) {
     await clearPendingEwayPayment();
-    const response = NextResponse.redirect(checkoutUrl(request, "success"));
+    return "failed" as const;
+  }
+
+  const orderPayload: QuitHeroOrderPayload = {
+    source: "NATIVE",
+    currencyCode: "AUD",
+    subtotal: pending.subtotal,
+    total: pending.total,
+    customerId: pending.customerId,
+    items: pending.items,
+  };
+  let order = await findRecentlyCreatedQuitHeroOrder(
+    orderPayload,
+    pending.createdAt - 5_000,
+  ).catch(() => undefined);
+  if (!order) order = (await createQuitHeroOrder(orderPayload)) as QuitHeroOrder | undefined;
+
+  await clearPendingEwayPayment();
+  return "success" as const;
+}
+
+export async function GET(request: NextRequest) {
+  const accessCode = request.nextUrl.searchParams.get("AccessCode")?.trim();
+
+  try {
+    const status = await finalizeEwayPayment(accessCode);
+    const response = NextResponse.redirect(checkoutUrl(request, status));
     response.headers.set("cache-control", "private, no-store");
     return response;
   } catch (error) {
@@ -66,6 +67,39 @@ export async function GET(request: NextRequest) {
           "cache-control": "private, no-store",
         },
       },
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = (await request.json().catch(() => ({}))) as { accessCode?: unknown };
+    const accessCode = typeof body.accessCode === "string" ? body.accessCode.trim() : undefined;
+    const status = await finalizeEwayPayment(accessCode);
+
+    if (status === "invalid")
+      return NextResponse.json(
+        { error: "We couldn't verify that payment session. Please try again." },
+        { status: 400 },
+      );
+    if (status === "failed")
+      return NextResponse.json(
+        { error: "Payment was declined or could not be completed. Please try again." },
+        { status: 402 },
+      );
+
+    return NextResponse.json(
+      { status: "success" },
+      { headers: { "cache-control": "private, no-store" } },
+    );
+  } catch (error) {
+    console.error("Unable to finalize eWAY payment:", error);
+    return NextResponse.json(
+      {
+        error:
+          "We could not confirm your order. If payment was taken, please try again or contact support.",
+      },
+      { status: 502 },
     );
   }
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { FormEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import styles from "./checkout.module.css";
 import { CHECKOUT_SHIPPING, getCheckoutCustomerDefaults } from "@/lib/checkout/checkout";
@@ -24,6 +25,19 @@ type CartItem = {
 };
 
 const CART_KEY = "quitrx-cart";
+type EwayResult = "Complete" | "Cancel" | "Error";
+
+declare global {
+  interface Window {
+    eCrypt?: {
+      showModalPayment: (
+        config: { sharedPaymentUrl: string },
+        callback: (result: EwayResult, transactionId?: string, errors?: string) => void,
+      ) => void;
+    };
+  }
+}
+
 function numericPrice(value?: number | string) {
   if (typeof value === "number") return value;
   const parsed = Number(String(value || "").replace(/[^0-9.-]/g, ""));
@@ -51,6 +65,8 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"eway" | "paypal">("eway");
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ewayReady, setEwayReady] = useState(false);
+  const [completedPayment, setCompletedPayment] = useState(false);
   const submissionLock = useRef(false);
   const storedCart = useSyncExternalStore(
     (onStoreChange) => {
@@ -93,14 +109,50 @@ export default function CheckoutPage() {
           : paymentStatus === "invalid"
             ? "We couldn't verify that payment session. Please try again."
             : "";
-  const displayedNotice = notice || paymentNotice;
+  const displayedNotice =
+    notice || (completedPayment ? "Payment successful. Your order has been placed." : paymentNotice);
 
   useEffect(() => {
-    if (paymentStatus === "success") {
+    if (paymentStatus === "success" || completedPayment) {
       localStorage.setItem(CART_KEY, "[]");
       window.dispatchEvent(new CustomEvent("quitrx:cart-updated", { detail: { items: [] } }));
     }
-  }, [paymentStatus]);
+  }, [completedPayment, paymentStatus]);
+
+  function openEwayPayment(paymentUrl: string, accessCode: string) {
+    return new Promise<void>((resolve, reject) => {
+      if (!ewayReady || !window.eCrypt)
+        return reject(new Error("The secure payment form is still loading. Please try again."));
+
+      window.eCrypt.showModalPayment(
+        { sharedPaymentUrl: paymentUrl },
+        async (result, _transactionId, errors) => {
+          if (result === "Cancel") {
+            reject(new Error("Payment was cancelled. Your cart has not been changed."));
+            return;
+          }
+          if (result !== "Complete") {
+            reject(new Error(errors || "The secure payment form could not be opened."));
+            return;
+          }
+
+          try {
+            const response = await fetch("/api/payments/eway/callback", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ accessCode }),
+            });
+            const payload = (await response.json().catch(() => ({}))) as { error?: string };
+            if (!response.ok) throw new Error(payload.error || "We couldn't confirm the payment.");
+            setCompletedPayment(true);
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        },
+      );
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -142,10 +194,16 @@ export default function CheckoutPage() {
       const result = (await response.json().catch(() => ({}))) as {
         error?: string;
         paymentUrl?: string;
+        accessCode?: string;
       };
       if (!response.ok || !result.paymentUrl)
         throw new Error(result.error || "We couldn't start payment. Please try again.");
-      window.location.assign(result.paymentUrl);
+      if (paymentMethod === "eway") {
+        if (!result.accessCode) throw new Error("We couldn't verify the secure payment session.");
+        await openEwayPayment(result.paymentUrl, result.accessCode);
+      } else {
+        window.location.assign(result.paymentUrl);
+      }
     } catch (error) {
       setNotice(
         error instanceof Error ? error.message : "We couldn't place your order. Please try again.",
@@ -158,6 +216,12 @@ export default function CheckoutPage() {
 
   return (
     <main className={styles.page}>
+      <Script
+        src="https://secure.ewaypayments.com/scripts/eCrypt.min.js"
+        strategy="afterInteractive"
+        onLoad={() => setEwayReady(true)}
+        onError={() => setNotice("The secure payment form could not be loaded. Please refresh.")}
+      />
       <div className={styles.checkoutShell}>
         <section className={styles.formColumn}>
           <Link className={styles.logo} href="/" aria-label="QuitRx homepage">
@@ -184,7 +248,11 @@ export default function CheckoutPage() {
 
           {items.length === 0 ? (
             <div className={styles.emptyState}>
-              <h2>{paymentStatus === "success" ? "Order confirmed" : "Your cart is empty"}</h2>
+              <h2>
+                {paymentStatus === "success" || completedPayment
+                  ? "Order confirmed"
+                  : "Your cart is empty"}
+              </h2>
               <p>{displayedNotice || "Add a product before continuing to checkout."}</p>
               <Link href="/collections/all-products">Browse products</Link>
             </div>
@@ -397,8 +465,16 @@ export default function CheckoutPage() {
                   {displayedNotice}
                 </p>
               )}
-              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Processing…" : "Pay Securely Now"}{" "}
+              <button
+                className={styles.submitButton}
+                type="submit"
+                disabled={isSubmitting || (paymentMethod === "eway" && !ewayReady)}
+              >
+                {isSubmitting
+                  ? "Processing…"
+                  : paymentMethod === "eway" && !ewayReady
+                    ? "Loading secure payment…"
+                    : "Pay Securely Now"}{" "}
                 <span aria-hidden="true">→</span>
               </button>
               <p className={styles.terms}>

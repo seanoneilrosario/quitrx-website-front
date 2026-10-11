@@ -185,7 +185,7 @@ export async function POST(request: Request) {
       createdAt: Date.now(),
     });
     return NextResponse.json(
-      { paymentUrl: result.SharedPaymentUrl },
+      { paymentUrl: result.SharedPaymentUrl, accessCode: result.AccessCode },
       { headers: { "cache-control": "private, no-store" } },
     );
   } catch (error) {
