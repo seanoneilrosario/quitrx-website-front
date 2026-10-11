@@ -202,6 +202,8 @@ async function loadQuitHeroProductById(id: string) {
   return response.data ?? response;
 }
 
+export const getFreshQuitHeroProductById = loadQuitHeroProductById;
+
 function getCachedQuitHeroProductById(id: string) {
   return unstable_cache(() => loadQuitHeroProductById(id), ["quithero-product", id], {
     revalidate: QUITHERO_CACHE_SECONDS,

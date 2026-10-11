@@ -7,10 +7,27 @@ vi.mock("./client", () => ({
   QUITHERO_CATALOG_CACHE_SECONDS: 300,
 }));
 import { quitHeroFetch } from "./client";
-import { loadQuitHeroProductsPage } from "./products";
+import { getFreshQuitHeroProductById, loadQuitHeroProductsPage } from "./products";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
 import { cacheProductCard } from "./cache/card-cache";
 afterEach(() => vi.resetAllMocks());
+
+it("loads fresh product variants by product ID for checkout validation", async () => {
+  vi.mocked(quitHeroFetch).mockResolvedValue({
+    data: {
+      id: "product-one",
+      name: "Product one",
+      variants: [{ id: "variant-one", inventory: 5, allocatedInventory: 1, price: 20 }],
+    },
+  });
+
+  const product = await getFreshQuitHeroProductById("product-one");
+
+  expect(quitHeroFetch).toHaveBeenCalledWith("/products/product-one");
+  expect(product.variants).toEqual([
+    { id: "variant-one", inventory: 5, allocatedInventory: 1, price: 20 },
+  ]);
+});
 
 it("loads missing card relations only for the requested page and paginates variants", async () => {
   const fetch = vi.mocked(quitHeroFetch).mockImplementation(async (path) => {

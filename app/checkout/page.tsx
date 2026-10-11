@@ -11,6 +11,7 @@ import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 
 type CartItem = {
   key: string;
+  productId: string;
   productName: string;
   image?: string;
   variantName: string;
@@ -158,7 +159,9 @@ export default function CheckoutPage() {
     event.preventDefault();
     if (submissionLock.current) return;
     const orderItems = items.flatMap((item) =>
-      item.variantId ? [{ variantId: item.variantId, quantity: item.quantity }] : [],
+      item.productId && item.variantId
+        ? [{ productId: item.productId, variantId: item.variantId, quantity: item.quantity }]
+        : [],
     );
     if (orderItems.length !== items.length) {
       setNotice(

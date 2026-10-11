@@ -5,7 +5,7 @@ import { CHECKOUT_SHIPPING, isCheckoutShippingMethod } from "@/lib/checkout/chec
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { createPayPalOrder, PayPalApiError } from "@/lib/payments/paypal";
 import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
-import { getFreshQuitHeroProducts } from "@/lib/quithero";
+import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
 
@@ -49,10 +49,11 @@ export async function POST(request: Request) {
     const items = body.items.flatMap((value) => {
       if (!value || typeof value !== "object") return [];
       const item = value as Record<string, unknown>;
+      const productId = typeof item.productId === "string" ? item.productId.trim() : "";
       const variantId = typeof item.variantId === "string" ? item.variantId.trim() : "";
       const quantity = Number(item.quantity);
-      return variantId && Number.isInteger(quantity) && quantity > 0 && quantity <= 99
-        ? [{ variantId, quantity }]
+      return productId && variantId && Number.isInteger(quantity) && quantity > 0 && quantity <= 99
+        ? [{ productId, variantId, quantity }]
         : [];
     });
     if (items.length !== body.items.length)
@@ -74,16 +75,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const products = await getFreshQuitHeroProducts();
+    const products = await Promise.all(
+      [...new Set(items.map((item) => item.productId))].map(getFreshQuitHeroProductById),
+    );
     const variants = new Map(
       products.flatMap((product) =>
         (product.variants ?? []).flatMap((variant) =>
-          variant.id ? [[variant.id, { product, variant }] as const] : [],
+          product.id && variant.id
+            ? [[`${product.id}:${variant.id}`, { product, variant }] as const]
+            : [],
         ),
       ),
     );
     const paypalItems = items.flatMap((item) => {
-      const match = variants.get(item.variantId);
+      const match = variants.get(`${item.productId}:${item.variantId}`);
       if (!match || getPurchasableStock(match.variant) < item.quantity) return [];
       const price =
         typeof match.variant.price === "number"
@@ -171,7 +176,7 @@ export async function POST(request: Request) {
     await setPendingPayPalPayment({
       orderId: result.id,
       customerId: customerAccount.id,
-      items,
+      items: items.map(({ variantId, quantity }) => ({ variantId, quantity })),
       subtotal: subtotalCents / 100,
       total: totalCents / 100,
       createdAt: Date.now(),
