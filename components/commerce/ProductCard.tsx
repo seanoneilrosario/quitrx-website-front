@@ -78,7 +78,7 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
       if (existing.quantity >= availableStock) return;
       existing.quantity += 1;
     } else {
-      storedCart.push({
+      storedCart.unshift({
         key,
         productId: product.id,
         productName: product.name || "Product",

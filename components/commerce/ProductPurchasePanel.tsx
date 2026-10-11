@@ -74,12 +74,15 @@ function formatPrice(value?: number | string) {
 function addItemsToCart(items: StorefrontCartItem[]) {
   const stored = localStorage.getItem(CART_KEY);
   const cart: StorefrontCartItem[] = stored ? JSON.parse(stored) : [];
+  const newItems: StorefrontCartItem[] = [];
 
   items.forEach((item) => {
     const existing = cart.find((cartItem) => cartItem.key === item.key);
     if (existing) existing.quantity += item.quantity;
-    else cart.push(item);
+    else newItems.push(item);
   });
+
+  cart.unshift(...newItems);
 
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   window.dispatchEvent(
