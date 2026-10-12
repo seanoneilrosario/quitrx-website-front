@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { CHECKOUT_SHIPPING, isCheckoutShippingMethod } from "@/lib/checkout/checkout";
 import { getCustomerSession } from "@/lib/auth/customer-session";
-import { createEwaySharedPayment, EwayApiError } from "@/lib/payments/eway";
+import { createEwayTransparentRedirect, EwayApiError } from "@/lib/payments/eway";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
@@ -164,11 +164,9 @@ export async function POST(request: Request) {
       );
     const reference = `QuitRx-${Date.now()}`;
     const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
-    const cancelUrl = new URL("/api/payments/eway/cancel", request.url).toString();
-    const logoUrl = new URL("/images/quitrx-logo-light.png", request.url);
     const street2 = requiredText(address, "address2", 50);
 
-    const result = await createEwaySharedPayment({
+    const result = await createEwayTransparentRedirect({
       Customer: {
         FirstName: firstName,
         LastName: lastName,
@@ -220,15 +218,11 @@ export async function POST(request: Request) {
               },
             ],
       RedirectUrl: callbackUrl,
-      CancelUrl: cancelUrl,
-      ...(logoUrl.protocol === "https:" ? { LogoUrl: logoUrl.toString() } : {}),
-      HeaderText: "QuitRx secure payment",
-      CustomView: "BootstrapFlatly",
       Method: "ProcessPayment",
       TransactionType: "Purchase",
     });
-    if (!result.AccessCode || !result.SharedPaymentUrl)
-      throw new Error("eWAY did not provide a payment URL.");
+    if (!result.AccessCode || !result.FormActionURL)
+      throw new Error("eWAY did not provide a secure payment form action.");
 
     await setPendingEwayPayment({
       accessCode: result.AccessCode,
@@ -252,7 +246,7 @@ export async function POST(request: Request) {
       createdAt: Date.now(),
     });
     return NextResponse.json(
-      { paymentUrl: result.SharedPaymentUrl, accessCode: result.AccessCode },
+      { formActionUrl: result.FormActionURL, accessCode: result.AccessCode },
       { headers: { "cache-control": "private, no-store" } },
     );
   } catch (error) {

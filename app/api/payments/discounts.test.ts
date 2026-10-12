@@ -22,9 +22,9 @@ vi.mock("@/lib/quithero/discounts", async (original) => ({
   previewQuitHeroDiscounts: vi.fn(),
 }));
 vi.mock("@/lib/payments/eway", () => ({
-  createEwaySharedPayment: vi.fn(async () => ({
+  createEwayTransparentRedirect: vi.fn(async () => ({
     AccessCode: "access",
-    SharedPaymentUrl: "https://payment.test",
+    FormActionURL: "https://payment.test",
   })),
   EwayApiError: class extends Error {},
 }));
@@ -44,7 +44,7 @@ import { POST as previewRoute } from "../checkout/discounts/route";
 import { auth } from "@/auth";
 import { previewQuitHeroDiscounts } from "@/lib/quithero/discounts";
 import { QuitHeroApiError } from "@/lib/quithero/client";
-import { createEwaySharedPayment } from "@/lib/payments/eway";
+import { createEwayTransparentRedirect } from "@/lib/payments/eway";
 import { createPayPalOrder } from "@/lib/payments/paypal";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
@@ -90,7 +90,7 @@ beforeEach(() => {
 });
 
 describe.each([
-  ["eway", eway, createEwaySharedPayment, setPendingEwayPayment],
+  ["eway", eway, createEwayTransparentRedirect, setPendingEwayPayment],
   ["paypal", paypal, createPayPalOrder, setPendingPayPalPayment],
 ] as const)("%s discount payment", (_name, handler, gateway, save) => {
   it.each([

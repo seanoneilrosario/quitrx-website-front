@@ -16,7 +16,7 @@ export class EwayApiError extends Error {
   }
 }
 
-export type EwaySharedPaymentRequest = {
+export type EwayTransparentRedirectRequest = {
   Customer: EwayAddress & { Email: string };
   ShippingAddress: EwayAddress;
   Payment: {
@@ -27,10 +27,6 @@ export type EwaySharedPaymentRequest = {
   };
   Items: EwayLineItem[];
   RedirectUrl: string;
-  CancelUrl: string;
-  LogoUrl?: string;
-  HeaderText?: string;
-  CustomView?: "BootstrapFlatly";
   Method: "ProcessPayment";
   TransactionType: "Purchase";
 };
@@ -55,9 +51,9 @@ type EwayLineItem = {
   Total: number;
 };
 
-export type EwaySharedPaymentResponse = EwayErrorResponse & {
+export type EwayTransparentRedirectResponse = EwayErrorResponse & {
   AccessCode?: string;
-  SharedPaymentUrl?: string;
+  FormActionURL?: string;
 };
 export type EwayPaymentResult = EwayErrorResponse & {
   AccessCode?: string;
@@ -116,8 +112,8 @@ async function ewayFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return body;
 }
 
-export function createEwaySharedPayment(payload: EwaySharedPaymentRequest) {
-  return ewayFetch<EwaySharedPaymentResponse>("/AccessCodesShared", {
+export function createEwayTransparentRedirect(payload: EwayTransparentRedirectRequest) {
+  return ewayFetch<EwayTransparentRedirectResponse>("/AccessCodes", {
     method: "POST",
     body: JSON.stringify(payload),
   });

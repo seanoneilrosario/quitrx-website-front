@@ -245,6 +245,19 @@
   font-weight: 400;
   line-height: 1.5;
 }
+.cardFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  padding-top: 3px;
+}
+.cardSecurityNote {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #72898a;
+  font-size: 11px;
+  line-height: 1.5;
+}
 .submitButton {
   display: flex;
   min-height: 58px;
@@ -540,6 +553,9 @@
   }
   .fieldGrid {
     grid-template-columns: 1fr;
+  }
+  .cardFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .fieldWide {
     grid-column: auto;
