@@ -39,6 +39,7 @@ export type DiscountPreview = {
     lineSubtotal?: number;
     discountAmount: number;
     lineTotal?: number;
+    isGift?: boolean;
   }>;
   promotionalItems: PromotionalItem[];
 };
@@ -82,7 +83,8 @@ export function parseDiscountPreview(value: unknown): DiscountPreview {
         (item.quantity !== undefined && (!Number.isInteger(item.quantity) || item.quantity < 1)) ||
         (item.lineSubtotal !== undefined &&
           (!Number.isFinite(item.lineSubtotal) || item.lineSubtotal < 0)) ||
-        (item.lineTotal !== undefined && (!Number.isFinite(item.lineTotal) || item.lineTotal < 0)),
+        (item.lineTotal !== undefined && (!Number.isFinite(item.lineTotal) || item.lineTotal < 0)) ||
+        (item.isGift !== undefined && typeof item.isGift !== "boolean"),
     ) ||
     (preview.promotionalItems !== undefined &&
       (!Array.isArray(preview.promotionalItems) ||
@@ -112,7 +114,7 @@ export function parseDiscountPreview(value: unknown): DiscountPreview {
   return { ...preview, promotionalItems: preview.promotionalItems ?? [] };
 }
 
-/** Support BUY_X_GET_Y responses that append gift rows to lineDiscounts. */
+/** Convert BUY_X_GET_Y gift rows into checkout promotional items. */
 export function deriveBuyXGetYPromotionalItems(
   preview: DiscountPreview,
   customerItemCount: number,
@@ -126,7 +128,7 @@ export function deriveBuyXGetYPromotionalItems(
 
   const promotionalItems = preview.lineDiscounts.flatMap((line) => {
     if (
-      line.itemIndex < customerItemCount ||
+      (line.isGift !== true && line.itemIndex < customerItemCount) ||
       !line.productId ||
       !line.quantity ||
       line.lineSubtotal === undefined ||

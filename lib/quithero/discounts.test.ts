@@ -114,7 +114,7 @@ describe("discount API boundary", () => {
           },
         ],
         lineDiscounts: [
-          { itemIndex: 0, variantId: "paid", discountAmount: 0 },
+          { itemIndex: 0, variantId: "paid", discountAmount: 0, isGift: false },
           {
             itemIndex: 1,
             variantId: "gift-variant",
@@ -123,10 +123,11 @@ describe("discount API boundary", () => {
             lineSubtotal: 34.99,
             discountAmount: 34.99,
             lineTotal: 0,
+            isGift: true,
           },
         ],
       }),
-      1,
+      2,
     );
 
     expect(result.promotionalItems).toEqual([
