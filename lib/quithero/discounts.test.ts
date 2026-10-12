@@ -3,7 +3,10 @@ vi.mock("server-only", () => ({}));
 import { previewQuitHeroDiscounts, readDiscountCode } from "./discounts";
 import { createQuitHeroOrder, verifyOrderDiscountTotals } from "./orders";
 import { previewDiscountFingerprint } from "./discount-verification";
-import { parseDiscountPreview } from "@/lib/checkout/discounts";
+import {
+  deriveBuyXGetYPromotionalItems,
+  parseDiscountPreview,
+} from "@/lib/checkout/discounts";
 
 const preview = {
   subtotal: 60,
@@ -95,6 +98,49 @@ describe("discount API boundary", () => {
         promotionalItems: [{ variantId: "gift-variant", quantity: 1 }],
       }),
     ).toThrow();
+  });
+  it("derives a free gift from an appended BUY_X_GET_Y line", () => {
+    const result = deriveBuyXGetYPromotionalItems(
+      parseDiscountPreview({
+        ...preview,
+        appliedDiscounts: [
+          {
+            id: "discount-id",
+            name: "Buy 2 Get 1 Free",
+            code: null,
+            method: "BUY_X_GET_Y",
+            scope: "PRODUCT",
+            discountAmount: 34.99,
+          },
+        ],
+        lineDiscounts: [
+          { itemIndex: 0, variantId: "paid", discountAmount: 0 },
+          {
+            itemIndex: 1,
+            variantId: "gift-variant",
+            productId: "gift-product",
+            quantity: 1,
+            lineSubtotal: 34.99,
+            discountAmount: 34.99,
+            lineTotal: 0,
+          },
+        ],
+      }),
+      1,
+    );
+
+    expect(result.promotionalItems).toEqual([
+      expect.objectContaining({
+        discountId: "discount-id",
+        productId: "gift-product",
+        variantId: "gift-variant",
+        quantity: 1,
+        unitPrice: 34.99,
+        lineTotal: 0,
+        benefitType: "FREE",
+        isPromotional: true,
+      }),
+    ]);
   });
   it("trims codes and rejects malformed inputs", () => {
     expect(readDiscountCode(" SAVE ")).toBe("SAVE");

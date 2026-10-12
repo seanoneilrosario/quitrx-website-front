@@ -1,6 +1,9 @@
 import "server-only";
 import { quitHeroPost } from "./client";
-import { parseDiscountPreview } from "@/lib/checkout/discounts";
+import {
+  deriveBuyXGetYPromotionalItems,
+  parseDiscountPreview,
+} from "@/lib/checkout/discounts";
 
 export type DiscountPreviewPayload = {
   customerId: string;
@@ -12,7 +15,10 @@ export type DiscountPreviewPayload = {
 };
 
 export async function previewQuitHeroDiscounts(payload: DiscountPreviewPayload) {
-  return parseDiscountPreview(await quitHeroPost<unknown>("/discounts/preview", payload));
+  const preview = parseDiscountPreview(
+    await quitHeroPost<unknown>("/discounts/preview", payload),
+  );
+  return deriveBuyXGetYPromotionalItems(preview, payload.items.length);
 }
 
 export function readDiscountCode(value: unknown) {

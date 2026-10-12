@@ -31,7 +31,15 @@ export type DiscountPreview = {
   shippingAfterDiscount: number;
   totalAfterDiscount: number;
   appliedDiscounts: AppliedDiscount[];
-  lineDiscounts: Array<{ itemIndex: number; variantId: string; discountAmount: number }>;
+  lineDiscounts: Array<{
+    itemIndex: number;
+    variantId: string;
+    productId?: string;
+    quantity?: number;
+    lineSubtotal?: number;
+    discountAmount: number;
+    lineTotal?: number;
+  }>;
   promotionalItems: PromotionalItem[];
 };
 
@@ -69,7 +77,12 @@ export function parseDiscountPreview(value: unknown): DiscountPreview {
         item.itemIndex < 0 ||
         typeof item.variantId !== "string" ||
         !Number.isFinite(item.discountAmount) ||
-        item.discountAmount < 0,
+        item.discountAmount < 0 ||
+        (item.productId !== undefined && typeof item.productId !== "string") ||
+        (item.quantity !== undefined && (!Number.isInteger(item.quantity) || item.quantity < 1)) ||
+        (item.lineSubtotal !== undefined &&
+          (!Number.isFinite(item.lineSubtotal) || item.lineSubtotal < 0)) ||
+        (item.lineTotal !== undefined && (!Number.isFinite(item.lineTotal) || item.lineTotal < 0)),
     ) ||
     (preview.promotionalItems !== undefined &&
       (!Array.isArray(preview.promotionalItems) ||
@@ -97,4 +110,43 @@ export function parseDiscountPreview(value: unknown): DiscountPreview {
   )
     throw new Error("Invalid discount preview details.");
   return { ...preview, promotionalItems: preview.promotionalItems ?? [] };
+}
+
+/** Support BUY_X_GET_Y responses that append gift rows to lineDiscounts. */
+export function deriveBuyXGetYPromotionalItems(
+  preview: DiscountPreview,
+  customerItemCount: number,
+): DiscountPreview {
+  if (preview.promotionalItems.length) return preview;
+  const discount = preview.appliedDiscounts.find(
+    (item) => item.method === "BUY_X_GET_Y" && item.id,
+  );
+  if (!discount?.id) return preview;
+  const discountId = discount.id;
+
+  const promotionalItems = preview.lineDiscounts.flatMap((line) => {
+    if (
+      line.itemIndex < customerItemCount ||
+      !line.productId ||
+      !line.quantity ||
+      line.lineSubtotal === undefined ||
+      line.lineTotal === undefined
+    )
+      return [];
+    return [{
+      discountId,
+      role: "GET_Y" as const,
+      productId: line.productId,
+      variantId: line.variantId,
+      quantity: line.quantity,
+      unitPrice: line.lineSubtotal / line.quantity,
+      discountAmount: line.discountAmount,
+      lineTotal: line.lineTotal,
+      benefitType: (line.lineTotal === 0 ? "FREE" : "FIXED_AMOUNT") as
+        | "FREE"
+        | "FIXED_AMOUNT",
+      isPromotional: true as const,
+    }];
+  });
+  return promotionalItems.length ? { ...preview, promotionalItems } : preview;
 }
