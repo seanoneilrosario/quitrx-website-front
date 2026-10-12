@@ -1,3 +1,10 @@
+import { previewDiscountFingerprint } from "@/lib/quithero/discount-verification";
+import {
+  previewQuitHeroDiscounts,
+  readDiscountCode,
+  QuitHeroDiscountInputError,
+} from "@/lib/quithero/discounts";
+import { QuitHeroApiError } from "@/lib/quithero/client";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
@@ -9,7 +16,13 @@ import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
 
-type PaymentRequest = { items?: unknown; shippingMethod?: unknown; customer?: unknown };
+type PaymentRequest = {
+  items?: unknown;
+  shippingMethod?: unknown;
+  customer?: unknown;
+  discountCode?: unknown;
+  expectedTotal?: unknown;
+};
 
 function requiredText(record: Record<string, unknown>, key: string, maxLength: number) {
   const value = typeof record[key] === "string" ? record[key].trim() : "";
@@ -119,7 +132,32 @@ export async function POST(request: Request) {
       0,
     );
     const shippingCents = Math.round(CHECKOUT_SHIPPING[body.shippingMethod] * 100);
-    const totalCents = subtotalCents + shippingCents;
+    const discountCode = readDiscountCode(body.discountCode);
+    const preview = await previewQuitHeroDiscounts({
+      customerId: customerAccount.id,
+      discountCode,
+      subtotal: subtotalCents / 100,
+      shippingTotal: shippingCents / 100,
+      quantity: items.reduce((sum, item) => sum + item.quantity, 0),
+      items: items.map(({ variantId, quantity }) => ({ variantId, quantity })),
+    });
+    const totalCents = Math.round(preview.totalAfterDiscount * 100);
+    if (
+      typeof body.expectedTotal !== "number" ||
+      Math.round(body.expectedTotal * 100) !== totalCents
+    )
+      return NextResponse.json(
+        {
+          error:
+            "Your checkout total has changed. Please refresh discounts and review your total before paying.",
+        },
+        { status: 409 },
+      );
+    if (totalCents <= 0)
+      return NextResponse.json(
+        { error: "Please contact support to complete an order with a zero total." },
+        { status: 400 },
+      );
     const returnUrl = new URL("/api/payments/paypal/callback", request.url).toString();
     const cancelUrl = new URL("/api/payments/paypal/cancel", request.url).toString();
     const requestId = randomUUID();
@@ -133,18 +171,25 @@ export async function POST(request: Request) {
             amount: {
               currency_code: "AUD",
               value: (totalCents / 100).toFixed(2),
-              breakdown: {
-                item_total: { currency_code: "AUD", value: (subtotalCents / 100).toFixed(2) },
-                shipping: { currency_code: "AUD", value: (shippingCents / 100).toFixed(2) },
-              },
+              ...(preview.discountAmount > 0 || Math.round(preview.subtotal * 100) !== subtotalCents
+                ? {}
+                : {
+                    breakdown: {
+                      item_total: { currency_code: "AUD", value: (subtotalCents / 100).toFixed(2) },
+                      shipping: { currency_code: "AUD", value: (shippingCents / 100).toFixed(2) },
+                    },
+                  }),
             },
-            items: paypalItems.map((item) => ({
-              name: item.name,
-              sku: item.sku,
-              quantity: item.quantity,
-              category: item.category,
-              unit_amount: item.unit_amount,
-            })),
+            items:
+              preview.discountAmount > 0 || Math.round(preview.subtotal * 100) !== subtotalCents
+                ? undefined
+                : paypalItems.map((item) => ({
+                    name: item.name,
+                    sku: item.sku,
+                    quantity: item.quantity,
+                    category: item.category,
+                    unit_amount: item.unit_amount,
+                  })),
             shipping: {
               name: { full_name: `${firstName} ${lastName}` },
               address: {
@@ -177,7 +222,11 @@ export async function POST(request: Request) {
       orderId: result.id,
       customerId: customerAccount.id,
       items: items.map(({ variantId, quantity }) => ({ variantId, quantity })),
-      subtotal: subtotalCents / 100,
+      subtotal: preview.subtotal,
+      shippingTotal: preview.shippingTotal,
+      discountCode,
+      discountTotal: preview.discountAmount,
+      discountFingerprint: previewDiscountFingerprint(preview),
       total: totalCents / 100,
       createdAt: Date.now(),
     });
@@ -186,6 +235,11 @@ export async function POST(request: Request) {
       { headers: { "cache-control": "private, no-store" } },
     );
   } catch (error) {
+    if (
+      error instanceof QuitHeroDiscountInputError ||
+      (error instanceof QuitHeroApiError && error.status === 400)
+    )
+      return NextResponse.json({ error: error.message }, { status: 400 });
     console.error("Unable to start PayPal payment:", error);
     const configurationError =
       (error instanceof Error && error.message.includes("not configured")) ||

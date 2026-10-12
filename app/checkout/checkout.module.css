@@ -553,3 +553,34 @@
     height: 61px;
   }
 }
+
+.discount button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.discount .discountRemove {
+  padding: 10px;
+  grid-column: 1 / -1;
+}
+.discountStatus {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.appliedDiscounts {
+  padding: 0;
+  margin: 0 0 20px;
+  list-style: none;
+}
+.appliedDiscounts li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #075d67;
+}
+.item .savings {
+  color: #075d67;
+}

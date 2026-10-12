@@ -3,6 +3,46 @@ import { createRequestGate } from "./request-gate";
 
 const requestGate = createRequestGate();
 
+export class QuitHeroApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+/** Mutations are not retried: an ambiguous response must not create duplicate orders. */
+export async function quitHeroPost<T>(path: string, payload: unknown): Promise<T> {
+  const apiKey = process.env.QUITHERO_API_KEY;
+  if (!apiKey) throw new Error("QuitHero API key is not configured.");
+  const response = await requestGate.run(() =>
+    fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    }),
+  );
+  const body = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    const message = body?.message;
+    const detail =
+      typeof message === "string"
+        ? message
+        : Array.isArray(message) && message.every((entry: unknown) => typeof entry === "string")
+          ? message.join(" ")
+          : "";
+    throw new QuitHeroApiError(
+      response.status === 400 && detail
+        ? detail
+        : "Unable to confirm checkout totals. Please try again.",
+      response.status,
+    );
+  }
+  return body as T;
+}
+
 export const API_BASE = (
   process.env.QUITHERO_API_BASE_URL ?? "https://retail-api.quithero.com.au"
 ).replace(/\/$/, "");

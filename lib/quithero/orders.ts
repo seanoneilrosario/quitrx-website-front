@@ -1,11 +1,20 @@
 import "server-only";
 
-import { API_BASE, quitHeroFetch } from "./client";
+import { orderDiscountFingerprint } from "./discount-verification";
+import { QuitHeroApiError, quitHeroPost, quitHeroFetch } from "./client";
+
+export function orderConfirmationError(error: unknown) {
+  const detail =
+    error instanceof QuitHeroApiError && error.status === 400 ? `${error.message} ` : "";
+  return `${detail}We could not confirm your order. If payment was taken, do not submit another payment. Contact support or retry confirmation from your payment return page.`;
+}
 
 export type QuitHeroOrderPayload = {
   source: "NATIVE";
   currencyCode: "AUD";
   subtotal: number;
+  shippingTotal?: number;
+  discountCode?: string;
   total: number;
   customerId: string;
   items: Array<{ variantId: string; quantity: number }>;
@@ -19,6 +28,16 @@ export type QuitHeroOrder = {
   paymentStatus?: string;
   fulfillmentStatus?: string;
   currencyCode?: string;
+  subtotal?: number | string;
+  discountTotal?: number | string;
+  shippingTotal?: number | string;
+  discountApplications?: Array<{
+    discountName?: string;
+    discountCode?: string | null;
+    scope?: string;
+    amount?: number | string;
+    details?: unknown;
+  }>;
   total?: number | string;
   createdAt?: string;
   items?: Array<{
@@ -27,6 +46,7 @@ export type QuitHeroOrder = {
     productName?: string;
     variantName?: string;
     sku?: string;
+    discountTotal?: number | string;
     price?: number | string;
     total?: number | string;
   }>;
@@ -45,25 +65,12 @@ export async function getQuitHeroOrdersForCustomer(customerId: string) {
   return response.data ?? response.orders ?? response.items ?? [];
 }
 
-export async function createQuitHeroOrder(payload: QuitHeroOrderPayload) {
-  const apiKey = process.env.QUITHERO_API_KEY;
-  if (!apiKey) throw new Error("QuitHero API key is not configured.");
+export async function getQuitHeroOrderById(id: string) {
+  return quitHeroFetch<QuitHeroOrder>(`/orders/${encodeURIComponent(id)}`);
+}
 
-  const response = await fetch(`${API_BASE}/orders`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": apiKey },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  });
-  const body = await response.text();
-  let parsed: unknown;
-  try {
-    parsed = body ? JSON.parse(body) : undefined;
-  } catch {
-    parsed = undefined;
-  }
-  if (!response.ok) throw new Error(`QuitHero order creation failed with ${response.status}.`);
-  return parsed;
+export async function createQuitHeroOrder(payload: QuitHeroOrderPayload) {
+  return quitHeroPost<QuitHeroOrder>("/orders", payload);
 }
 
 export async function findRecentlyCreatedQuitHeroOrder(
@@ -91,4 +98,44 @@ export async function findRecentlyCreatedQuitHeroOrder(
       (item) => item.variantId && requestedItems.get(item.variantId) === Number(item.quantity),
     );
   });
+}
+
+/** A paid order must not be reported as confirmed when backend repricing differs. */
+export function verifyOrderDiscountTotals(
+  order: QuitHeroOrder | undefined,
+  pending: {
+    total: number;
+    subtotal?: number;
+    shippingTotal?: number;
+    discountTotal?: number;
+    discountFingerprint?: string;
+  },
+) {
+  if (
+    !order?.id ||
+    !Number.isFinite(Number(order.total)) ||
+    Math.round(Number(order.total) * 100) !== Math.round(pending.total * 100)
+  )
+    throw new Error(
+      "The saved order total does not match the payment. Please contact support before retrying payment.",
+    );
+  if (
+    pending.discountTotal !== undefined &&
+    (!Number.isFinite(Number(order.discountTotal)) ||
+      Math.round(Number(order.discountTotal) * 100) !== Math.round(pending.discountTotal * 100) ||
+      (pending.discountTotal > 0 && !order.discountApplications?.length) ||
+      (pending.shippingTotal !== undefined &&
+        Math.round(Number(order.shippingTotal) * 100) !==
+          Math.round(pending.shippingTotal * 100)) ||
+      (pending.subtotal !== undefined &&
+        Math.round(Number(order.subtotal) * 100) !== Math.round(pending.subtotal * 100)) ||
+      (pending.discountFingerprint !== undefined &&
+        orderDiscountFingerprint(order) !== pending.discountFingerprint) ||
+      order.discountApplications?.some(
+        (entry) => !entry.details || typeof entry.details !== "object",
+      ))
+  )
+    throw new Error(
+      "The saved order discounts could not be verified. Please contact support before retrying payment.",
+    );
 }

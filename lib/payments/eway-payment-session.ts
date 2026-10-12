@@ -9,8 +9,13 @@ const PAYMENT_MAX_AGE = 60 * 60;
 export type PendingEwayPayment = {
   accessCode: string;
   customerId: string;
+  retailOrderId?: string;
   items: Array<{ variantId: string; quantity: number }>;
   subtotal: number;
+  shippingTotal?: number;
+  discountCode?: string;
+  discountTotal?: number;
+  discountFingerprint?: string;
   total: number;
   createdAt: number;
 };

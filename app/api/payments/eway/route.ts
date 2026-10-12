@@ -1,3 +1,10 @@
+import { previewDiscountFingerprint } from "@/lib/quithero/discount-verification";
+import {
+  previewQuitHeroDiscounts,
+  readDiscountCode,
+  QuitHeroDiscountInputError,
+} from "@/lib/quithero/discounts";
+import { QuitHeroApiError } from "@/lib/quithero/client";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { CHECKOUT_SHIPPING, isCheckoutShippingMethod } from "@/lib/checkout/checkout";
@@ -8,7 +15,13 @@ import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
 
-type PaymentRequest = { items?: unknown; shippingMethod?: unknown; customer?: unknown };
+type PaymentRequest = {
+  items?: unknown;
+  shippingMethod?: unknown;
+  customer?: unknown;
+  discountCode?: unknown;
+  expectedTotal?: unknown;
+};
 
 function requiredText(record: Record<string, unknown>, key: string, maxLength: number) {
   const value = typeof record[key] === "string" ? record[key].trim() : "";
@@ -123,7 +136,32 @@ export async function POST(request: Request) {
 
     const subtotalCents = paymentItems.reduce((sum, item) => sum + item.Total, 0);
     const shippingCents = Math.round(CHECKOUT_SHIPPING[body.shippingMethod] * 100);
-    const totalCents = subtotalCents + shippingCents;
+    const discountCode = readDiscountCode(body.discountCode);
+    const preview = await previewQuitHeroDiscounts({
+      customerId: customerAccount.id,
+      discountCode,
+      subtotal: subtotalCents / 100,
+      shippingTotal: shippingCents / 100,
+      quantity: items.reduce((sum, item) => sum + item.quantity, 0),
+      items: items.map(({ variantId, quantity }) => ({ variantId, quantity })),
+    });
+    const totalCents = Math.round(preview.totalAfterDiscount * 100);
+    if (
+      typeof body.expectedTotal !== "number" ||
+      Math.round(body.expectedTotal * 100) !== totalCents
+    )
+      return NextResponse.json(
+        {
+          error:
+            "Your checkout total has changed. Please refresh discounts and review your total before paying.",
+        },
+        { status: 409 },
+      );
+    if (totalCents <= 0)
+      return NextResponse.json(
+        { error: "Please contact support to complete an order with a zero total." },
+        { status: 400 },
+      );
     const reference = `QuitRx-${Date.now()}`;
     const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
     const cancelUrl = new URL("/api/payments/eway/cancel", request.url).toString();
@@ -160,16 +198,27 @@ export async function POST(request: Request) {
         InvoiceReference: reference,
         CurrencyCode: "AUD",
       },
-      Items: [
-        ...paymentItems,
-        {
-          SKU: "SHIPPING",
-          Description: `${body.shippingMethod} shipping`,
-          Quantity: 1,
-          UnitCost: shippingCents,
-          Total: shippingCents,
-        },
-      ],
+      Items:
+        preview.discountAmount > 0 || Math.round(preview.subtotal * 100) !== subtotalCents
+          ? [
+              {
+                SKU: "QUITRX",
+                Description: "QuitRx discounted order",
+                Quantity: 1,
+                UnitCost: totalCents,
+                Total: totalCents,
+              },
+            ]
+          : [
+              ...paymentItems,
+              {
+                SKU: "SHIPPING",
+                Description: `${body.shippingMethod} shipping`,
+                Quantity: 1,
+                UnitCost: shippingCents,
+                Total: shippingCents,
+              },
+            ],
       RedirectUrl: callbackUrl,
       CancelUrl: cancelUrl,
       ...(logoUrl.protocol === "https:" ? { LogoUrl: logoUrl.toString() } : {}),
@@ -185,7 +234,11 @@ export async function POST(request: Request) {
       accessCode: result.AccessCode,
       customerId: customerAccount.id,
       items: items.map(({ variantId, quantity }) => ({ variantId, quantity })),
-      subtotal: subtotalCents / 100,
+      subtotal: preview.subtotal,
+      shippingTotal: preview.shippingTotal,
+      discountCode,
+      discountTotal: preview.discountAmount,
+      discountFingerprint: previewDiscountFingerprint(preview),
       total: totalCents / 100,
       createdAt: Date.now(),
     });
@@ -194,6 +247,11 @@ export async function POST(request: Request) {
       { headers: { "cache-control": "private, no-store" } },
     );
   } catch (error) {
+    if (
+      error instanceof QuitHeroDiscountInputError ||
+      (error instanceof QuitHeroApiError && error.status === 400)
+    )
+      return NextResponse.json({ error: error.message }, { status: 400 });
     console.error("Unable to start eWAY payment:", error);
     const isConfigurationError =
       error instanceof EwayApiError && (error.status === 401 || error.status === 403);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCheckoutDiscounts } from "@/hooks/useCheckoutDiscounts";
 import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
@@ -64,9 +65,11 @@ export default function CheckoutPage() {
   const { customer } = useAccountCustomer();
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
   const [paymentMethod, setPaymentMethod] = useState<"eway" | "paypal">("eway");
+  const [discountInput, setDiscountInput] = useState<string>();
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ewayReady, setEwayReady] = useState(false);
+  const [paymentNeedsReview, setPaymentNeedsReview] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
   const submissionLock = useRef(false);
   const storedCart = useSyncExternalStore(
@@ -97,7 +100,14 @@ export default function CheckoutPage() {
     (total, item) => total + numericPrice(item.price) * item.quantity,
     0,
   );
-  const shipping = CHECKOUT_SHIPPING[shippingMethod];
+  const discounts = useCheckoutDiscounts(
+    items,
+    shippingMethod,
+    customer?.id,
+    completedPayment || paymentStatus === "success",
+  );
+  const displayedDiscountInput = discountInput ?? discounts.code;
+  const preview = discounts.preview;
   const customerDefaults = useMemo(() => getCheckoutCustomerDefaults(customer), [customer]);
 
   const paymentNotice =
@@ -111,7 +121,8 @@ export default function CheckoutPage() {
             ? "We couldn't verify that payment session. Please try again."
             : "";
   const displayedNotice =
-    notice || (completedPayment ? "Payment successful. Your order has been placed." : paymentNotice);
+    notice ||
+    (completedPayment ? "Payment successful. Your order has been placed." : paymentNotice);
 
   useEffect(() => {
     if (paymentStatus === "success" || completedPayment) {
@@ -144,7 +155,10 @@ export default function CheckoutPage() {
               body: JSON.stringify({ accessCode }),
             });
             const payload = (await response.json().catch(() => ({}))) as { error?: string };
-            if (!response.ok) throw new Error(payload.error || "We couldn't confirm the payment.");
+            if (!response.ok) {
+              if (response.status >= 500) setPaymentNeedsReview(true);
+              throw new Error(payload.error || "We couldn't confirm the payment.");
+            }
             setCompletedPayment(true);
             resolve();
           } catch (error) {
@@ -157,7 +171,7 @@ export default function CheckoutPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submissionLock.current) return;
+    if (submissionLock.current || paymentNeedsReview || !preview || discounts.loading) return;
     const orderItems = items.flatMap((item) =>
       item.productId && item.variantId
         ? [{ productId: item.productId, variantId: item.variantId, quantity: item.quantity }]
@@ -180,6 +194,8 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shippingMethod,
+          discountCode: discounts.code || undefined,
+          expectedTotal: preview.totalAfterDiscount,
           items: orderItems,
           customer: {
             email: formData.get("email"),
@@ -199,8 +215,10 @@ export default function CheckoutPage() {
         paymentUrl?: string;
         accessCode?: string;
       };
-      if (!response.ok || !result.paymentUrl)
+      if (!response.ok || !result.paymentUrl) {
+        discounts.refresh();
         throw new Error(result.error || "We couldn't start payment. Please try again.");
+      }
       if (paymentMethod === "eway") {
         if (!result.accessCode) throw new Error("We couldn't verify the secure payment session.");
         await openEwayPayment(result.paymentUrl, result.accessCode);
@@ -402,6 +420,7 @@ export default function CheckoutPage() {
                     <input
                       type="radio"
                       name="shipping"
+                      disabled={isSubmitting}
                       checked={shippingMethod === "standard"}
                       onChange={() => setShippingMethod("standard")}
                     />
@@ -415,6 +434,7 @@ export default function CheckoutPage() {
                     <input
                       type="radio"
                       name="shipping"
+                      disabled={isSubmitting}
                       checked={shippingMethod === "express"}
                       onChange={() => setShippingMethod("express")}
                     />
@@ -471,7 +491,13 @@ export default function CheckoutPage() {
               <button
                 className={styles.submitButton}
                 type="submit"
-                disabled={isSubmitting || (paymentMethod === "eway" && !ewayReady)}
+                disabled={
+                  paymentNeedsReview ||
+                  isSubmitting ||
+                  !preview ||
+                  discounts.loading ||
+                  (paymentMethod === "eway" && !ewayReady)
+                }
               >
                 {isSubmitting
                   ? "Processing…"
@@ -495,7 +521,7 @@ export default function CheckoutPage() {
               <span>{items.reduce((count, item) => count + item.quantity, 0)} items</span>
             </h2>
             <div className={styles.items}>
-              {items.map((item) => (
+              {items.map((item, itemIndex) => (
                 <article className={styles.item} key={item.key}>
                   <div className={styles.itemImage}>
                     <Image
@@ -510,6 +536,18 @@ export default function CheckoutPage() {
                   <div>
                     <strong>{item.productName}</strong>
                     <small>{item.variantName}</small>
+                    {preview?.lineDiscounts
+                      .filter(
+                        (line) =>
+                          line.itemIndex === itemIndex &&
+                          line.variantId === item.variantId &&
+                          line.discountAmount > 0,
+                      )
+                      .map((line, index) => (
+                        <small className={styles.savings} key={index}>
+                          Savings: {money(line.discountAmount)}
+                        </small>
+                      ))}
                     {item.bundleComponents?.length ? (
                       <ol className={styles.itemBundle} aria-label="Bundle selections">
                         {item.bundleComponents.map((component, index) => (
@@ -528,27 +566,108 @@ export default function CheckoutPage() {
                 </article>
               ))}
             </div>
-            <div className={styles.discount}>
+            <form
+              className={styles.discount}
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!discounts.loading && !isSubmitting && displayedDiscountInput.trim()) {
+                  discounts.apply(displayedDiscountInput);
+                  setDiscountInput(undefined);
+                }
+              }}
+            >
               <label>
                 <span className="sr-only">Discount code</span>
-                <input placeholder="Discount code" />
+                <input
+                  placeholder="Discount code"
+                  value={displayedDiscountInput}
+                  maxLength={200}
+                  disabled={isSubmitting || discounts.loading}
+                  aria-describedby="discount-status"
+                  onChange={(event) => setDiscountInput(event.target.value)}
+                />
               </label>
-              <button type="button">Apply</button>
-            </div>
+              <button
+                type="submit"
+                disabled={
+                  paymentNeedsReview ||
+                  isSubmitting ||
+                  discounts.loading ||
+                  !items.length ||
+                  !displayedDiscountInput.trim()
+                }
+              >
+                {discounts.loading ? "Checking..." : "Apply"}
+              </button>
+              {discounts.code && (
+                <button
+                  className={styles.discountRemove}
+                  type="button"
+                  disabled={isSubmitting || discounts.loading}
+                  onClick={() => {
+                    setDiscountInput("");
+                    discounts.apply("");
+                  }}
+                >
+                  Remove {discounts.code}
+                </button>
+              )}
+              <p id="discount-status" className={styles.discountStatus} role="status">
+                {discounts.loading
+                  ? "Updating discounts and totals..."
+                  : discounts.error ||
+                    (preview && discounts.code ? `Code ${discounts.code} applied.` : "")}
+              </p>
+              {discounts.error && (
+                <button type="button" disabled={isSubmitting} onClick={discounts.refresh}>
+                  Retry totals
+                </button>
+              )}
+            </form>
+            {preview && preview.appliedDiscounts.length > 0 && (
+              <ul className={styles.appliedDiscounts} aria-label="Applied discounts">
+                {preview.appliedDiscounts.map((discount, index) => (
+                  <li key={`${discount.name}-${index}`}>
+                    <span>
+                      {discount.name} <small>({discount.scope.toLowerCase()})</small>
+                    </span>
+                    <strong>-{money(discount.discountAmount)}</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
             <dl className={styles.totals}>
               <div>
                 <dt>Subtotal</dt>
-                <dd>{money(subtotal)}</dd>
+                <dd>
+                  {preview ? money(preview.subtotal) : money(subtotal)}
+                  {!preview && " (estimated)"}
+                </dd>
               </div>
               <div>
                 <dt>Shipping</dt>
-                <dd>{money(shipping)}</dd>
+                <dd>
+                  {preview ? (
+                    <>
+                      {preview.shippingAfterDiscount !== preview.shippingTotal && (
+                        <del>{money(preview.shippingTotal)} </del>
+                      )}
+                      {money(preview.shippingAfterDiscount)}
+                    </>
+                  ) : (
+                    "Pending"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Total discount</dt>
+                <dd>{preview ? `-${money(preview.discountAmount)}` : "Pending"}</dd>
               </div>
               <div className={styles.total}>
                 <dt>
                   Total <small>AUD</small>
                 </dt>
-                <dd>{money(subtotal + shipping)}</dd>
+                <dd>{preview ? money(preview.totalAfterDiscount) : "Pending"}</dd>
               </div>
             </dl>
             <div className={styles.help}>
