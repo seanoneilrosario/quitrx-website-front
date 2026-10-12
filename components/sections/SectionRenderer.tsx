@@ -260,7 +260,6 @@ export default function SectionRenderer({
     if (!Array.isArray(components)) {
       return [] as ContentSection[];
     }
-
     return components.filter((component): component is ContentSection => {
       const isValid =
         Boolean(component) && typeof component === "object" && typeof component._type === "string";
