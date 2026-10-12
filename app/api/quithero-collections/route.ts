@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { getQuitHeroCollections } from "@/lib/quithero";
+import { getFreshQuitHeroCollections, getQuitHeroCollections } from "@/lib/quithero";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    return NextResponse.json(await getQuitHeroCollections());
+    const fresh = new URL(request.url).searchParams.get("refresh") === "1";
+    const collections = await (fresh ? getFreshQuitHeroCollections() : getQuitHeroCollections());
+    return NextResponse.json(collections, { headers: { "cache-control": "private, no-store" } });
   } catch (error) {
     console.error("Unable to load QuitHero collections.", error);
     return NextResponse.json({ error: "Unable to load collections." }, { status: 502 });

@@ -1,5 +1,6 @@
 const PAGE_COMPONENTS = `
   components[]{
+    _key,
     _type,
     sectionId,
     title,

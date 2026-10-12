@@ -142,7 +142,10 @@ export function ApiCollectionInput(props: ObjectInputProps<CollectionValue>) {
 
     async function load() {
       try {
-        const response = await fetch("/api/quithero-collections", { signal: controller.signal });
+        const response = await fetch("/api/quithero-collections?refresh=1", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
         if (!response.ok) throw new Error("Unable to load collections. Please try again.");
         const payload: unknown = await response.json();
         if (!Array.isArray(payload)) throw new Error("The collection list could not be read.");

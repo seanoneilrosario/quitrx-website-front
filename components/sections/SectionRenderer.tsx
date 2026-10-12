@@ -261,18 +261,11 @@ export default function SectionRenderer({
       return [] as ContentSection[];
     }
 
-    let hasProductApiGrid = false;
-
     return components.filter((component): component is ContentSection => {
       const isValid =
         Boolean(component) && typeof component === "object" && typeof component._type === "string";
 
-      if (!isValid) return false;
-      if (component._type !== "product_api_grid") return true;
-      if (hasProductApiGrid) return false;
-
-      hasProductApiGrid = true;
-      return true;
+      return isValid;
     });
   }, [components]);
 

@@ -24,6 +24,7 @@ type QuitHeroCollectionsResponse =
       collections?: QuitHeroCollection[];
       data?: QuitHeroCollection[];
       items?: QuitHeroCollection[];
+      pagination?: { totalPages?: number };
     };
 
 const COLLECTION_PRODUCT_FIELDS = [
@@ -48,12 +49,26 @@ function collectionsFrom(payload: QuitHeroCollectionsResponse) {
 }
 
 async function loadQuitHeroCollections() {
-  return collectionsFrom(await quitHeroFetch<QuitHeroCollectionsResponse>("/collections"));
+  const collections: QuitHeroCollection[] = [];
+  for (let page = 1; page <= 100; page += 1) {
+    const response = await quitHeroFetch<QuitHeroCollectionsResponse>(
+      `/collections?page=${page}&limit=100`,
+    );
+    collections.push(...collectionsFrom(response));
+    const totalPages = Array.isArray(response) ? undefined : response.pagination?.totalPages;
+    if (totalPages === undefined) return collections;
+    if (!Number.isInteger(totalPages) || totalPages < 0 || totalPages > 100)
+      throw new Error("Invalid collection pagination.");
+    if (page >= totalPages) return collections;
+  }
+  throw new Error("Collection pagination limit reached.");
 }
+
+export const getFreshQuitHeroCollections = loadQuitHeroCollections;
 
 const getCachedQuitHeroCollections = unstable_cache(
   loadQuitHeroCollections,
-  ["quithero-collections"],
+  ["quithero-collections-all-pages"],
   {
     revalidate: QUITHERO_CACHE_SECONDS,
     tags: ["quithero-collections"],

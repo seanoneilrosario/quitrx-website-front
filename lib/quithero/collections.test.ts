@@ -4,11 +4,49 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("@/sanity/lib/client", () => ({ client: { withConfig: vi.fn() } }));
 
-import { getFastQuitHeroCollectionPage, getQuitHeroCollectionPage } from "./collections";
+import {
+  getFastQuitHeroCollectionPage,
+  getQuitHeroCollectionPage,
+  getFreshQuitHeroCollections,
+} from "./collections";
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
+});
+
+describe("collection picker pagination", () => {
+  it("loads collections from every backend page", async () => {
+    vi.stubEnv("QUITHERO_API_KEY", "test-key");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ data: [{ id: "first", slug: "first" }], pagination: { totalPages: 2 } }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ data: [{ id: "new", slug: "new" }], pagination: { totalPages: 2 } }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await getFreshQuitHeroCollections()).toEqual([
+      { id: "first", slug: "first" },
+      { id: "new", slug: "new" },
+    ]);
+    expect(fetchMock.mock.calls.map(([url]) => new URL(url).search)).toEqual([
+      "?page=1&limit=100",
+      "?page=2&limit=100",
+    ]);
+  });
+
+  it("reads newly created collections on subsequent fresh requests", async () => {
+    vi.stubEnv("QUITHERO_API_KEY", "test-key");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json([{ slug: "first" }]))
+      .mockResolvedValueOnce(Response.json([{ slug: "first" }, { slug: "new" }]));
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await getFreshQuitHeroCollections()).toHaveLength(1);
+    expect(await getFreshQuitHeroCollections()).toHaveLength(2);
+  });
 });
 
 describe("all-products pagination", () => {
