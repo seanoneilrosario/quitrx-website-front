@@ -518,7 +518,14 @@ export default function CheckoutPage() {
           <div className={styles.summaryInner}>
             <h2>
               Order summary{" "}
-              <span>{items.reduce((count, item) => count + item.quantity, 0)} items</span>
+              <span>
+                {items.reduce((count, item) => count + item.quantity, 0) +
+                  (preview?.promotionalItems.reduce(
+                    (count, item) => count + item.quantity,
+                    0,
+                  ) ?? 0)}{" "}
+                items
+              </span>
             </h2>
             <div className={styles.items}>
               {items.map((item, itemIndex) => (
@@ -565,6 +572,37 @@ export default function CheckoutPage() {
                   <strong>{money(numericPrice(item.price) * item.quantity)}</strong>
                 </article>
               ))}
+              {preview?.promotionalItems.map((item) => {
+                const originalTotal = item.unitPrice * item.quantity;
+                return (
+                  <article
+                    className={`${styles.item} ${styles.promotionalItem}`}
+                    key={`promotion:${item.discountId}:${item.variantId}`}
+                  >
+                    <div className={styles.itemImage}>
+                      <Image
+                        src={item.image || DEFAULT_PRODUCT_IMAGE}
+                        width={68}
+                        height={72}
+                        alt=""
+                        sizes="68px"
+                      />
+                      <span>{item.quantity}</span>
+                    </div>
+                    <div>
+                      <strong>{item.productName || "Promotional item"}</strong>
+                      <small>{item.variantName || "Default"}</small>
+                      <small className={styles.savings}>
+                        Promotional item · {item.benefitType.toLowerCase().replace("_", " ")}
+                      </small>
+                    </div>
+                    <strong>
+                      {item.lineTotal < originalTotal && <del>{money(originalTotal)} </del>}
+                      {item.lineTotal === 0 ? "FREE" : money(item.lineTotal)}
+                    </strong>
+                  </article>
+                );
+              })}
             </div>
             <form
               className={styles.discount}

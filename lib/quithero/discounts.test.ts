@@ -16,6 +16,7 @@ const preview = {
     { name: "Delivery offer", code: null, scope: "SHIPPING", discountAmount: 12.9 },
   ],
   lineDiscounts: [{ itemIndex: 0, variantId: "variant", discountAmount: 10 }],
+  promotionalItems: [],
 };
 const payload = {
   customerId: "customer",
@@ -63,6 +64,36 @@ describe("discount API boundary", () => {
     expect(() => parseDiscountPreview({ ...preview, totalAfterDiscount: null })).toThrow();
     expect(() =>
       parseDiscountPreview({ ...preview, appliedDiscounts: [{ name: "Wrong shape", amount: 10 }] }),
+    ).toThrow();
+  });
+  it("normalizes legacy responses and validates promotional items", () => {
+    const { promotionalItems, ...legacyPreview } = preview;
+    void promotionalItems;
+    expect(parseDiscountPreview(legacyPreview).promotionalItems).toEqual([]);
+    expect(
+      parseDiscountPreview({
+        ...preview,
+        promotionalItems: [
+          {
+            discountId: "buy-x-get-y",
+            role: "GET_Y",
+            productId: "gift-product",
+            variantId: "gift-variant",
+            quantity: 1,
+            unitPrice: 22.99,
+            discountAmount: 22.99,
+            lineTotal: 0,
+            benefitType: "FREE",
+            isPromotional: true,
+          },
+        ],
+      }).promotionalItems,
+    ).toHaveLength(1);
+    expect(() =>
+      parseDiscountPreview({
+        ...preview,
+        promotionalItems: [{ variantId: "gift-variant", quantity: 1 }],
+      }),
     ).toThrow();
   });
   it("trims codes and rejects malformed inputs", () => {

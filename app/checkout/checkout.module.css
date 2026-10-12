@@ -584,3 +584,15 @@
 .item .savings {
   color: #075d67;
 }
+
+.promotionalItem {
+  border-color: #b9dfc5;
+  background: #f3fbf5;
+}
+
+.promotionalItem del {
+  display: block;
+  color: #6b7280;
+  font-size: 0.78rem;
+  font-weight: 500;
+}

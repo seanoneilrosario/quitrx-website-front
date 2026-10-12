@@ -24,3 +24,9 @@ Retail orders are created after payment. Discounts can change while the gateway 
 Zero-total orders currently return a support message before opening the gateway. An approved zero-payment order workflow is needed to support them automatically.
 
 `shippingTotal` remains the original charge, matching the supplied saved-order example. `shippingAfterDiscount` is displayed in checkout; shipping savings are also part of the backend's combined `discountAmount`. The UI does not subtract those savings a second time.
+
+## Buy X Get Y
+
+The optional `promotionalItems` preview field is normalized to an empty array for older backend responses. Promotional lines are derived from the current preview and are not written into the customer's `quitrx-cart`, so a customer-added quantity of the same variant remains independent and stale gifts disappear with the stale preview. The checkout preview route hydrates product display data from the catalog.
+
+Payment entry routes independently preview the customer-owned cart again, append the returned promotional lines to the signed payment session, and submit those lines to `/orders` with `isPromotional`, `discountId`, and `benefitType`. The saved order must return the same promotional metadata, quantities, line discounts, and line totals for fingerprint verification. The backend contract must define `promotionalItems[].quantity` as the desired total promotional quantity and include promotional pre-discount value in `subtotal` so displayed totals reconcile.

@@ -10,6 +10,7 @@ import {
   QuitHeroDiscountInputError,
 } from "@/lib/quithero/discounts";
 import { QuitHeroApiError } from "@/lib/quithero/client";
+import { getPurchasableStock } from "@/lib/catalog/bundles";
 
 export async function POST(request: Request) {
   try {
@@ -82,7 +83,28 @@ export async function POST(request: Request) {
       quantity: items.reduce((sum, item) => sum + item.quantity, 0),
       items: items.map(({ variantId, quantity }) => ({ variantId, quantity })),
     });
-    return NextResponse.json(preview, { headers: { "cache-control": "private, no-store" } });
+    const promotionalProducts = await Promise.all(
+      [...new Set(preview.promotionalItems.map((item) => item.productId))].map(
+        getFreshQuitHeroProductById,
+      ),
+    );
+    const promotionalItems = preview.promotionalItems.map((item) => {
+      const product = promotionalProducts.find((entry) => entry.id === item.productId);
+      const variant = product?.variants?.find((entry) => entry.id === item.variantId);
+      if (!product || !variant)
+        throw new Error("A promotional item is unavailable. Please try again.");
+      return {
+        ...item,
+        productName: product.name || "Promotional item",
+        variantName: variant.name || "Default",
+        image: product.images?.find((image) => image.isPrimary)?.url ?? product.images?.[0]?.url,
+        availableStock: getPurchasableStock(variant),
+      };
+    });
+    return NextResponse.json(
+      { ...preview, promotionalItems },
+      { headers: { "cache-control": "private, no-store" } },
+    );
   } catch (error) {
     const invalid =
       error instanceof QuitHeroDiscountInputError ||

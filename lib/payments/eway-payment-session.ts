@@ -10,7 +10,13 @@ export type PendingEwayPayment = {
   accessCode: string;
   customerId: string;
   retailOrderId?: string;
-  items: Array<{ variantId: string; quantity: number }>;
+  items: Array<{
+    variantId: string;
+    quantity: number;
+    isPromotional?: true;
+    discountId?: string;
+    benefitType?: "FREE" | "PERCENTAGE" | "FIXED_AMOUNT";
+  }>;
   subtotal: number;
   shippingTotal?: number;
   discountCode?: string;

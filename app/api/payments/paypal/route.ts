@@ -221,7 +221,16 @@ export async function POST(request: Request) {
     await setPendingPayPalPayment({
       orderId: result.id,
       customerId: customerAccount.id,
-      items: items.map(({ variantId, quantity }) => ({ variantId, quantity })),
+      items: [
+        ...items.map(({ variantId, quantity }) => ({ variantId, quantity })),
+        ...preview.promotionalItems.map((item) => ({
+          variantId: item.variantId,
+          quantity: item.quantity,
+          isPromotional: true as const,
+          discountId: item.discountId,
+          benefitType: item.benefitType,
+        })),
+      ],
       subtotal: preview.subtotal,
       shippingTotal: preview.shippingTotal,
       discountCode,

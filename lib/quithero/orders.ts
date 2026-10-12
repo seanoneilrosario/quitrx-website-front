@@ -17,7 +17,13 @@ export type QuitHeroOrderPayload = {
   discountCode?: string;
   total: number;
   customerId: string;
-  items: Array<{ variantId: string; quantity: number }>;
+  items: Array<{
+    variantId: string;
+    quantity: number;
+    isPromotional?: true;
+    discountId?: string;
+    benefitType?: "FREE" | "PERCENTAGE" | "FIXED_AMOUNT";
+  }>;
 };
 
 export type QuitHeroOrder = {
@@ -49,6 +55,9 @@ export type QuitHeroOrder = {
     discountTotal?: number | string;
     price?: number | string;
     total?: number | string;
+    isPromotional?: boolean;
+    discountId?: string;
+    benefitType?: string;
   }>;
 };
 
@@ -79,7 +88,9 @@ export async function findRecentlyCreatedQuitHeroOrder(
 ) {
   const response = await quitHeroFetch<QuitHeroOrdersResponse>("/orders?page=1&limit=25");
   const orders = response.data ?? response.orders ?? response.items ?? [];
-  const requestedItems = new Map(payload.items.map((item) => [item.variantId, item.quantity]));
+  const itemKey = (item: { variantId?: string; isPromotional?: boolean; discountId?: string }) =>
+    `${item.variantId ?? ""}:${item.isPromotional ? item.discountId ?? "promotion" : "customer"}`;
+  const requestedItems = new Map(payload.items.map((item) => [itemKey(item), item.quantity]));
 
   return orders.find((order) => {
     const createdAt = Date.parse(order.createdAt ?? "");
@@ -95,7 +106,7 @@ export async function findRecentlyCreatedQuitHeroOrder(
     )
       return false;
     return order.items.every(
-      (item) => item.variantId && requestedItems.get(item.variantId) === Number(item.quantity),
+      (item) => item.variantId && requestedItems.get(itemKey(item)) === Number(item.quantity),
     );
   });
 }

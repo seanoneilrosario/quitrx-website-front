@@ -60,6 +60,7 @@ const preview = {
     { name: "Shipping", scope: "SHIPPING", discountAmount: 12.9 },
   ],
   lineDiscounts: [{ itemIndex: 0, variantId: "variant", discountAmount: 10 }],
+  promotionalItems: [],
 };
 function request(extra = {}) {
   return new Request("https://shop.test/api/payments", {
@@ -145,6 +146,45 @@ describe.each([
     if (_name === "eway")
       expect(payload).toMatchObject({ Payment: { TotalAmount: 5000 }, Items: [{ Total: 5000 }] });
     else expect(payload).toMatchObject({ purchase_units: [{ amount: { value: "50.00" } }] });
+  });
+  it("adds backend promotional items to the signed order session", async () => {
+    vi.mocked(previewQuitHeroDiscounts).mockResolvedValue({
+      ...preview,
+      subtotal: 82.99,
+      discountAmount: 22.99,
+      shippingAfterDiscount: 12.9,
+      totalAfterDiscount: 72.9,
+      promotionalItems: [
+        {
+          discountId: "buy-x-get-y",
+          role: "GET_Y",
+          productId: "gift-product",
+          variantId: "gift-variant",
+          quantity: 1,
+          unitPrice: 22.99,
+          discountAmount: 22.99,
+          lineTotal: 0,
+          benefitType: "FREE",
+          isPromotional: true,
+        },
+      ],
+    });
+    const response = await handler(request({ expectedTotal: 72.9 }));
+    expect(response.status).toBe(200);
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        items: [
+          { variantId: "variant", quantity: 2 },
+          {
+            variantId: "gift-variant",
+            quantity: 1,
+            isPromotional: true,
+            discountId: "buy-x-get-y",
+            benefitType: "FREE",
+          },
+        ],
+      }),
+    );
   });
   it("stops before payment if the backend rejects eligibility", async () => {
     vi.mocked(previewQuitHeroDiscounts).mockRejectedValue(
