@@ -15,6 +15,11 @@ vi.mock("@/lib/quithero", () => ({
     name: "Product",
     variants: [{ id: "variant", price: 30 }],
   })),
+  createQuitHeroOrder: vi.fn(async (payload) => ({ id: "retail-order", ...payload })),
+}));
+vi.mock("@/lib/quithero/orders", async (original) => ({
+  ...(await original<typeof import("@/lib/quithero/orders")>()),
+  verifyOrderDiscountTotals: vi.fn(),
 }));
 vi.mock("@/lib/catalog/bundles", () => ({ getPurchasableStock: () => 99 }));
 vi.mock("@/lib/quithero/discounts", async (original) => ({
@@ -22,9 +27,10 @@ vi.mock("@/lib/quithero/discounts", async (original) => ({
   previewQuitHeroDiscounts: vi.fn(),
 }));
 vi.mock("@/lib/payments/eway", () => ({
-  createEwayTransparentRedirect: vi.fn(async () => ({
-    AccessCode: "access",
-    FormActionURL: "https://payment.test",
+  createEwayDirectPayment: vi.fn(async (payload) => ({
+    TransactionStatus: true,
+    TransactionID: 123,
+    TotalAmount: payload.Payment.TotalAmount,
   })),
   EwayApiError: class extends Error {},
 }));
@@ -44,7 +50,7 @@ import { POST as previewRoute } from "../checkout/discounts/route";
 import { auth } from "@/auth";
 import { previewQuitHeroDiscounts } from "@/lib/quithero/discounts";
 import { QuitHeroApiError } from "@/lib/quithero/client";
-import { createEwayTransparentRedirect } from "@/lib/payments/eway";
+import { createEwayDirectPayment } from "@/lib/payments/eway";
 import { createPayPalOrder } from "@/lib/payments/paypal";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
@@ -70,6 +76,7 @@ function request(extra = {}) {
       shippingMethod: "standard",
       discountCode: " SAVE ",
       expectedTotal: 50,
+      securedCardData: "secure-field-code",
       customer: {
         firstName: "Test",
         lastName: "Customer",
@@ -90,7 +97,7 @@ beforeEach(() => {
 });
 
 describe.each([
-  ["eway", eway, createEwayTransparentRedirect, setPendingEwayPayment],
+  ["eway", eway, createEwayDirectPayment, setPendingEwayPayment],
   ["paypal", paypal, createPayPalOrder, setPendingPayPalPayment],
 ] as const)("%s discount payment", (_name, handler, gateway, save) => {
   it.each([
@@ -112,13 +119,14 @@ describe.each([
       });
       const response = await handler(request({ discountCode, expectedTotal: totalAfterDiscount }));
       expect(response.status).toBe(200);
-      expect(save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          total: totalAfterDiscount,
-          discountCode,
-          discountTotal: discountAmount,
-        }),
-      );
+      if (_name === "paypal")
+        expect(save).toHaveBeenCalledWith(
+          expect.objectContaining({
+            total: totalAfterDiscount,
+            discountCode,
+            discountTotal: discountAmount,
+          }),
+        );
     },
   );
   it("charges the backend total and carries the code and original shipping into the signed session", async () => {
@@ -132,16 +140,17 @@ describe.each([
         shippingTotal: 12.9,
       }),
     );
-    expect(save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        subtotal: 60,
-        total: 50,
-        discountCode: "SAVE",
-        shippingTotal: 12.9,
-        discountTotal: 22.9,
-        discountFingerprint: expect.any(String),
-      }),
-    );
+    if (_name === "paypal")
+      expect(save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subtotal: 60,
+          total: 50,
+          discountCode: "SAVE",
+          shippingTotal: 12.9,
+          discountTotal: 22.9,
+          discountFingerprint: expect.any(String),
+        }),
+      );
     const payload = vi.mocked(gateway).mock.calls[0][0];
     if (_name === "eway")
       expect(payload).toMatchObject({ Payment: { TotalAmount: 5000 }, Items: [{ Total: 5000 }] });
@@ -171,20 +180,21 @@ describe.each([
     });
     const response = await handler(request({ expectedTotal: 72.9 }));
     expect(response.status).toBe(200);
-    expect(save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        items: [
-          { variantId: "variant", quantity: 2 },
-          {
-            variantId: "gift-variant",
-            quantity: 1,
-            isPromotional: true,
-            discountId: "buy-x-get-y",
-            benefitType: "FREE",
-          },
-        ],
-      }),
-    );
+    if (_name === "paypal")
+      expect(save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items: [
+            { variantId: "variant", quantity: 2 },
+            {
+              variantId: "gift-variant",
+              quantity: 1,
+              isPromotional: true,
+              discountId: "buy-x-get-y",
+              benefitType: "FREE",
+            },
+          ],
+        }),
+      );
   });
   it("stops before payment if the backend rejects eligibility", async () => {
     vi.mocked(previewQuitHeroDiscounts).mockRejectedValue(
@@ -200,6 +210,12 @@ describe.each([
     expect(response.status).toBe(409);
     expect(gateway).not.toHaveBeenCalled();
   });
+  if (_name === "eway")
+    it("rejects requests without secure card data", async () => {
+      const response = await handler(request({ securedCardData: undefined }));
+      expect(response.status).toBe(400);
+      expect(gateway).not.toHaveBeenCalled();
+    });
 });
 
 describe("checkout preview route", () => {

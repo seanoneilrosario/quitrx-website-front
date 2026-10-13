@@ -8,6 +8,7 @@ import styles from "./checkout.module.css";
 import { CHECKOUT_SHIPPING, getCheckoutCustomerDefaults } from "@/lib/checkout/checkout";
 import { DEFAULT_PRODUCT_IMAGE } from "@/lib/catalog/product-image";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import { EwaySecureFields } from "./EwaySecureFields";
 
 type CartItem = {
   key: string;
@@ -55,14 +56,10 @@ export default function CheckoutPage() {
   const [discountInput, setDiscountInput] = useState<string>();
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentNeedsReview, setPaymentNeedsReview] = useState(false);
+  const [paymentNeedsReview] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
+  const [ewaySecureFieldCode, setEwaySecureFieldCode] = useState<string | null>(null);
   const submissionLock = useRef(false);
-  const cardNameRef = useRef<HTMLInputElement>(null);
-  const cardNumberRef = useRef<HTMLInputElement>(null);
-  const cardExpiryMonthRef = useRef<HTMLInputElement>(null);
-  const cardExpiryYearRef = useRef<HTMLInputElement>(null);
-  const cardCvnRef = useRef<HTMLInputElement>(null);
   const storedCart = useSyncExternalStore(
     (onStoreChange) => {
       window.addEventListener("storage", onStoreChange);
@@ -122,30 +119,6 @@ export default function CheckoutPage() {
     }
   }, [completedPayment, paymentStatus]);
 
-  function submitEwayPayment(formActionUrl: string, accessCode: string) {
-    const fields = {
-      EWAY_ACCESSCODE: accessCode,
-      EWAY_PAYMENTTYPE: "Credit Card",
-      EWAY_CARDNAME: cardNameRef.current?.value.trim() || "",
-      EWAY_CARDNUMBER: cardNumberRef.current?.value.replace(/\D/g, "") || "",
-      EWAY_CARDEXPIRYMONTH: cardExpiryMonthRef.current?.value.trim() || "",
-      EWAY_CARDEXPIRYYEAR: cardExpiryYearRef.current?.value.trim() || "",
-      EWAY_CARDCVN: cardCvnRef.current?.value.replace(/\D/g, "") || "",
-    };
-    const paymentForm = document.createElement("form");
-    paymentForm.method = "POST";
-    paymentForm.action = formActionUrl;
-    for (const [name, value] of Object.entries(fields)) {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      input.value = value;
-      paymentForm.appendChild(input);
-    }
-    document.body.appendChild(paymentForm);
-    paymentForm.submit();
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submissionLock.current || paymentNeedsReview || !preview || discounts.loading) return;
@@ -158,6 +131,10 @@ export default function CheckoutPage() {
       setNotice(
         "One or more cart items are missing a variant. Please remove them and add them again.",
       );
+      return;
+    }
+    if (paymentMethod === "eway" && !ewaySecureFieldCode) {
+      setNotice("Please complete all secure card fields before paying.");
       return;
     }
 
@@ -173,6 +150,7 @@ export default function CheckoutPage() {
           shippingMethod,
           discountCode: discounts.code || undefined,
           expectedTotal: preview.totalAfterDiscount,
+          securedCardData: paymentMethod === "eway" ? ewaySecureFieldCode : undefined,
           items: orderItems,
           customer: {
             email: formData.get("email"),
@@ -190,19 +168,17 @@ export default function CheckoutPage() {
       const result = (await response.json().catch(() => ({}))) as {
         error?: string;
         paymentUrl?: string;
-        formActionUrl?: string;
-        accessCode?: string;
+        status?: string;
       };
       if (
         !response.ok ||
-        (paymentMethod === "eway" ? !result.formActionUrl : !result.paymentUrl)
+        (paymentMethod === "eway" ? result.status !== "success" : !result.paymentUrl)
       ) {
         discounts.refresh();
         throw new Error(result.error || "We couldn't start payment. Please try again.");
       }
       if (paymentMethod === "eway") {
-        if (!result.accessCode) throw new Error("We couldn't verify the secure payment session.");
-        submitEwayPayment(result.formActionUrl!, result.accessCode);
+        setCompletedPayment(true);
       } else {
         window.location.assign(result.paymentUrl!);
       }
@@ -456,68 +432,7 @@ export default function CheckoutPage() {
                     </span>
                   </label>
                 </div>
-                {paymentMethod === "eway" && (
-                  <div className={styles.cardFields}>
-                    <label className={styles.fieldWide}>
-                      <span>Name on card</span>
-                      <input ref={cardNameRef} autoComplete="cc-name" maxLength={50} required />
-                    </label>
-                    <label className={styles.fieldWide}>
-                      <span>Card number</span>
-                      <input
-                        ref={cardNumberRef}
-                        autoComplete="cc-number"
-                        inputMode="numeric"
-                        minLength={12}
-                        maxLength={23}
-                        pattern="[0-9 ]{12,23}"
-                        required
-                      />
-                    </label>
-                    <label>
-                      <span>Expiry month</span>
-                      <input
-                        ref={cardExpiryMonthRef}
-                        autoComplete="cc-exp-month"
-                        inputMode="numeric"
-                        placeholder="MM"
-                        minLength={2}
-                        maxLength={2}
-                        pattern="0[1-9]|1[0-2]"
-                        required
-                      />
-                    </label>
-                    <label>
-                      <span>Expiry year</span>
-                      <input
-                        ref={cardExpiryYearRef}
-                        autoComplete="cc-exp-year"
-                        inputMode="numeric"
-                        placeholder="YY"
-                        minLength={2}
-                        maxLength={2}
-                        pattern="[0-9]{2}"
-                        required
-                      />
-                    </label>
-                    <label>
-                      <span>Security code</span>
-                      <input
-                        ref={cardCvnRef}
-                        autoComplete="cc-csc"
-                        inputMode="numeric"
-                        minLength={3}
-                        maxLength={4}
-                        pattern="[0-9]{3,4}"
-                        required
-                      />
-                    </label>
-                    <p className={styles.cardSecurityNote}>
-                      Card details are submitted securely from your browser directly to eWAY and
-                      never pass through our server.
-                    </p>
-                  </div>
-                )}
+                {paymentMethod === "eway" && <EwaySecureFields onChange={setEwaySecureFieldCode} />}
               </section>
 
               {displayedNotice && (
@@ -547,10 +462,8 @@ export default function CheckoutPage() {
               Order summary{" "}
               <span>
                 {items.reduce((count, item) => count + item.quantity, 0) +
-                  (preview?.promotionalItems.reduce(
-                    (count, item) => count + item.quantity,
-                    0,
-                  ) ?? 0)}{" "}
+                  (preview?.promotionalItems.reduce((count, item) => count + item.quantity, 0) ??
+                    0)}{" "}
                 items
               </span>
             </h2>
