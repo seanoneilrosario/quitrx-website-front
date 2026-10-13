@@ -64,15 +64,6 @@ export type EwayPaymentResult = EwayErrorResponse & {
   TransactionStatus?: boolean;
 };
 
-export type EwayDirectPaymentRequest = Omit<EwayTransparentRedirectRequest, "RedirectUrl"> & {
-  SecuredCardData: string;
-  CustomerIP?: string;
-};
-
-export type EwayDirectPaymentResponse = EwayPaymentResult & {
-  AuthorisationCode?: string;
-};
-
 function getEwayConfig() {
   const apiKey = process.env.EWAY_API_KEY?.trim();
   const password = process.env.EWAY_PASSWORD?.trim();
@@ -123,13 +114,6 @@ async function ewayFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function createEwayTransparentRedirect(payload: EwayTransparentRedirectRequest) {
   return ewayFetch<EwayTransparentRedirectResponse>("/AccessCodes", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function createEwayDirectPayment(payload: EwayDirectPaymentRequest) {
-  return ewayFetch<EwayDirectPaymentResponse>("/Transaction", {
     method: "POST",
     body: JSON.stringify(payload),
   });

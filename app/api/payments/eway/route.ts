@@ -9,11 +9,11 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { CHECKOUT_SHIPPING, isCheckoutShippingMethod } from "@/lib/checkout/checkout";
 import { getCustomerSession } from "@/lib/auth/customer-session";
-import { createEwayDirectPayment, EwayApiError } from "@/lib/payments/eway";
-import { createQuitHeroOrder, getFreshQuitHeroProductById } from "@/lib/quithero";
+import { createEwayTransparentRedirect, EwayApiError } from "@/lib/payments/eway";
+import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
+import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
-import { verifyOrderDiscountTotals, type QuitHeroOrder } from "@/lib/quithero/orders";
 
 type PaymentRequest = {
   items?: unknown;
@@ -21,7 +21,6 @@ type PaymentRequest = {
   customer?: unknown;
   discountCode?: unknown;
   expectedTotal?: unknown;
-  securedCardData?: unknown;
 };
 
 function requiredText(record: Record<string, unknown>, key: string, maxLength: number) {
@@ -54,10 +53,7 @@ export async function POST(request: Request) {
       body.items.length > 50 ||
       !isCheckoutShippingMethod(body.shippingMethod) ||
       !body.customer ||
-      typeof body.customer !== "object" ||
-      typeof body.securedCardData !== "string" ||
-      !body.securedCardData.trim() ||
-      body.securedCardData.length > 500
+      typeof body.customer !== "object"
     ) {
       return NextResponse.json({ error: "The checkout details are invalid." }, { status: 400 });
     }
@@ -167,9 +163,10 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     const reference = `QuitRx-${Date.now()}`;
+    const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
     const street2 = requiredText(address, "address2", 50);
 
-    const result = await createEwayDirectPayment({
+    const result = await createEwayTransparentRedirect({
       Customer: {
         FirstName: firstName,
         LastName: lastName,
@@ -220,18 +217,15 @@ export async function POST(request: Request) {
                 Total: shippingCents,
               },
             ],
-      SecuredCardData: body.securedCardData.trim(),
-      CustomerIP: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+      RedirectUrl: callbackUrl,
       Method: "ProcessPayment",
       TransactionType: "Purchase",
     });
-    if (!result.TransactionStatus || !result.TransactionID || result.TotalAmount !== totalCents)
-      return NextResponse.json(
-        { error: "Payment was declined or could not be completed. Please try again." },
-        { status: 402 },
-      );
+    if (!result.AccessCode || !result.FormActionURL)
+      throw new Error("eWAY did not provide a secure payment form action.");
 
-    const pendingOrder = {
+    await setPendingEwayPayment({
+      accessCode: result.AccessCode,
       customerId: customerAccount.id,
       items: [
         ...items.map(({ variantId, quantity }) => ({ variantId, quantity })),
@@ -249,21 +243,10 @@ export async function POST(request: Request) {
       discountTotal: preview.discountAmount,
       discountFingerprint: previewDiscountFingerprint(preview),
       total: totalCents / 100,
-    };
-    const order = (await createQuitHeroOrder({
-      source: "NATIVE",
-      currencyCode: "AUD",
-      subtotal: pendingOrder.subtotal,
-      shippingTotal: pendingOrder.shippingTotal,
-      discountCode: pendingOrder.discountCode,
-      total: pendingOrder.total,
-      customerId: pendingOrder.customerId,
-      items: pendingOrder.items,
-    })) as QuitHeroOrder | undefined;
-    verifyOrderDiscountTotals(order, pendingOrder);
-
+      createdAt: Date.now(),
+    });
     return NextResponse.json(
-      { status: "success", transactionId: result.TransactionID, orderId: order?.id },
+      { formActionUrl: result.FormActionURL, accessCode: result.AccessCode },
       { headers: { "cache-control": "private, no-store" } },
     );
   } catch (error) {
@@ -272,13 +255,13 @@ export async function POST(request: Request) {
       (error instanceof QuitHeroApiError && error.status === 400)
     )
       return NextResponse.json({ error: error.message }, { status: 400 });
-    console.error("Unable to process eWAY payment:", error);
+    console.error("Unable to start eWAY payment:", error);
     const isConfigurationError =
       error instanceof EwayApiError && (error.status === 401 || error.status === 403);
     const message =
       (error instanceof Error && error.message.includes("not configured")) || isConfigurationError
         ? "Payments are temporarily unavailable because the payment gateway is not configured correctly. Please contact support."
-        : "We couldn't complete the secure payment. If payment was taken, do not try again; contact support.";
+        : "We couldn't start the secure payment. Please try again.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
