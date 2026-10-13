@@ -66,9 +66,13 @@ function bundleChoiceLabel(productName: string, variantName: string) {
 }
 
 function formatPrice(value?: number | string) {
-  if (typeof value === "number")
-    return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(value);
-  return value || "Price on request";
+  const normalized = String(value ?? "").replace(/[^0-9.-]/g, "");
+  if (!normalized) return "Price on request";
+  const numericValue = typeof value === "number" ? value : Number(normalized);
+  if (!Number.isFinite(numericValue)) return "Price on request";
+  return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(
+    numericValue,
+  );
 }
 
 function addItemsToCart(items: StorefrontCartItem[]) {
@@ -231,7 +235,7 @@ export default function ProductPurchasePanel({
   return (
     <>
       <p className={styles.detailPrice}>
-        ${price}
+        {price}
         {price !== "Price on request" && " AUD"}
       </p>
       <p className={styles.shippingNote}>Shipping calculated at checkout</p>
