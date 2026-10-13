@@ -138,7 +138,11 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
           {price && <span className={styles.price}>{price}</span>}
         </span>
       </Link>
-      {directVariant && isAvailable && !locked ? (
+      {!isAvailable ? (
+        <button type="button" className={styles.chooseButton} disabled>
+          Sold out
+        </button>
+      ) : directVariant && !locked ? (
         <button type="button" className={styles.chooseButton} onClick={addToCart}>
           Add to cart
         </button>
@@ -149,7 +153,7 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
           className={styles.chooseButton}
           onClick={lockedClick}
         >
-          {locked ? "View product" : isAvailable ? "Choose options" : "Sold out"}
+          {locked ? "View product" : "Choose options"}
         </Link>
       )}
     </article>

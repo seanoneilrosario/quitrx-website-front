@@ -166,6 +166,15 @@ export default function CollectionCatalog({
 }) {
   const { customer } = useAccountCustomer();
 
+  useEffect(() => {
+    // Reset on collection entry, not when filters or pagination change.
+    // Instant scrolling overrides the site's smooth-scroll CSS.
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [collectionSlug]);
+
   const productsLocked =
     !hasActiveScript(customer);
 
