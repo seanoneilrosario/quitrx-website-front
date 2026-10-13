@@ -108,11 +108,11 @@ export async function quitHeroFetch<T>(
         return result;
       });
 
-      console.log("[QuitHero API]", {
-        path,
-        status: response.status,
-        duration: `${Date.now() - startedAt}ms`,
-      });
+      // console.log("[QuitHero API]", {
+      //   path,
+      //   status: response.status,
+      //   duration: `${Date.now() - startedAt}ms`,
+      // });
     } catch (error) {
       // Stop queued work and budget failures immediately; do not create retry storms.
       if (error instanceof Error && /rate limited|request limit reached/.test(error.message))

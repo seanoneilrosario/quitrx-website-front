@@ -20,6 +20,7 @@ export type ProductCardData = {
   handle?: string;
   image?: string;
   price?: string;
+  status?: string;
 };
 type ApiRecord = Record<string, unknown>;
 

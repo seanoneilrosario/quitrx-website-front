@@ -41,7 +41,7 @@ export function CollectionGridCard({ collection }: { collection: CollectionCardD
   );
 }
 export function ProductGridCard({ product }: { product: ProductCardData }) {
-  const { title, image, price, handle } = product;
+  const { title, image, price, handle, status } = product;
   const content = (
     <>
       <div className={styles.imageWrap}>
