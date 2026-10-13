@@ -34,6 +34,7 @@ EWAY_ENVIRONMENT=sandbox
 PAYPAL_CLIENT_ID=your_paypal_client_id
 PAYPAL_CLIENT_SECRET=your_paypal_client_secret
 PAYPAL_ENVIRONMENT=sandbox
+NEXT_PUBLIC_PAYPAL_ENABLED=false
 ```
 
 Do not prefix these variables with `NEXT_PUBLIC_`; API keys and OAuth secrets must never be included in browser code.

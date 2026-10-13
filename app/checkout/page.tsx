@@ -26,6 +26,7 @@ type CartItem = {
 };
 
 const CART_KEY = "quitrx-cart";
+const PAYPAL_ENABLED = process.env.NEXT_PUBLIC_PAYPAL_ENABLED === "true";
 
 function numericPrice(value?: number | string) {
   if (typeof value === "number") return value;
@@ -443,18 +444,20 @@ export default function CheckoutPage() {
                       <small>Pay securely using your credit or debit card.</small>
                     </span>
                   </label>
-                  <label className={paymentMethod === "paypal" ? styles.selectedOption : ""}>
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      checked={paymentMethod === "paypal"}
-                      onChange={() => setPaymentMethod("paypal")}
-                    />
-                    <span>
-                      <strong>PayPal</strong>
-                      <small>You&apos;ll be redirected to PayPal to approve your payment.</small>
-                    </span>
-                  </label>
+                  {PAYPAL_ENABLED && (
+                    <label className={paymentMethod === "paypal" ? styles.selectedOption : ""}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        checked={paymentMethod === "paypal"}
+                        onChange={() => setPaymentMethod("paypal")}
+                      />
+                      <span>
+                        <strong>PayPal</strong>
+                        <small>You&apos;ll be redirected to PayPal to approve your payment.</small>
+                      </span>
+                    </label>
+                  )}
                 </div>
                 {paymentMethod === "eway" && (
                   <div className={styles.cardFields}>
