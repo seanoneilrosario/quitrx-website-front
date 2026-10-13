@@ -1,11 +1,5 @@
-import { getQuitHeroBundle, getQuitHeroProducts, patchQuitHeroBundle } from "@/lib/quithero";
+import { getQuitHeroBundle, getQuitHeroProducts } from "@/lib/quithero";
 import { getAvailableStock } from "@/lib/catalog/available-stock";
-
-type BundlePayloadComponent = {
-  componentVariantId: string;
-  position: number;
-  quantity: number;
-};
 
 export async function GET(
   _request: Request,
@@ -65,31 +59,13 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ productId: string; variantId: string }> },
-) {
-  try {
-    const { productId, variantId } = await params;
-    const payload = (await request.json()) as unknown;
-    if (
-      !Array.isArray(payload) ||
-      !payload.every(
-        (component): component is BundlePayloadComponent =>
-          Boolean(component) &&
-          typeof component === "object" &&
-          typeof component.componentVariantId === "string" &&
-          Number.isInteger(component.position) &&
-          Number(component.quantity) > 0,
-      )
-    ) {
-      return Response.json({ error: "Invalid bundle payload." }, { status: 400 });
-    }
-
-    await patchQuitHeroBundle(productId, variantId, payload);
-    return Response.json({ success: true, componentCount: payload.length });
-  } catch (error) {
-    console.error("Unable to PATCH Quit Hero bundle:", error);
-    return Response.json({ error: "Unable to update this bundle." }, { status: 502 });
-  }
+export async function PATCH() {
+  // Catalog edits belong in the authenticated admin application.
+  return Response.json(
+    { error: "Bundle editing is not available on the storefront." },
+    {
+      status: 405,
+      headers: { Allow: "GET", "Cache-Control": "no-store" },
+    },
+  );
 }

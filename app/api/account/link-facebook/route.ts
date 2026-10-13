@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
-import { setCustomerSession } from "@/lib/auth/customer-session";
+import { getCustomerSession, setCustomerSession } from "@/lib/auth/customer-session";
 import { linkQuitHeroCustomerOAuth, syncQuitHeroCustomer } from "@/lib/quithero/customers";
 
 type FacebookSessionUser = {
@@ -34,6 +34,15 @@ export async function POST(request: Request) {
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     return NextResponse.json({ error: "A valid email address is required." }, { status: 400 });
+  }
+
+  // A Facebook session alone does not prove ownership of a typed email.
+  const verifiedSession = await getCustomerSession();
+  if (!verifiedSession || verifiedSession.email.trim().toLowerCase() !== email) {
+    return NextResponse.json(
+      { error: "Verify this email by signing in with an email code first." },
+      { status: 403 },
+    );
   }
 
   try {

@@ -1,16 +1,17 @@
 "use server";
 
-import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { createHmac, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
 import { setCustomerSession } from "@/lib/auth/customer-session";
+import { allowLoginEmail, registerLoginCode, consumeLoginCode } from "@/lib/auth/login-protection";
 
 const EMAIL_CODE_COOKIE = "quitrx_email_code";
 const CODE_MAX_AGE_SECONDS = 10 * 60;
-const MAX_ATTEMPTS = 5;
 
 type EmailCodeChallenge = {
+  id: string;
   email: string;
   customerId?: string;
   codeHash: string;
@@ -101,7 +102,8 @@ async function sendLoginCode(email: string, code: string) {
 }
 
 async function requestCode(email: string): Promise<CustomerAccessState> {
-  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid email address." };
+  if (email.length > 254 || !/^\S+@\S+\.\S+$/.test(email))
+    return { error: "Enter a valid email address." };
 
   const normalizedEmail = email.toLowerCase();
   const cookieStore = await cookies();
@@ -116,16 +118,27 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
   const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
 
   try {
+    if (!(await allowLoginEmail(normalizedEmail))) {
+      return {
+        step: "code",
+        email: normalizedEmail,
+        error: "Too many requests. Please wait before requesting another code.",
+      };
+    }
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
     if (!customer) {
       return {
-        error:
-          "No account found with that email address. Check your email, or contact us for help getting started.",
+        step: "code",
+        email: normalizedEmail,
+        message: "If an account exists for this email, a sign-in code has been sent.",
       };
     }
 
+    const id = randomUUID();
+    await registerLoginCode(id, codeHash(normalizedEmail, code));
     await sendLoginCode(normalizedEmail, code);
     await storeChallenge({
+      id,
       email: normalizedEmail,
       customerId: customer?.id,
       codeHash: codeHash(normalizedEmail, code),
@@ -136,7 +149,7 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
     return {
       step: "code",
       email: normalizedEmail,
-      message: `We sent a confirmation code to ${normalizedEmail}.`,
+      message: "If an account exists for this email, a sign-in code has been sent.",
     };
   } catch (error) {
     console.error("Email sign-in code delivery failed.", {
@@ -159,7 +172,8 @@ export async function accessCustomerAccount(
   const redirectTo =
     typeof redirectValue === "string" &&
     redirectValue.startsWith("/") &&
-    !redirectValue.startsWith("//")
+    !redirectValue.startsWith("//") &&
+    !/[\\\u0000-\u001f]/.test(redirectValue)
       ? redirectValue
       : "/account";
   const cookieStore = await cookies();
@@ -172,7 +186,8 @@ export async function accessCustomerAccount(
   const emailValue = formData.get("email");
   const email = typeof emailValue === "string" ? emailValue.trim() : "";
   if (intent === "local") {
-    if (process.env.NODE_ENV === "production") return { error: "Local sign-in is unavailable." };
+    if (process.env.NODE_ENV === "production" || process.env.ENABLE_LOCAL_LOGIN !== "true")
+      return { error: "Local sign-in is unavailable." };
     if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Enter a valid customer email address." };
 
     try {
@@ -197,23 +212,18 @@ export async function accessCustomerAccount(
   const codeStep = { step: "code" as const, email: challenge?.email ?? state.email };
 
   if (!/^\d{6}$/.test(code)) return { ...codeStep, error: "Enter the six-digit code." };
-  if (!challenge || challenge.expiresAt <= Date.now()) {
+  if (!challenge?.id || challenge.expiresAt <= Date.now()) {
     cookieStore.delete(EMAIL_CODE_COOKIE);
     return { error: "That code has expired. Enter your email to request a new one." };
   }
-  if (challenge.attempts >= MAX_ATTEMPTS) {
-    cookieStore.delete(EMAIL_CODE_COOKIE);
-    return { error: "Too many incorrect attempts. Request a new code." };
-  }
-
-  const expected = Buffer.from(challenge.codeHash);
-  const supplied = Buffer.from(codeHash(challenge.email, code));
-  if (expected.length !== supplied.length || !timingSafeEqual(expected, supplied)) {
-    await storeChallenge({ ...challenge, attempts: challenge.attempts + 1 });
-    return { ...codeStep, error: "That code is incorrect. Please try again." };
-  }
-
   try {
+    if (!(await consumeLoginCode(challenge.id, codeHash(challenge.email, code)))) {
+      return {
+        ...codeStep,
+        error:
+          "That code is invalid, expired, or has reached its attempt limit. Request a new code if needed.",
+      };
+    }
     await setCustomerSession({ id: challenge.customerId, email: challenge.email });
     cookieStore.delete(EMAIL_CODE_COOKIE);
   } catch (error) {
