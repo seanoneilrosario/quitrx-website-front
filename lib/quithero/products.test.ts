@@ -1,6 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
+vi.mock("./shop-visibility", async () => {
+  const { productIsListedInShop } = await import("./helpers");
+  return { filterShopProducts: async (products: import("./product-types").QuitHeroProduct[]) =>
+    products.filter((product) => productIsListedInShop(product) && product.id !== "hidden-scalar") };
+});
 vi.mock("./client", () => ({
   quitHeroFetch: vi.fn(),
   QUITHERO_CACHE_SECONDS: 60,
@@ -26,6 +31,7 @@ it("excludes NOTOSHOP tags from every page of the search catalog", async () => {
 
 it("filters hidden products before loading paginated card relations", async () => {
   vi.mocked(quitHeroFetch).mockResolvedValue([
+    { id: "hidden-scalar" },
     { id: "hidden-page-card", tags: [{ name: "NOTOSHOP" }] },
     { id: "visible-page-card", images: [], variants: [] },
   ]);

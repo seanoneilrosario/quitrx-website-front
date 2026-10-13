@@ -9,6 +9,7 @@ import { productCardCache } from "./cache/card-cache";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
 import { QuitHeroCollectionFilters } from "./collections";
 import { productIsListedInShop } from "./helpers";
+import { filterShopProducts } from "./shop-visibility";
 
 type QuitHeroProductsResponse =
   | QuitHeroProduct[]
@@ -117,7 +118,7 @@ export async function loadQuitHeroProductsPage(
     beforeRequest,
   });
 
-  const listedProducts = productsFrom(payload);
+  const listedProducts = await filterShopProducts(productsFrom(payload), fresh);
   const products: QuitHeroProduct[] = [];
 
   // /products is a scalar-only list. Load only the missing card relations for
@@ -160,7 +161,7 @@ export async function loadQuitHeroProductsPage(
 }
 
 export async function getFreshQuitHeroProducts() {
-  return loadQuitHeroProducts();
+  return filterShopProducts(await loadQuitHeroProducts(), true);
 }
 
 const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quithero-products"], {
@@ -169,7 +170,7 @@ const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quither
 });
 
 export const getQuitHeroProducts = cache(async () =>
-  (await getCachedQuitHeroProducts()).filter(productIsListedInShop),
+  filterShopProducts(await getCachedQuitHeroProducts()),
 );
 
 const getCachedQuitHeroProduct = unstable_cache(

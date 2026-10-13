@@ -11,6 +11,7 @@ import { client } from "@/sanity/lib/client";
 import { productIsVisible } from "@/lib/catalog/bundles";
 import { getQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
 import { productIsListedInShop, productMatchesCollectionRules } from "./helpers";
+import { filterShopProducts } from "./shop-visibility";
 import type {
   QuitHeroCollection,
   QuitHeroCollectionPage,
@@ -201,7 +202,7 @@ async function loadCollectionPage(
       name: response.data.name,
       slug: response.data.slug,
     },
-    products: (response.data.products ?? []).filter(productIsListedInShop).map(cacheProductCard),
+    products: (await filterShopProducts(response.data.products ?? [], fresh)).map(cacheProductCard),
     pagination: response.pagination,
   };
 }
@@ -343,7 +344,7 @@ export async function getQuitHeroCollection(slug: string) {
       ...(apiCollection.productIds ?? []),
     ];
     const assignedProducts = references.length
-      ? resolveCollectionProducts(references, products, slug)
+      ? await filterShopProducts(resolveCollectionProducts(references, products, slug))
       : products.filter((product) => {
           if (apiCollection.id && product.collectionId === apiCollection.id) return true;
           if (apiCollection.id && product.collectionIds?.includes(apiCollection.id)) return true;

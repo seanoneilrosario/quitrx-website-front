@@ -2,6 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
+vi.mock("./shop-visibility", async () => {
+  const { productIsListedInShop } = await import("./helpers");
+  return { filterShopProducts: async (products: import("./product-types").QuitHeroProduct[]) =>
+    products.filter((product) => productIsListedInShop(product) && product.id !== "hidden-scalar") };
+});
 vi.mock("@/sanity/lib/client", () => ({ client: { withConfig: vi.fn() } }));
 
 import {
@@ -22,6 +27,7 @@ describe("collection picker pagination", () => {
       data: {
         name: "Shop visibility", slug: "shop-visibility",
         products: [
+          { id: "hidden-scalar" },
           { id: "hidden-collection", tags: [{ tag: { name: "NOTOSHOP" } }] },
           { id: "visible-collection", name: "Visible", variants: [], images: [] },
         ],

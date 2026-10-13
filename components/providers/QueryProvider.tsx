@@ -58,7 +58,7 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
       persistOptions={{
         persister,
         maxAge: API_CACHE_TIME,
-        buster: "catalog-v1",
+        buster: "catalog-v2-notoshop",
         dehydrateOptions: {
           shouldDehydrateQuery: shouldPersistQuery,
           shouldDehydrateMutation: () => false,
