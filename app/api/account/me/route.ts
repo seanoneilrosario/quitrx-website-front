@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getCustomerSession } from "@/lib/auth/customer-session";
-import { findQuitHeroCustomerByEmail, updateQuitHeroCustomer } from "@/lib/quithero/customers";
+import {
+  findQuitHeroCustomerByEmail,
+  getQuitHeroCustomerAddresses,
+  updateQuitHeroCustomer,
+} from "@/lib/quithero/customers";
 
 async function customerEmail() {
   const customerSession = await getCustomerSession();
@@ -46,8 +50,14 @@ export async function GET() {
     if (!customer?.id) {
       return NextResponse.json({ error: "Customer account not found." }, { status: 401 });
     }
+    const addresses = customer.addresses?.length
+      ? customer.addresses
+      : await getQuitHeroCustomerAddresses(customer.id).catch(() =>
+          customer.address ? [customer.address] : [],
+        );
     const account = {
       ...customer,
+      addresses,
       email: customer.email?.trim() || identity.email,
       firstName: customer.firstName?.trim() || identity.firstName,
       lastName: customer.lastName?.trim() || identity.lastName,

@@ -4,6 +4,7 @@ vi.mock("server-only", () => ({}));
 
 import {
   findQuitHeroCustomerByEmail,
+  getQuitHeroCustomerAddresses,
   findQuitHeroCustomerByOAuth,
   linkQuitHeroCustomerOAuth,
   syncQuitHeroCustomer,
@@ -74,6 +75,19 @@ describe("QuitHero customer synchronization", () => {
           "x-api-key": "test-key",
         }),
       }),
+    );
+  });
+
+  it("loads a customer's saved addresses", async () => {
+    fetchMock.mockResolvedValueOnce(
+      response({ data: [{ id: "home", isDefault: true, address1: "1 Main St" }] }),
+    );
+
+    await expect(getQuitHeroCustomerAddresses(" customer/123 ")).resolves.toEqual([
+      { id: "home", isDefault: true, address1: "1 Main St" },
+    ]);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://retail-api.test/customers/customer%2F123/addresses",
     );
   });
 

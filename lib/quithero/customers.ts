@@ -140,6 +140,33 @@ function extractCustomers(value: unknown): QuitHeroCustomer[] {
   return [];
 }
 
+function isAddress(value: unknown): value is QuitHeroAddress {
+  if (typeof value !== "object" || value === null) return false;
+  const address = value as QuitHeroAddress;
+  return Boolean(
+    address.id ||
+    address.addressId ||
+    address.address1 ||
+    address.line1 ||
+    address.city ||
+    address.postcode ||
+    address.zip,
+  );
+}
+
+function extractAddresses(value: unknown): QuitHeroAddress[] {
+  if (Array.isArray(value)) return value.filter(isAddress);
+  if (isAddress(value)) return [value];
+  if (typeof value !== "object" || value === null) return [];
+
+  const wrapper = value as Record<string, unknown>;
+  for (const key of ["data", "items", "results", "addresses"]) {
+    const addresses = extractAddresses(wrapper[key]);
+    if (addresses.length) return addresses;
+  }
+  return [];
+}
+
 function customerPayload(user: QuitHeroAuthenticatedUser): CreateQuitHeroCustomer | undefined {
   const email = user.email?.trim();
 
@@ -358,6 +385,13 @@ export async function createQuitHeroCustomerAddress(customerId: string, address:
     `/customers/${encodeURIComponent(customerId)}/addresses`,
     { method: "POST", body: JSON.stringify(address) },
   );
+}
+
+export async function getQuitHeroCustomerAddresses(customerId: string) {
+  const id = customerId.trim();
+  if (!id) return [];
+  const response = await quitHeroRequest<unknown>(`/customers/${encodeURIComponent(id)}/addresses`);
+  return extractAddresses(response);
 }
 
 export async function updateQuitHeroCustomerAddress(
