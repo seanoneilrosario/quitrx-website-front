@@ -8,6 +8,7 @@ import { productIsVisible } from "@/lib/catalog/bundles";
 import { productCardCache } from "./cache/card-cache";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
 import { QuitHeroCollectionFilters } from "./collections";
+import { productIsListedInShop } from "./helpers";
 
 type QuitHeroProductsResponse =
   | QuitHeroProduct[]
@@ -19,7 +20,7 @@ type QuitHeroProductsResponse =
     };
 
 function productsFrom(payload: QuitHeroProductsResponse) {
-  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload)) return payload.filter(productIsListedInShop);
 
   const products = payload.products ?? payload.data ?? payload.items;
 
@@ -27,7 +28,7 @@ function productsFrom(payload: QuitHeroProductsResponse) {
     throw new Error("QuitHero products response did not contain a product list.");
   }
 
-  return products;
+  return products.filter(productIsListedInShop);
 }
 
 async function loadQuitHeroProducts() {
@@ -167,7 +168,9 @@ const getCachedQuitHeroProducts = unstable_cache(loadQuitHeroProducts, ["quither
   tags: ["quithero-products"],
 });
 
-export const getQuitHeroProducts = cache(getCachedQuitHeroProducts);
+export const getQuitHeroProducts = cache(async () =>
+  (await getCachedQuitHeroProducts()).filter(productIsListedInShop),
+);
 
 const getCachedQuitHeroProduct = unstable_cache(
   async (handle: string) => {

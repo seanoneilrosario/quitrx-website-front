@@ -10,7 +10,7 @@ import { quitHeroFetch, QUITHERO_CACHE_SECONDS } from "./client";
 import { client } from "@/sanity/lib/client";
 import { productIsVisible } from "@/lib/catalog/bundles";
 import { getQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
-import { productMatchesCollectionRules } from "./helpers";
+import { productIsListedInShop, productMatchesCollectionRules } from "./helpers";
 import type {
   QuitHeroCollection,
   QuitHeroCollectionPage,
@@ -201,7 +201,7 @@ async function loadCollectionPage(
       name: response.data.name,
       slug: response.data.slug,
     },
-    products: (response.data.products ?? []).map(cacheProductCard),
+    products: (response.data.products ?? []).filter(productIsListedInShop).map(cacheProductCard),
     pagination: response.pagination,
   };
 }
@@ -437,6 +437,8 @@ function resolveCollectionProducts(
       });
       continue;
     }
+
+    if (!productIsListedInShop(product)) continue;
 
     const key = product.id ?? product.handle ?? product.slug!;
     if (!seen.has(key)) {

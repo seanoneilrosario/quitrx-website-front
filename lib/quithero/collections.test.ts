@@ -16,6 +16,22 @@ afterEach(() => {
 });
 
 describe("collection picker pagination", () => {
+  it("excludes NOTOSHOP products before creating named collection cards", async () => {
+    vi.stubEnv("QUITHERO_API_KEY", "test-key");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+      data: {
+        name: "Shop visibility", slug: "shop-visibility",
+        products: [
+          { id: "hidden-collection", tags: [{ tag: { name: "NOTOSHOP" } }] },
+          { id: "visible-collection", name: "Visible", variants: [], images: [] },
+        ],
+      },
+      pagination: { page: 1, limit: 20, total: 2, totalPages: 1, hasNextPage: false },
+    })));
+    const result = await getQuitHeroCollectionPage("shop-visibility", 1, 20);
+    expect(result.products.map((product) => product.id)).toEqual(["visible-collection"]);
+  });
+
   it("loads collections from every backend page", async () => {
     vi.stubEnv("QUITHERO_API_KEY", "test-key");
     const fetchMock = vi

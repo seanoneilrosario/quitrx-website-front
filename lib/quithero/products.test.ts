@@ -7,10 +7,32 @@ vi.mock("./client", () => ({
   QUITHERO_CATALOG_CACHE_SECONDS: 300,
 }));
 import { quitHeroFetch } from "./client";
-import { getFreshQuitHeroProductById, loadQuitHeroProductsPage } from "./products";
+import { getFreshQuitHeroProductById, getFreshQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
 import { cacheProductCard } from "./cache/card-cache";
 afterEach(() => vi.resetAllMocks());
+
+it("excludes NOTOSHOP tags from every page of the search catalog", async () => {
+  vi.mocked(quitHeroFetch)
+    .mockResolvedValueOnce({
+      data: [{ id: "hidden", tags: [" NOTOSHOP "] }, { id: "visible" }],
+      pagination: { totalPages: 2 },
+    })
+    .mockResolvedValueOnce({
+      data: [{ id: "also-hidden", tags: [{ tag: { slug: "notoshop" } }] }],
+    });
+  expect(await getFreshQuitHeroProducts()).toEqual([{ id: "visible" }]);
+});
+
+it("filters hidden products before loading paginated card relations", async () => {
+  vi.mocked(quitHeroFetch).mockResolvedValue([
+    { id: "hidden-page-card", tags: [{ name: "NOTOSHOP" }] },
+    { id: "visible-page-card", images: [], variants: [] },
+  ]);
+  const result = await loadQuitHeroProductsPage(1, 20, "card");
+  expect(result.products.map((product) => product.id)).toEqual(["visible-page-card"]);
+  expect(quitHeroFetch).toHaveBeenCalledTimes(1);
+});
 
 it("loads fresh product variants by product ID for checkout validation", async () => {
   vi.mocked(quitHeroFetch).mockResolvedValue({
