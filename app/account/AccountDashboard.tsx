@@ -44,6 +44,25 @@ function isCancelled(order: QuitHeroOrder) {
   );
 }
 
+function isWithinRenewalWindow(expiry: string) {
+  const expiryDate = new Date(expiry);
+  if (Number.isNaN(expiryDate.getTime())) return false;
+
+  const renewalStart = new Date(expiryDate);
+  // Clamp to the last day of the target month for dates such as May 31.
+  renewalStart.setDate(1);
+  renewalStart.setMonth(renewalStart.getMonth() - 3);
+  const lastDay = new Date(
+    renewalStart.getFullYear(),
+    renewalStart.getMonth() + 1,
+    0,
+  ).getDate();
+  renewalStart.setDate(Math.min(expiryDate.getDate(), lastDay));
+
+  const now = new Date();
+  return now >= renewalStart && now <= expiryDate;
+}
+
 function formatMoney(amount: number, currency: string) {
   return new Intl.NumberFormat("en-AU", { style: "currency", currency }).format(amount);
 }
@@ -111,6 +130,9 @@ export default function AccountDashboard({
   const headerName = fullName || customer.email?.trim() || "Customer";
   const addresses = addressLines(customer);
   const scriptIsActive = hasActiveScript(customer);
+  const canRenewScript =
+    scriptIsActive &&
+    (!customer.scriptExpiry || isWithinRenewalWindow(customer.scriptExpiry));
 
   if (customer.consultPurchase === false) {
     return (
@@ -177,7 +199,7 @@ export default function AccountDashboard({
               <strong>Expiry Date:</strong> {formatDate(customer.scriptExpiry)}
             </p>
           </div>
-          {!customer.scriptExpiry && scriptIsActive && (
+          {canRenewScript && (
             <Link
               href="/account/prescriptions"
               className="account-button account-button--primary account-button--compact"

@@ -74,6 +74,21 @@ export function useCheckoutDiscounts(
         }
         if (!response.ok) throw new Error(body.error || "Unable to confirm checkout totals.");
         const preview = parseDiscountPreview(body);
+        if (active && process.env.NODE_ENV === "development") {
+          console.groupCollapsed(
+            `[Checkout discounts] Combination: ${preview.appliedDiscounts.length} applied (code: ${code || "none"})`,
+          );
+          console.table(preview.appliedDiscounts);
+          console.log("Totals", {
+            subtotal: preview.subtotal,
+            discountAmount: preview.discountAmount,
+            shippingBefore: preview.shippingTotal,
+            shippingAfter: preview.shippingAfterDiscount,
+            totalAfterDiscount: preview.totalAfterDiscount,
+          });
+          console.log("Line discounts", preview.lineDiscounts);
+          console.groupEnd();
+        }
         if (active) {
           saveCheckoutDiscount(customerId, code);
           setResult({ key, preview });

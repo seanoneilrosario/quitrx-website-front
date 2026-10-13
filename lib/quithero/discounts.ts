@@ -15,9 +15,20 @@ export type DiscountPreviewPayload = {
 };
 
 export async function previewQuitHeroDiscounts(payload: DiscountPreviewPayload) {
+  if (process.env.NODE_ENV === "development") {
+    console.log("[QuitHero discounts] Preview request", payload);
+  }
   const preview = parseDiscountPreview(
     await quitHeroPost<unknown>("/discounts/preview", payload),
   );
+  if (process.env.NODE_ENV === "development") {
+    console.log("[QuitHero discounts] Preview result", {
+      customerId: payload.customerId,
+      requestedCode: payload.discountCode ?? null,
+      appliedCount: preview.appliedDiscounts.length,
+      ...preview,
+    });
+  }
   return deriveBuyXGetYPromotionalItems(preview, payload.items.length);
 }
 
