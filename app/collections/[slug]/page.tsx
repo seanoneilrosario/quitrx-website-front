@@ -9,17 +9,32 @@ type CollectionPageProps = {
   searchParams: Promise<{ page?: string | string[] }>;
 };
 
+const starterPackCollections = new Set([
+  "pre-filled-system-packs",
+  "refillable-system-pack",
+  "refillable-system-packs",
+  "mod-packs",
+  "liquid-packs",
+]);
+
 export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
   const { slug } = await params;
 
   const query = await searchParams;
   const page = parseCollectionPage(Array.isArray(query.page) ? query.page[0] : query.page);
   const initialPage = await getFastQuitHeroCollectionPage(slug, page, COLLECTION_PAGE_SIZE);
+  const isStarterPack =
+    starterPackCollections.has(slug) ||
+    starterPackCollections.has(initialPage.collection.name.trim().toLowerCase().replace(/\s+/g, "-"));
 
   return (
     <main className={styles.page}>
       <div className="page-width">
-        <Link href="/pharmacy" className={styles.backToPharmacy} aria-label="Go back to pharmacy">
+        <Link
+          href={isStarterPack ? "/starter-pack" : "/pharmacy"}
+          className={styles.backToPharmacy}
+          aria-label={isStarterPack ? "Go back to Starter Packs" : "Go back to pharmacy"}
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
               d="M19 12H5m7-7-7 7 7 7"
