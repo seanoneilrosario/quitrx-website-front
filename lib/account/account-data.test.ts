@@ -1,14 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-const mocks = vi.hoisted(() => ({ session: vi.fn(), auth: vi.fn(), customer: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  session: vi.fn(),
+  auth: vi.fn(),
+  customer: vi.fn(),
+  addresses: vi.fn(),
+}));
 vi.mock("@/lib/auth/customer-session", () => ({ getCustomerSession: mocks.session }));
 vi.mock("@/auth", () => ({ auth: mocks.auth }));
-vi.mock("@/lib/quithero/customers", () => ({ findQuitHeroCustomerByEmail: mocks.customer }));
+vi.mock("@/lib/quithero/customers", () => ({
+  findQuitHeroCustomerByEmail: mocks.customer,
+  getQuitHeroCustomerAddresses: mocks.addresses,
+}));
 
 import { getInitialAccount } from "./account-data";
 
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => {
+  vi.resetAllMocks();
+  mocks.addresses.mockResolvedValue([]);
+});
 
 describe("initial account render", () => {
   it("loads the signed-in customer's greeting for the server-rendered header", async () => {
@@ -34,5 +45,18 @@ describe("initial account render", () => {
     mocks.auth.mockResolvedValue({ user: { email: "levi@example.com", name: "Levi Smith" } });
     mocks.customer.mockResolvedValue({ id: "one" });
     expect(await getInitialAccount()).toMatchObject({ firstName: "Levi", lastName: "Smith" });
+  });
+
+  it("includes saved addresses in the initial checkout customer", async () => {
+    mocks.session.mockResolvedValue({ email: "levi@example.com" });
+    mocks.customer.mockResolvedValue({ id: "one", firstName: "Levi" });
+    mocks.addresses.mockResolvedValue([
+      { id: "home", isDefault: true, address1: "1 Main St", city: "Sydney" },
+    ]);
+
+    expect(await getInitialAccount()).toMatchObject({
+      addresses: [{ id: "home", isDefault: true, address1: "1 Main St", city: "Sydney" }],
+    });
+    expect(mocks.addresses).toHaveBeenCalledWith("one");
   });
 });
