@@ -23,6 +23,7 @@ import RichtextImage from "./text/RichtextWithImage";
 import PromotionalBannerSlider from "./hero/PromotionalBannerSlider";
 import BrandGrid from "./images/BrandGrid";
 import ProductApiGrid from "./products/ProductApiGrid";
+import ProductHighlights from "./products/ProductHighlights";
 import IntakeForm from "./forms/IntakeForm";
 import UploadPrescription from "./forms/UploadPrescription";
 import EscriptRequest from "./forms/EscriptRequest";
@@ -213,6 +214,10 @@ const sectionRenderers: Record<
   ),
   product_api_grid: (component) => (
     <ProductApiGrid
+      collectionLayout={component.collectionLayout}
+      tileSize={component.tileSize}
+      tileRadius={component.tileRadius}
+      showBottomBorder={component.showBottomBorder}
       heading={component.heading}
       productLimit={component.productLimit}
       displayMode={component.displayMode}
@@ -220,6 +225,20 @@ const sectionRenderers: Record<
       collections={component.collections}
       paddingTop={component.paddingTop}
       paddingBottom={component.paddingBottom}
+      desktopPaddingTop={component.desktopPaddingTop}
+      desktopPaddingBottom={component.desktopPaddingBottom}
+      mobilePaddingTop={component.mobilePaddingTop}
+      mobilePaddingBottom={component.mobilePaddingBottom}
+    />
+  ),
+  product_highlights: (component) => (
+    <ProductHighlights
+      highlightSource={component.highlightSource}
+      highlightProducts={component.highlightProducts}
+      heading={component.heading}
+      highlightCollection={component.highlightCollection}
+      productLimit={component.productLimit}
+      showBottomBorder={component.showBottomBorder}
       desktopPaddingTop={component.desktopPaddingTop}
       desktopPaddingBottom={component.desktopPaddingBottom}
       mobilePaddingTop={component.mobilePaddingTop}
@@ -264,7 +283,7 @@ export default function SectionRenderer({
       const isValid =
         Boolean(component) && typeof component === "object" && typeof component._type === "string";
 
-      return isValid;
+      return isValid && component.hideSection !== true;
     });
   }, [components]);
 

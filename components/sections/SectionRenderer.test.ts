@@ -24,6 +24,7 @@ vi.mock("./images/BrandGrid", () => ({ default: () => null }));
 vi.mock("./products/ProductApiGrid", () => ({
   default: ({ heading }: { heading: string }) => createElement("h2", null, heading),
 }));
+vi.mock("./products/ProductHighlights", () => ({ default: () => null }));
 vi.mock("./forms/IntakeForm", () => ({ default: () => null }));
 vi.mock("./forms/UploadPrescription", () => ({ default: () => null }));
 vi.mock("./forms/EscriptRequest", () => ({ default: () => null }));
@@ -47,4 +48,27 @@ it("renders every ProductApiGrid in CMS order", () => {
   expect(html.match(/class="product_api_grid-section"/g)).toHaveLength(3);
   expect(html.indexOf(headings[0])).toBeLessThan(html.indexOf(headings[1]));
   expect(html.indexOf(headings[1])).toBeLessThan(html.indexOf(headings[2]));
+});
+
+it("omits hidden sections and their wrappers while keeping visible and legacy sections", () => {
+  const html = renderToStaticMarkup(
+    createElement(SectionRenderer, {
+      components: [true, false, undefined].map((hideSection, index) => ({
+        _type: "product_api_grid" as const,
+        _key: `section-${index}`,
+        sectionId: `anchor-${index}`,
+        heading: `Heading ${index}`,
+        hideSection,
+        hide_separator: false,
+        offices: [],
+        box: [],
+        items: [],
+      })),
+    }),
+  );
+  expect(html).not.toContain("Heading 0");
+  expect(html).not.toContain("anchor-0");
+  expect(html).toContain("Heading 1");
+  expect(html).toContain("Heading 2");
+  expect(html.match(/class="product_api_grid-section"/g)).toHaveLength(2);
 });

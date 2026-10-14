@@ -8,6 +8,40 @@ export default defineType({
   type: "object",
   fields: [
     sectionIdField,
+    defineField({
+      name: "collectionLayout",
+      title: "Collection tile layout",
+      type: "string",
+      initialValue: "default",
+      options: {
+        list: [
+          { title: "Original", value: "default" },
+          { title: "Pharmacy — circular green tiles", value: "pharmacy" },
+          { title: "Brands — rectangular logo tiles", value: "brands" },
+        ],
+      },
+    }),
+    defineField({
+      name: "tileSize",
+      title: "Tile width (px)",
+      description: "Maximum tile width. Tiles shrink to fit on smaller screens.",
+      type: "number",
+      validation: (Rule) => Rule.integer().min(40).max(600),
+    }),
+    defineField({
+      name: "tileRadius",
+      title: "Tile corner radius (px)",
+      description:
+        "Leave empty for the layout default. Use 999 for a circle with the pharmacy layout.",
+      type: "number",
+      validation: (Rule) => Rule.min(0).max(999),
+    }),
+    defineField({
+      name: "showBottomBorder",
+      title: "Show bottom divider",
+      type: "boolean",
+      initialValue: false,
+    }),
     defineField({ name: "heading", title: "Heading", type: "string", initialValue: "Collections" }),
     defineField({
       name: "displayMode",

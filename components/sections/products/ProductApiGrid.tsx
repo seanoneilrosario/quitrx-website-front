@@ -16,6 +16,10 @@ import { ProductGridAccessNotice, ProductGridSkeleton } from "./GridFeedback";
 import styles from "./product-api-grid.module.css";
 
 type ProductApiGridProps = {
+  collectionLayout?: "default" | "pharmacy" | "brands";
+  tileSize?: number;
+  tileRadius?: number;
+  showBottomBorder?: boolean;
   heading?: string;
   productLimit?: number;
   paddingTop?: number;
@@ -55,6 +59,10 @@ function CatalogGrid({ mode, limit }: { mode: "collections" | "products"; limit:
 }
 
 export default function ProductApiGrid({
+  collectionLayout = "default",
+  tileSize,
+  tileRadius,
+  showBottomBorder = false,
   heading = "Products",
   productLimit = 12,
   paddingTop = 60,
@@ -76,6 +84,8 @@ export default function ProductApiGrid({
       ? [collection]
       : [];
   const sectionStyle = {
+    ...(tileSize !== undefined ? { "--tile-size": `${tileSize}px` } : {}),
+    ...(tileRadius !== undefined ? { "--tile-radius": `${tileRadius}px` } : {}),
     "--desktop-padding-top": `${desktopPaddingTop ?? paddingTop}px`,
     "--desktop-padding-bottom": `${desktopPaddingBottom ?? paddingBottom}px`,
     "--mobile-padding-top": `${mobilePaddingTop}px`,
@@ -102,14 +112,16 @@ export default function ProductApiGrid({
 
   return (
     <section
-      className={styles.section}
+      className={`${styles.section} ${collectionLayout === "default" ? "" : styles[collectionLayout]}`}
       style={sectionStyle}
       aria-busy={loading}
       aria-label={loading ? "Loading products" : undefined}
     >
       <div className="page-width">
-        {(loading || hasAccess) && heading && <h2 className={styles.heading}>{heading}</h2>}
-        {renderContent()}
+        <div className={showBottomBorder ? styles.divider : undefined}>
+          {(loading || hasAccess) && heading && <h2 className={styles.heading}>{heading}</h2>}
+          {renderContent()}
+        </div>
       </div>
     </section>
   );

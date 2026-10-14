@@ -9,7 +9,7 @@ export function CollectionGridCard({ collection }: { collection: CollectionCardD
   return (
     <Link
       href={href}
-      className={styles.card}
+      className={`${styles.card} ${styles.collectionCard}`}
       target={openInNewTab ? "_blank" : undefined}
       rel={openInNewTab ? "noopener noreferrer" : undefined}
     >

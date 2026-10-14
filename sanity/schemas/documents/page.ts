@@ -86,6 +86,7 @@ export const pageType = defineType({
         { type: "promotional_banner_slider" },
         { type: "brand_grid" },
         { type: "product_api_grid" },
+        { type: "product_highlights" },
         { type: "intakeForm" },
         { type: "uploadPrescription" },
         { type: "escriptRequest" },
@@ -132,6 +133,7 @@ export const pageType = defineType({
               of: [
                 "supportForm",
                 "product_api_grid",
+                "product_highlights",
                 "intakeForm",
                 "uploadPrescription",
                 "escriptRequest",

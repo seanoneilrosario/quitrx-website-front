@@ -5,23 +5,17 @@ Facebook email linking now requires a matching verified email-code session.
 
 ## Required before deploying email login
 
-Create/connect an Upstash Redis database, then set these **server-only** environment variables in Vercel for each deployment environment:
+Set these server-only environment variables:
 
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN` (read/write token)
-- `AUTH_SECRET` or `AUTH_SESSION_SECRET` (at least 32 random characters; retain the existing secret)
+- `AUTH_SECRET` or `AUTH_SESSION_SECRET` (at least 32 random characters)
+- `RESEND_API_KEY`
+- `EMAIL_FROM`
 
-Existing `RESEND_API_KEY` and `EMAIL_FROM` settings are still needed. Never use a `NEXT_PUBLIC_` prefix for secrets.
-Redeploy after setting variables. Email login fails closed if Redis is missing or unavailable; social login is independent.
-Existing email codes issued before this change expire; request a new code.
+Restart locally or redeploy after changes. Never prefix secrets with `NEXT_PUBLIC_`.
 
-Limits: one code request per email per minute, five per email per hour, twenty per IP per hour.
-Codes expire in ten minutes, allow five incorrect guesses and can succeed only once.
-Counters and consumption use atomic Redis scripts; deleting or replaying browser cookies cannot reset them.
-Vercel's overwritten `x-vercel-forwarded-for` header supplies the IP. Non-Vercel deployments share one IP bucket until trusted-proxy handling is configured.
+Email codes use signed, HTTP-only cookies, expire after ten minutes, and track five failed attempts and a one-minute resend cooldown in the current cookie. Successful verification clears the cookie. There is no shared rate-limit or consumption store: deleting cookies resets these limits, and replaying a saved valid cookie can reuse a code until expiry.
+
 Local passwordless bypass requires `ENABLE_LOCAL_LOGIN=true` and never works in production.
-
-References: [Upstash REST API](https://upstash.com/docs/redis/features/restapi), [Vercel request headers](https://vercel.com/docs/headers/request-headers).
 
 ## Account settings still required
 
@@ -34,4 +28,4 @@ Headers restrict framing to the same origin, disable plugins, restrict base URLs
 
 ## Deployment checks
 
-Verify an email sign-in end to end; replay a used challenge and confirm rejection in a test environment. Check request quotas with a test mailbox. Confirm forms, OAuth popups, Sanity Studio and payment redirects work. Inspect response headers. Do not publish until Redis configuration is ready.
+Verify email sign-in, code expiry, incorrect-code handling and the resend cooldown. Confirm forms, OAuth popups, Sanity Studio and payment redirects work. Inspect response headers.

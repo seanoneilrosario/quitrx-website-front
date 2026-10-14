@@ -1,0 +1,31 @@
+.section {
+  padding: var(--desktop-padding-top) 0 var(--desktop-padding-bottom);
+  background: #f3f7fb;
+  color: #035c67;
+}
+.heading {
+  margin: 0 0 28px;
+  color: #035c67;
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 500;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 960px;
+}
+.divider {
+  padding-bottom: 32px;
+  border-bottom: 1px solid #a8e7db;
+}
+@media (max-width: 700px) {
+  .section {
+    padding-top: var(--mobile-padding-top);
+    padding-bottom: var(--mobile-padding-bottom);
+  }
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+}

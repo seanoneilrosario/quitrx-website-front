@@ -1,12 +1,73 @@
 .section {
   padding-top: var(--desktop-padding-top, 60px);
   padding-bottom: var(--desktop-padding-bottom, 60px);
-  background: #035c67;
+  background: #f3f6fb;
+}
+
+.divider {
+  padding-bottom: 28px;
+  border-bottom: 1px solid #a8e7db;
+}
+.collectionCard {
+  width: 100%;
+  max-width: var(--tile-size, 100%);
+  justify-self: center;
+}
+.collectionCard .imageWrap {
+  border-radius: var(--tile-radius, 24px);
+}
+.pharmacy,
+.brands {
+  background: #f3f7fb;
+}
+.pharmacy .heading,
+.brands .heading {
+  color: #035c67;
+  text-align: left;
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 600;
+}
+.pharmacy .grid,
+.brands .grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 28px 16px;
+}
+.pharmacy .collectionCard {
+  max-width: var(--tile-size, 150px);
+}
+.brands .collectionCard {
+  max-width: var(--tile-size, 200px);
+}
+.pharmacy .collectionCard .imageWrap {
+  border-radius: var(--tile-radius, 999px);
+  background: transparent;
+  padding: 10%;
+}
+.brands .collectionCard .imageWrap {
+  border-radius: var(--tile-radius, 10px);
+  aspect-ratio: 2 / 1;
+  padding: 12%;
+}
+.pharmacy .content h3,
+.brands .content h3 {
+  color: #035c67;
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 600;
+}
+.pharmacy .status,
+.brands .status,
+.pharmacy .error,
+.brands .error {
+  color: #035c67;
+}
+.pharmacy .skeletonImage,
+.brands .skeletonImage {
+  background-color: #d4e6e9;
 }
 
 .heading {
   margin: 0 0 24px;
-  color: #fff;
+  color: #035c67;
   font-family: "Quicksand", sans-serif;
   font-size: 40px;
   font-weight: 600;
@@ -122,7 +183,7 @@
   aspect-ratio: 1;
   place-items: center;
   overflow: hidden;
-  padding: clamp(12px, 2vw, 28px);
+  padding: 0;
   border-radius: 24px;
   background: #fff;
   transition:
@@ -131,8 +192,8 @@
 }
 
 .card:hover .imageWrap {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgb(0 0 0 / 14%);
+  /* transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 14%); */
 }
 
 .image {
@@ -165,7 +226,7 @@
 
 .content h3 {
   margin: 0;
-  color: #fff;
+  color: #035c67;
   font-size: 18px;
   font-weight: 600;
   line-height: 1.25;

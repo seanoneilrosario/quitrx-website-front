@@ -1,4 +1,5 @@
 import { type SchemaTypeDefinition } from "sanity";
+import { hideSectionField } from "./fields/hide-section";
 
 import { blockContentType } from "./objects/block-content";
 import { categoryType } from "./documents/category";
@@ -32,6 +33,7 @@ import banner_slider from "./sections/banner-slider";
 import promotional_banner_slider from "./sections/promotional-banner-slider";
 import brand_grid from "./sections/brand-grid";
 import product_api_grid from "./sections/product-api-grid";
+import product_highlights from "./sections/product-highlights";
 import { intakeForm } from "./sections/intake-form";
 import { uploadPrescription } from "./sections/upload-prescription";
 import { escriptRequest } from "./sections/escript-request";
@@ -51,30 +53,33 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     productCollectionType,
     imageDocument,
     // components
-    videoBanner,
-    banner,
-    twoColumnLayout,
-    imageGrid,
-    richtext_with_cta,
-    richtext_with_image,
-    richtextWithGroupedCTA,
-    richtext,
-    heading_with_link,
-    multi_row,
-    contact_section,
-    prescriptionComparison,
-    escriptBanner,
-    textBlockWithIcon,
-    textImage,
-    faq,
-    externalForm,
-    floatingCTASchema,
-    banner_slider,
-    promotional_banner_slider,
-    brand_grid,
-    product_api_grid,
-    intakeForm,
-    uploadPrescription,
-    escriptRequest,
+    ...[
+      videoBanner,
+      banner,
+      twoColumnLayout,
+      imageGrid,
+      richtext_with_cta,
+      richtext_with_image,
+      richtextWithGroupedCTA,
+      richtext,
+      heading_with_link,
+      multi_row,
+      contact_section,
+      prescriptionComparison,
+      escriptBanner,
+      textBlockWithIcon,
+      textImage,
+      faq,
+      externalForm,
+      floatingCTASchema,
+      banner_slider,
+      promotional_banner_slider,
+      brand_grid,
+      product_api_grid,
+      product_highlights,
+      intakeForm,
+      uploadPrescription,
+      escriptRequest,
+    ].map((section) => ({ ...section, fields: [hideSectionField, ...section.fields] })),
   ],
 };

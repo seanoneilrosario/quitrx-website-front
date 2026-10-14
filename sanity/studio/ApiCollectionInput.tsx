@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { set, type ObjectInputProps } from "sanity";
+import { set, setIfMissing, type ObjectInputProps } from "sanity";
 import styled from "styled-components";
 import type { QuitHeroCollection } from "@/lib/quithero/types";
 
@@ -232,16 +232,13 @@ export function ApiCollectionInput(props: ObjectInputProps<CollectionValue>) {
               onFocus={elementProps.onFocus}
               onBlur={elementProps.onBlur}
               onChange={() =>
-                onChange(
-                  set({
-                    ...value,
-                    _type: "apiCollection",
-                    id: item.id ?? "",
-                    slug: item.slug,
-                    title: item.name || item.slug,
-                    image: typeof item.image === "string" ? item.image : "",
-                  }),
-                )
+                onChange([
+                  setIfMissing({ _type: props.schemaType.name }),
+                  set(item.id ?? "", ["id"]),
+                  set(item.slug, ["slug"]),
+                  set(item.name || item.slug, ["title"]),
+                  set(typeof item.image === "string" ? item.image : "", ["image"]),
+                ])
               }
             />
             <span className="collection-details">

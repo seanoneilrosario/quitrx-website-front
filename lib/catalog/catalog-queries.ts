@@ -5,6 +5,18 @@ import { API_STALE_TIME } from "@/lib/query/query-cache";
 import { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 
 export type CollectionPageResponse = QuitHeroCollectionPage;
+export function selectedHighlightsQuery(ids: string[]) {
+  const selected = [...new Set(ids)].slice(0, 15);
+  const params = new URLSearchParams();
+  selected.forEach((id) => params.append("productId", id));
+  return queryOptions({
+    queryKey: ["api", "/api/quithero-highlights", selected] as const,
+    queryFn: ({ signal }) => getCatalogData<Pick<QuitHeroCollectionPage, "products">>(`/api/quithero-highlights?${params}`, signal),
+    staleTime: API_STALE_TIME,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+}
 export { COLLECTION_PAGE_SIZE } from "./catalog-pagination";
 
 export type CollectionFilterValue = {

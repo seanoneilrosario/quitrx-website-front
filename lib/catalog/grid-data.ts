@@ -5,6 +5,7 @@ export type GridCollection = {
   link?: string;
   openInNewTab?: boolean;
 };
+
 export type CollectionCardData = {
   slug?: string;
   href: string;

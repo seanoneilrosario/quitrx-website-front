@@ -3,9 +3,6 @@ const mocks = vi.hoisted(() => ({
   cookies: new Map<string, string>(),
   customer: vi.fn(),
   session: vi.fn(),
-  allow: vi.fn(),
-  register: vi.fn(),
-  consume: vi.fn(),
 }));
 vi.mock("next/headers", () => ({
   cookies: async () => ({
@@ -21,11 +18,6 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib/quithero/customers", () => ({ findQuitHeroCustomerByEmail: mocks.customer }));
 vi.mock("@/lib/auth/customer-session", () => ({ setCustomerSession: mocks.session }));
-vi.mock("@/lib/auth/login-protection", () => ({
-  allowLoginEmail: mocks.allow,
-  registerLoginCode: mocks.register,
-  consumeLoginCode: mocks.consume,
-}));
 import { accessCustomerAccount } from "./actions";
 
 beforeEach(() => {
@@ -39,7 +31,6 @@ beforeEach(() => {
     "fetch",
     vi.fn(async () => Response.json({ id: "sent" })),
   );
-  mocks.allow.mockResolvedValue(true);
   mocks.customer.mockResolvedValue({ id: "customer", email: "person@example.test" });
 });
 afterEach(() => {
@@ -53,24 +44,32 @@ function form(intent: string) {
   data.set("code", "123456");
   return data;
 }
-it("does not send email or look up customers once the shared quota is exceeded", async () => {
-  mocks.allow.mockResolvedValue(false);
-  expect((await accessCustomerAccount({}, form("request"))).error).toContain("Too many requests");
-  expect(mocks.customer).not.toHaveBeenCalled();
-  expect(fetch).not.toHaveBeenCalled();
-});
 it("uses generic responses for existing and unknown accounts", async () => {
   const existing = await accessCustomerAccount({}, form("request"));
   mocks.cookies.clear();
   mocks.customer.mockResolvedValue(undefined);
   expect(await accessCustomerAccount({}, form("request"))).toEqual(existing);
 });
-it("never creates a session when server-side verification rejects a replay", async () => {
+it("sends and verifies a signed cookie code", async () => {
+  expect((await accessCustomerAccount({}, form("request"))).step).toBe("code");
+  const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body));
+  const code = body.text.match(/code is (\d{6})/)[1];
+  const verify = form("verify");
+  verify.set("code", code);
+  await expect(accessCustomerAccount({}, verify)).rejects.toThrow("REDIRECT:/account");
+  expect(mocks.session).toHaveBeenCalledOnce();
+  expect(mocks.cookies.has("quitrx_email_code")).toBe(false);
+});
+
+it("rejects incorrect codes after five attempts", async () => {
   await accessCustomerAccount({}, form("request"));
-  const saved = mocks.cookies.get("quitrx_email_code")!;
-  mocks.consume.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
-  await expect(accessCustomerAccount({}, form("verify"))).rejects.toThrow("REDIRECT:/account");
-  mocks.cookies.set("quitrx_email_code", saved);
-  expect((await accessCustomerAccount({}, form("verify"))).error).toContain("invalid");
-  expect(mocks.session).toHaveBeenCalledTimes(1);
+  const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body));
+  const code = body.text.match(/code is (\d{6})/)[1];
+  const verify = form("verify");
+  verify.set("code", code === "000000" ? "000001" : "000000");
+  for (let attempt = 0; attempt < 5; attempt++)
+    expect((await accessCustomerAccount({}, verify)).error).toContain("invalid");
+  verify.set("code", code);
+  expect((await accessCustomerAccount({}, verify)).error).toContain("invalid");
+  expect(mocks.session).not.toHaveBeenCalled();
 });

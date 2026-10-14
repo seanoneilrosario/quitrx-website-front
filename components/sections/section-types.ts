@@ -114,11 +114,20 @@ export type SectionType =
   | "promotional_banner_slider"
   | "brand_grid"
   | "product_api_grid"
+  | "product_highlights"
   | "intakeForm"
   | "uploadPrescription"
   | "escriptRequest";
 
 export interface ContentSection {
+  hideSection?: boolean;
+  highlightSource?: "products" | "collection";
+  highlightProducts?: { id?: string; title?: string; slug?: string; new_product?: boolean }[];
+  highlightCollection?: { title?: string; slug?: string };
+  collectionLayout?: "default" | "pharmacy" | "brands";
+  tileSize?: number;
+  tileRadius?: number;
+  showBottomBorder?: boolean;
   _key: string;
   _type: SectionType;
   sectionId?: string;

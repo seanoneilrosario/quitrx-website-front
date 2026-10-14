@@ -14,12 +14,20 @@ import styles from "./collection-catalog.module.css";
 const CART_KEY = "quitrx-cart";
 
 type ProductCardProps = {
+  new_product?: boolean;
+  compact?: boolean;
   product: QuitHeroProduct;
   locked?: boolean;
   onLockedClick?: () => void;
 };
 
-export default function ProductCard({ product, locked = false, onLockedClick }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  locked = false,
+  onLockedClick,
+  compact = false,
+  new_product = false,
+}: ProductCardProps) {
   const image = product.images?.find((item) => item.isPrimary) ?? product.images?.[0];
   const prices = (product.variants ?? []).flatMap((variant) => {
     if (variant.price === undefined || variant.price === null || variant.price === "") return [];
@@ -108,9 +116,10 @@ export default function ProductCard({ product, locked = false, onLockedClick }: 
       : undefined;
 
   return (
-    <article className={styles.productCard}>
+    <article className={`${styles.productCard} ${compact ? styles.compactCard : ""}`}>
       <Link href={productUrl} prefetch={false} className={styles.productLink} onClick={lockedClick}>
         <span className={styles.productImageWrap}>
+          {new_product && <span className={styles.newProductBadge}>NEW</span>}
           {locked && <span className={styles.scriptRequired}>Script required</span>}
           {locked ? (
             <Image
