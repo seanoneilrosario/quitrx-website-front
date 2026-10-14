@@ -3,8 +3,12 @@ vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("./shop-visibility", async () => {
   const { productIsListedInShop } = await import("./helpers");
-  return { filterShopProducts: async (products: import("./product-types").QuitHeroProduct[]) =>
-    products.filter((product) => productIsListedInShop(product) && product.id !== "hidden-scalar") };
+  return {
+    filterShopProducts: async (products: import("./product-types").QuitHeroProduct[]) =>
+      products.filter(
+        (product) => productIsListedInShop(product) && product.id !== "hidden-scalar",
+      ),
+  };
 });
 vi.mock("./client", () => ({
   quitHeroFetch: vi.fn(),
@@ -12,7 +16,11 @@ vi.mock("./client", () => ({
   QUITHERO_CATALOG_CACHE_SECONDS: 300,
 }));
 import { quitHeroFetch } from "./client";
-import { getFreshQuitHeroProductById, getFreshQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
+import {
+  getFreshQuitHeroProductById,
+  getFreshQuitHeroProducts,
+  loadQuitHeroProductsPage,
+} from "./products";
 import { toCollectionProduct } from "@/lib/catalog/collection-product";
 import { cacheProductCard } from "./cache/card-cache";
 afterEach(() => vi.resetAllMocks());
@@ -62,8 +70,12 @@ it("loads missing card relations only for the requested page and paginates varia
     const url = new URL(path, "https://example.test");
     if (url.pathname === "/products")
       return {
-        data: [{ id: "one", name: "One", productType: "Bundle" }],
-        pagination: { total: 20, totalPages: 20 },
+        data: Array.from({ length: 20 }, (_, index) =>
+          index === 1
+            ? { id: "one", name: "One", productType: "Bundle" }
+            : { id: `other-${index}`, name: `Other ${index}` },
+        ),
+        pagination: { total: 20, totalPages: 1 },
       };
     expect(url.searchParams.get("productId")).toBe("one");
     if (url.pathname === "/product-images")
@@ -88,7 +100,7 @@ it("loads missing card relations only for the requested page and paginates varia
   const result = await loadQuitHeroProductsPage(2, 1);
   const card = toCollectionProduct(result.products[0]);
   expect(fetch).toHaveBeenCalledTimes(4);
-  expect(fetch).toHaveBeenCalledWith("/products?page=2&limit=1&status=active", {
+  expect(fetch).toHaveBeenCalledWith("/products?page=1&limit=100&status=active", {
     beforeRequest: expect.any(Function),
   });
   expect(card.images?.[0].url).toBe("https://example.test/product.png");
@@ -96,9 +108,9 @@ it("loads missing card relations only for the requested page and paginates varia
   expect(card.variants).toHaveLength(2);
   expect(result.total).toBe(20);
   await loadQuitHeroProductsPage(2, 1);
-  expect(fetch).toHaveBeenCalledTimes(5); // list only; card relations are reused
+  expect(fetch).toHaveBeenCalledTimes(4); // snapshot and card relations are reused
   await loadQuitHeroProductsPage(2, 1, undefined, true);
-  expect(fetch).toHaveBeenCalledTimes(9); // explicit refresh reloads relations
+  expect(fetch).toHaveBeenCalledTimes(8); // explicit refresh reloads snapshot and relations
 });
 
 it("reuses a card seeded by a named collection without fetching its relations", async () => {
@@ -111,7 +123,7 @@ it("reuses a card seeded by a named collection without fetching its relations", 
   const fetch = vi
     .mocked(quitHeroFetch)
     .mockResolvedValue({ data: [{ id: "seeded" }], pagination: { total: 1, totalPages: 1 } });
-  const result = await loadQuitHeroProductsPage(1, 1);
+  const result = await loadQuitHeroProductsPage(1, 1, "seeded");
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(result.products[0]).toMatchObject({
     name: "Seeded",

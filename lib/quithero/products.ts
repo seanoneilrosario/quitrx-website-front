@@ -10,6 +10,7 @@ import { toCollectionProduct } from "@/lib/catalog/collection-product";
 import { QuitHeroCollectionFilters } from "./collections";
 import { productIsListedInShop } from "./helpers";
 import { filterShopProducts } from "./shop-visibility";
+import { visibleProductPage } from "./visible-product-pages";
 
 type QuitHeroProductsResponse =
   | QuitHeroProduct[]
@@ -85,8 +86,6 @@ export async function loadQuitHeroProductsPage(
     requests += 1;
   };
   const query = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
     status: "active",
   });
 
@@ -108,17 +107,30 @@ export async function loadQuitHeroProductsPage(
   ];
 
   if (attributeFilters.length) {
-    query.set(
-      "attributeFilters",
-      attributeFilters.join(","),
-    );
+    query.set("attributeFilters", attributeFilters.join(","));
   }
 
-  const payload = await quitHeroFetch<QuitHeroProductsResponse>(`/products?${query}`, {
-    beforeRequest,
-  });
-
-  const listedProducts = await filterShopProducts(productsFrom(payload), fresh);
+  const visiblePage = await visibleProductPage(
+    `/products?${query}`,
+    page,
+    limit,
+    async (backendPage, backendLimit) => {
+      const params = new URLSearchParams({
+        page: String(backendPage),
+        limit: String(backendLimit),
+      });
+      query.forEach((value, key) => params.append(key, value));
+      const payload = await quitHeroFetch<QuitHeroProductsResponse>(`/products?${params}`, {
+        beforeRequest,
+      });
+      return {
+        products: productsFrom(payload),
+        totalPages: Array.isArray(payload) ? 1 : Number(payload.pagination?.totalPages ?? 1),
+      };
+    },
+    fresh,
+  );
+  const listedProducts = visiblePage.products;
   const products: QuitHeroProduct[] = [];
 
   // /products is a scalar-only list. Load only the missing card relations for
@@ -145,18 +157,10 @@ export async function loadQuitHeroProductsPage(
     products.push(card);
   }
 
-  const total = Array.isArray(payload)
-    ? products.length
-    : Number(payload.pagination?.total) || products.length;
-
-  const totalPages = Array.isArray(payload)
-    ? 1
-    : Math.max(1, Number(payload.pagination?.totalPages) || 1);
-
   return {
     products,
-    total,
-    totalPages,
+    total: visiblePage.pagination.total,
+    totalPages: visiblePage.pagination.totalPages,
   };
 }
 

@@ -12,6 +12,7 @@ import { productIsVisible } from "@/lib/catalog/bundles";
 import { getQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
 import { productIsListedInShop, productMatchesCollectionRules } from "./helpers";
 import { filterShopProducts } from "./shop-visibility";
+import { visibleProductPage } from "./visible-product-pages";
 import type {
   QuitHeroCollection,
   QuitHeroCollectionPage,
@@ -111,8 +112,7 @@ async function loadCollectionPage(
   };
 
   if (slug === "all-products") {
-    const { products, total, totalPages } =
-    await loadQuitHeroProductsPage(
+    const { products, total, totalPages } = await loadQuitHeroProductsPage(
       normalizedPage,
       normalizedLimit,
       undefined,
@@ -146,8 +146,6 @@ async function loadCollectionPage(
   }
 
   const params = new URLSearchParams({
-    page: String(normalizedPage),
-    limit: String(normalizedLimit),
     status: "active",
     productFields: COLLECTION_PRODUCT_FIELDS,
   });
@@ -184,26 +182,37 @@ async function loadCollectionPage(
     params.append("attributeFilters", value);
   });
 
-  const response = await quitHeroFetch<{
-    data: {
-      id: string;
-      name: string;
-      slug: string;
-      description?: string | null;
-      products: QuitHeroProduct[];
-    };
-    pagination: QuitHeroPagination;
-  }>(
-    `/collections/${encodeURIComponent(slug)}?${params.toString()}`,
+  const visiblePage = await visibleProductPage(
+    `/collections/${encodeURIComponent(slug)}?${params}`,
+    normalizedPage,
+    normalizedLimit,
+    async (backendPage, backendLimit) => {
+      const backendParams = new URLSearchParams(params);
+      backendParams.set("page", String(backendPage));
+      backendParams.set("limit", String(backendLimit));
+      const response = await quitHeroFetch<{
+        data: {
+          id: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          products: QuitHeroProduct[];
+        };
+        pagination: QuitHeroPagination;
+      }>(`/collections/${encodeURIComponent(slug)}?${backendParams}`);
+      return {
+        collection: { name: response.data.name, slug: response.data.slug },
+        products: response.data.products ?? [],
+        totalPages: response.pagination.totalPages,
+      };
+    },
+    fresh,
   );
 
   return {
-    collection: {
-      name: response.data.name,
-      slug: response.data.slug,
-    },
-    products: (await filterShopProducts(response.data.products ?? [], fresh)).map(cacheProductCard),
-    pagination: response.pagination,
+    collection: visiblePage.collection!,
+    products: visiblePage.products.map(cacheProductCard),
+    pagination: visiblePage.pagination,
   };
 }
 
@@ -221,22 +230,10 @@ function collectionPage(
     1,
     Math.min(slug === "all-products" ? ALL_PRODUCTS_PAGE_SIZE : 100, Math.floor(limit)),
   );
-  const key = JSON.stringify([
-    slug,
-    normalizedPage,
-    normalizedLimit,
-    filters,
-  ]);
+  const key = JSON.stringify([slug, normalizedPage, normalizedLimit, filters]);
   return collectionPageCache.get(
     key,
-    () =>
-    loadCollectionPage(
-      slug,
-      normalizedPage,
-      normalizedLimit,
-      filters,
-      fresh,
-    ),
+    () => loadCollectionPage(slug, normalizedPage, normalizedLimit, filters, fresh),
     fresh,
   );
 }
@@ -248,29 +245,12 @@ export function getQuitHeroCollectionPage(
   limit: number,
   filters: QuitHeroCollectionFilters = {},
 ) {
-  return collectionPage(
-    slug,
-    page,
-    limit,
-    filters,
-    true,
-  );
+  return collectionPage(slug, page, limit, filters, true);
 }
 
 export const getFastQuitHeroCollectionPage = cache(
-  (
-    slug: string,
-    page: number,
-    limit: number,
-    filters: QuitHeroCollectionFilters = {},
-  ) =>
-    collectionPage(
-      slug,
-      page,
-      limit,
-      filters,
-      false,
-    ),
+  (slug: string, page: number, limit: number, filters: QuitHeroCollectionFilters = {}) =>
+    collectionPage(slug, page, limit, filters, false),
 );
 
 export async function getQuitHeroCollection(slug: string) {
