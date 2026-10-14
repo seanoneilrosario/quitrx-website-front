@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
 import { getQuitHeroOrdersForCustomer } from "@/lib/quithero";
+import { enrichOrderItems } from "@/lib/quithero/order-items";
 
 export async function GET() {
   try {
@@ -19,9 +20,12 @@ export async function GET() {
         { status: 404 },
       );
 
-    return NextResponse.json(await getQuitHeroOrdersForCustomer(customer.id), {
-      headers: { "cache-control": "private, no-store" },
-    });
+    return NextResponse.json(
+      await enrichOrderItems(await getQuitHeroOrdersForCustomer(customer.id)),
+      {
+        headers: { "cache-control": "private, no-store" },
+      },
+    );
   } catch (error) {
     console.error("Unable to load QuitHero orders:", error);
     return NextResponse.json(

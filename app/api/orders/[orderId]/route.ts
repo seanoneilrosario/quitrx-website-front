@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
-import { getQuitHeroOrdersForCustomer, getQuitHeroProducts } from "@/lib/quithero";
+import { getQuitHeroOrdersForCustomer } from "@/lib/quithero";
+import { enrichOrderItems } from "@/lib/quithero/order-items";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ orderId: string }> }) {
   try {
@@ -20,32 +21,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ord
       );
 
     const { orderId } = await params;
-    const [orders, products] = await Promise.all([
-      getQuitHeroOrdersForCustomer(customer.id),
-      getQuitHeroProducts().catch(() => []),
-    ]);
+    const orders = await getQuitHeroOrdersForCustomer(customer.id);
     const order = orders.find((item) => item.id === orderId || item.orderNumber === orderId);
     if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
 
-    const variants = new Map(
-      products.flatMap((product) =>
-        (product.variants || []).flatMap((variant) =>
-          variant.id ? [[variant.id, { product, variant }] as const] : [],
-        ),
-      ),
-    );
-    const detailedOrder = {
-      ...order,
-      items: order.items?.map((item) => {
-        const match = item.variantId ? variants.get(item.variantId) : undefined;
-        return {
-          ...item,
-          productName: item.productName || match?.product.name,
-          variantName: item.variantName || match?.variant.name,
-          sku: item.sku || match?.variant.sku,
-        };
-      }),
-    };
+    const [detailedOrder] = await enrichOrderItems([order]);
 
     return NextResponse.json(detailedOrder, { headers: { "cache-control": "private, no-store" } });
   } catch (error) {

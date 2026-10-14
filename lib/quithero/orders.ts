@@ -47,6 +47,8 @@ export type QuitHeroOrder = {
   total?: number | string;
   createdAt?: string;
   items?: Array<{
+    productId?: string;
+    imageUrl?: string;
     variantId?: string;
     quantity?: number;
     productName?: string;

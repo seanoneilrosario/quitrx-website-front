@@ -792,6 +792,77 @@
   overflow-x: auto;
 }
 
+.account-order-table__order + .account-order-table__order {
+  border-top: 1px solid #e6efee;
+}
+.account-order-items {
+  list-style: none;
+  margin: 0;
+  padding: 0 30px 24px;
+  display: grid;
+  gap: 12px;
+}
+.account-order-items__item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid #e6efee;
+  border-radius: 12px;
+  background: #f8fbfa;
+}
+.account-order-items__image {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+}
+.account-order-items__description {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-size: 13px;
+}
+.account-order-items__description strong {
+  color: #035c67;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.account-order-items__description span,
+.account-order-items__description small {
+  color: #637a7c;
+}
+.account-order-items__total {
+  margin-left: auto;
+  white-space: nowrap;
+  color: #035c67;
+  font-size: 14px;
+}
+.account-order-items__empty {
+  margin: 0;
+  padding: 0 30px 24px;
+  color: #637a7c;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  .account-order-items {
+    padding: 0 16px 20px;
+  }
+  .account-order-items__item {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .account-order-items__image {
+    width: 56px;
+    height: 56px;
+  }
+  .account-order-items__description {
+    flex: 1;
+  }
+}
+
 .account-order-table__row {
   display: grid;
   grid-template-columns: 1.1fr 1fr 1fr 0.7fr auto;

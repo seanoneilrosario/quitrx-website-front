@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import type { QuitHeroOrder } from "@/lib/quithero";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
+import OrderItems from "./OrderItems";
 
 function formatDate(value?: string) {
   if (!value) return "Not available";
@@ -89,31 +90,34 @@ export default function OrderHistoryTable({ onOrdersLoaded }: OrderHistoryTableP
             ? `/account/orders/${encodeURIComponent(orderIdentifier)}`
             : undefined;
           return (
-            <div className="account-order-table__row" key={orderIdentifier}>
-              <strong>
+            <div className="account-order-table__order" key={orderIdentifier}>
+              <div className="account-order-table__row">
+                <strong>
+                  {orderHref ? (
+                    <Link className="account-order-link" href={orderHref}>
+                      {order.orderNumber || "View order"}
+                    </Link>
+                  ) : (
+                    "Order"
+                  )}
+                </strong>
+                <span>{formatDate(order.createdAt)}</span>
+                <span
+                  className={`account-order-status${isCancelled(order) ? " account-order-status--cancelled" : ""}`}
+                >
+                  <i />
+                  {readableStatus(order)}
+                </span>
+                <strong>{formatMoney(order.total, order.currencyCode)}</strong>
                 {orderHref ? (
-                  <Link className="account-order-link" href={orderHref}>
-                    {order.orderNumber || "View order"}
+                  <Link className="account-order-details-button" href={orderHref}>
+                    View details
                   </Link>
                 ) : (
-                  "Order"
+                  <span>—</span>
                 )}
-              </strong>
-              <span>{formatDate(order.createdAt)}</span>
-              <span
-                className={`account-order-status${isCancelled(order) ? " account-order-status--cancelled" : ""}`}
-              >
-                <i />
-                {readableStatus(order)}
-              </span>
-              <strong>{formatMoney(order.total, order.currencyCode)}</strong>
-              {orderHref ? (
-                <Link className="account-order-details-button" href={orderHref}>
-                  View details
-                </Link>
-              ) : (
-                <span>—</span>
-              )}
+              </div>
+              <OrderItems order={order} />
             </div>
           );
         })}
