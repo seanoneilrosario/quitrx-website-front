@@ -1,0 +1,236 @@
+.panel {
+  overflow: hidden;
+  border: 1px solid #dbe8e5;
+  border-radius: 22px;
+  background: #fff;
+  color: #123e46;
+  box-shadow: 0 8px 28px rgb(9 65 67 / 4%);
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 30px;
+  border-bottom: 1px solid #e4eeeb;
+  background: linear-gradient(110deg, #f0faf6, #fff);
+}
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+.identity > div {
+  min-width: 0;
+}
+.icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: #d5f5e9;
+  color: #087364;
+}
+.icon svg {
+  width: 30px;
+  height: 30px;
+}
+.eyebrow {
+  margin: 0 0 7px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #567d7a;
+}
+.identity h2 {
+  margin: 0;
+  font-size: clamp(17px, 1.6vw, 23px);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+.date {
+  margin: 7px 0 0;
+  font-size: 13px;
+  color: #64807e;
+  letter-spacing: 0;
+}
+.statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.badge i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.pending {
+  background: #fff3d9;
+  color: #8b621e;
+}
+.success {
+  background: #ddf6e9;
+  color: #16694c;
+}
+.cancelled {
+  background: #ffe9e7;
+  color: #a23831;
+}
+.neutral {
+  background: #edf2f3;
+  color: #49686d;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 32px;
+  padding: 30px;
+  align-items: start;
+}
+.sectionHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.sectionHeading h3,
+.receipt h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.sectionHeading > span {
+  color: #718c89;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.items :global(.account-order-items) {
+  padding: 0;
+}
+.items :global(.account-order-items__item) {
+  padding: 18px;
+  gap: 20px;
+  background: #fff;
+  align-items: center;
+}
+.items :global(.account-order-items__image) {
+  width: 96px;
+  height: 110px;
+  padding: 8px;
+  background: #f5f8f7;
+  border: 1px solid #edf1ef;
+  border-radius: 12px;
+}
+.items :global(.account-order-items__description) {
+  gap: 8px;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+.items :global(.account-order-items__description strong) {
+  font-size: 15px;
+}
+.items :global(.account-order-items__total) {
+  font-size: 16px;
+  letter-spacing: 0;
+}
+.receipt {
+  padding: 24px;
+  border: 1px solid #e2ece9;
+  border-radius: 16px;
+  background: #f6faf8;
+}
+.receipt dl {
+  margin: 24px 0 0;
+}
+.receipt dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+.receipt dt {
+  color: #617e78;
+}
+.receipt dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+.receipt dl > .total {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #d8e5df;
+}
+.total dt {
+  color: #123e46;
+  font-weight: 600;
+}
+.total dd {
+  font-size: 25px;
+  font-weight: 700;
+}
+.currency {
+  margin: 8px 0 0;
+  text-align: right;
+  font-size: 11px;
+  color: #718c89;
+}
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .header,
+  .layout {
+    padding: 20px 16px;
+  }
+  .layout {
+    gap: 24px;
+  }
+  .identity {
+    gap: 12px;
+  }
+  .icon {
+    width: 42px;
+    height: 42px;
+  }
+  .items :global(.account-order-items__item) {
+    padding: 12px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .items :global(.account-order-items__image) {
+    width: 64px;
+    height: 80px;
+  }
+  .items :global(.account-order-items__description) {
+    flex: 1;
+  }
+  .items :global(.account-order-items__total) {
+    width: 100%;
+    text-align: right;
+  }
+}

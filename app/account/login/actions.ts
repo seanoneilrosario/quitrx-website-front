@@ -5,10 +5,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
 import { setCustomerSession } from "@/lib/auth/customer-session";
-import { allowLoginEmail, registerLoginCode, consumeLoginCode } from "@/lib/auth/login-protection";
 
 const EMAIL_CODE_COOKIE = "quitrx_email_code";
 const CODE_MAX_AGE_SECONDS = 10 * 60;
+
 
 type EmailCodeChallenge = {
   id: string;
@@ -118,13 +118,6 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
   const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
 
   try {
-    if (!(await allowLoginEmail(normalizedEmail))) {
-      return {
-        step: "code",
-        email: normalizedEmail,
-        error: "Too many requests. Please wait before requesting another code.",
-      };
-    }
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
     if (!customer) {
       return {
@@ -135,7 +128,6 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
     }
 
     const id = randomUUID();
-    await registerLoginCode(id, codeHash(normalizedEmail, code));
     await sendLoginCode(normalizedEmail, code);
     await storeChallenge({
       id,
@@ -217,7 +209,16 @@ export async function accessCustomerAccount(
     return { error: "That code has expired. Enter your email to request a new one." };
   }
   try {
-    if (!(await consumeLoginCode(challenge.id, codeHash(challenge.email, code)))) {
+    let valid = false;
+    if (challenge.attempts < 5) {
+      const expected = Buffer.from(challenge.codeHash);
+      const supplied = Buffer.from(codeHash(challenge.email, code));
+      valid = expected.length === supplied.length && timingSafeEqual(expected, supplied);
+      if (!valid) {
+        await storeChallenge({ ...challenge, attempts: challenge.attempts + 1 });
+      }
+    }
+    if (!valid) {
       return {
         ...codeStep,
         error:
