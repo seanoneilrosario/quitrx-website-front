@@ -27,7 +27,17 @@ const PAGE_COMPONENTS = `
     "collection": collection->{title, "slug": slug.current, "image": coalesce(image.asset->url, featuredImageUrl)},
     "collections": collections[]{
       _type == "reference" => @->{title, "slug": slug.current, "image": coalesce(image.asset->url, featuredImageUrl)},
-      _type == "apiCollection" => {title, slug, image},
+      _type == "apiCollection" => coalesce(
+        *[_type == "productCollection" && (
+          quitHeroCollectionId == ^.id ||
+          (!defined(^.id) && slug.current == ^.slug)
+        )] | order(_updatedAt desc) [0] {
+          title,
+          "slug": slug.current,
+          "image": coalesce(image.asset->url, featuredImageUrl)
+        },
+        {title, slug, image}
+      ),
       _type == "customLink" => {title, link, openInNewTab, "image": image.asset->url}
     },
     "comparisonIcon": comparison_icon.asset->url,
