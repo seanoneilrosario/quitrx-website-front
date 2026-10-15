@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import type { QuitHeroCustomer } from "@/lib/quithero/customers";
@@ -40,7 +40,10 @@ export function AccountCustomerProvider({
   });
   const customer = data ?? undefined;
   const previousPath = useRef(pathname);
-  const loading = isPending || (!customer && isFetching);
+  const [checkedPath, setCheckedPath] = useState(pathname);
+  // Gate child access guards during the first render of a navigation, before
+  // effects can start rechecking a session changed by login or logout.
+  const loading = checkedPath !== pathname || isPending || (!customer && isFetching);
   const error = queryError
     ? "We couldn't load your account right now. Please try again shortly."
     : undefined;
@@ -83,27 +86,28 @@ export function AccountCustomerProvider({
 
   useEffect(() => {
     const changed = previousPath.current !== pathname;
-    const returningFromLogin =
-      previousPath.current === "/account/login" || previousPath.current === "/account/auth-popup";
-    previousPath.current = pathname;
-    // Only clear the browser account after the server has allowed the login page
-    // to render. Clearing on logout submit races the session-cookie deletion.
-    if (pathname === "/account/login") {
-      if (data !== null) setCustomer(undefined);
-      return;
-    }
-    // Server-action login can change the session without remounting the shell.
-    if (changed && returningFromLogin && pathname !== "/account/login") {
-      void refreshCustomer();
-      return;
-    }
+    if (!changed) return;
+    let active = true;
+    // The URL is not proof of logout. Ask the API, and wait for its answer
+    // before allowing any account or prescription guard to redirect.
+    void refetch().then(() => {
+      if (!active) return;
+      previousPath.current = pathname;
+      setCheckedPath(pathname);
+    });
+    return () => {
+      active = false;
+    };
+  }, [pathname, refetch]);
+
+  useEffect(() => {
     const protectedPage =
       pathname === "/account" ||
       (pathname.startsWith("/account/") &&
         pathname !== "/account/login" &&
         pathname !== "/account/auth-popup");
     if (!loading && !queryError && data === null && protectedPage) router.replace("/account/login");
-  }, [customer, data, loading, pathname, queryError, refreshCustomer, router, setCustomer]);
+  }, [data, loading, pathname, queryError, router]);
 
   return (
     <AccountCustomerContext.Provider
