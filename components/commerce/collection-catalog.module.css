@@ -392,7 +392,7 @@
     font-size: 22px;
   }
   .compactCard .chooseButton {
-    margin: auto 22px 8px;
+    margin: auto 22px 8px 10px;
     padding: 4px;
     height: auto;
     min-height: 36px;
