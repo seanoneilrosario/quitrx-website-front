@@ -12,6 +12,7 @@
   width: 100%;
   max-width: var(--tile-size, 100%);
   justify-self: center;
+  transition: transform 180ms ease;
 }
 .collectionCard .imageWrap {
   border-radius: var(--tile-radius, 24px);
@@ -192,9 +193,15 @@
     box-shadow 180ms ease;
 }
 
-.card:hover .imageWrap {
-  /* transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgb(0 0 0 / 14%); */
+@media (hover: hover) and (pointer: fine) {
+  .collectionCard:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.collectionCard:focus-visible {
+  outline: 2px solid #035c67;
+  outline-offset: 4px;
 }
 
 .image {
@@ -334,6 +341,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .collectionCard {
+    transition: none;
+    transform: none;
+  }
+
   .skeletonImage,
   .skeletonLine {
     animation: none;
