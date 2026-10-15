@@ -22,7 +22,7 @@ export function ProductGridAccessNotice({ signedIn }: { signedIn: boolean }) {
         <br />A free nicotine vaping script unlocks your options
       </h2>
       <Link
-        href={signedIn ? "https://www.quitrx.com.au/intake-form" : "/account/login"}
+        href={signedIn ? "https://quitrx.com.au/intake-form" : "/account/login"}
         className={styles.loginButton}
       >
         {signedIn ? "Apply Free" : "Login"}

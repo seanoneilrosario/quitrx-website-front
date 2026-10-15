@@ -382,11 +382,11 @@
     gap: 4px;
   }
   .compactCard .productInfo strong {
-    font-size: 9px;
+    font-size: 10px;
     overflow-wrap: anywhere;
   }
   .compactCard .brand {
-    font-size: 9px;
+    font-size: 10px;
   }
   .compactCard .price {
     font-size: 11px;
@@ -396,7 +396,7 @@
     padding: 4px;
     height: auto;
     min-height: 28px;
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 0;
     text-align: center;
   }
