@@ -50,7 +50,7 @@ function Icon({ name }: { name: keyof typeof iconImages }) {
 
 export default function AccountShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { customer: identity, loading: customerLoading, setCustomer } = useAccountCustomer();
+  const { customer: identity, loading: customerLoading } = useAccountCustomer();
   const [menuOpen, setMenuOpen] = useState(false);
   const accountName = identity?.firstName?.trim() || identity?.email?.split("@")[0]?.trim();
   const scriptIsActive = hasActiveScript(identity);
@@ -120,11 +120,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
             );
           })}
         </nav>
-        <form
-          className="account-signout-form"
-          action={logoutAccount}
-          onSubmit={() => setCustomer(undefined)}
-        >
+        <form className="account-signout-form" action={logoutAccount}>
           <button type="submit" className="account-signout">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path

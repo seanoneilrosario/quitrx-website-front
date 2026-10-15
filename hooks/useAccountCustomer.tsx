@@ -86,6 +86,12 @@ export function AccountCustomerProvider({
     const returningFromLogin =
       previousPath.current === "/account/login" || previousPath.current === "/account/auth-popup";
     previousPath.current = pathname;
+    // Only clear the browser account after the server has allowed the login page
+    // to render. Clearing on logout submit races the session-cookie deletion.
+    if (pathname === "/account/login") {
+      if (data !== null) setCustomer(undefined);
+      return;
+    }
     // Server-action login can change the session without remounting the shell.
     if (changed && returningFromLogin && pathname !== "/account/login") {
       void refreshCustomer();
@@ -97,7 +103,7 @@ export function AccountCustomerProvider({
         pathname !== "/account/login" &&
         pathname !== "/account/auth-popup");
     if (!loading && !queryError && data === null && protectedPage) router.replace("/account/login");
-  }, [customer, data, loading, pathname, queryError, refreshCustomer, router]);
+  }, [customer, data, loading, pathname, queryError, refreshCustomer, router, setCustomer]);
 
   return (
     <AccountCustomerContext.Provider
