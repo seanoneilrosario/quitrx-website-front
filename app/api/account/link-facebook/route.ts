@@ -4,15 +4,9 @@ import { auth } from "@/auth";
 import { getCustomerSession, setCustomerSession } from "@/lib/auth/customer-session";
 import { linkQuitHeroCustomerOAuth, syncQuitHeroCustomer } from "@/lib/quithero/customers";
 
-type FacebookSessionUser = {
-  email?: string | null;
-  provider?: string;
-  providerAccountId?: string;
-};
-
 export async function POST(request: Request) {
   const session = await auth();
-  const user = session?.user as FacebookSessionUser | undefined;
+  const user = session?.user;
   if (!user) {
     return NextResponse.json(
       { error: "You must be signed in to link your Facebook account." },

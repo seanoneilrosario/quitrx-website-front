@@ -51,12 +51,14 @@ export default function LoginPopup({
   facebookEnabled,
   localLoginEnabled,
   loginError,
+  facebookLink = false,
 }: {
   redirectTo: string;
   googleEnabled: boolean;
   facebookEnabled: boolean;
   localLoginEnabled: boolean;
   loginError?: string;
+  facebookLink?: boolean;
 }) {
   const [state, action, pending] = useActionState(accessCustomerAccount, initialState);
   const displayedLoginError = state.error ?? loginError;
@@ -85,7 +87,11 @@ export default function LoginPopup({
 
         <div className="customer-login__copy">
           <h1 id="customer-login-title">Sign in</h1>
-          <p>Sign in to your account</p>
+          <p>
+            {facebookLink
+              ? "Facebook did not share an email address. Verify your account email to finish connecting Facebook."
+              : "Sign in to your account"}
+          </p>
         </div>
 
         {displayedLoginError && (
@@ -94,43 +100,47 @@ export default function LoginPopup({
           </p>
         )}
 
-        <div className="customer-login__socials">
-          {googleEnabled ? (
-            // OAuth endpoints require a full browser navigation so the popup flow can receive redirects.
-            // eslint-disable-next-line @next/next/no-html-link-for-pages
-            <a href="/api/account/google" aria-label="Continue with Google">
-              <GoogleLogo />
-            </a>
-          ) : (
-            <button
-              type="button"
-              disabled
-              title="Configure Google OAuth credentials"
-              aria-label="Continue with Google"
-            >
-              <GoogleLogo />
-            </button>
-          )}
-          {facebookEnabled ? (
-            // eslint-disable-next-line @next/next/no-html-link-for-pages
-            <a href="/api/account/facebook" aria-label="Continue with Facebook">
-              <FacebookLogo />
-            </a>
-          ) : (
-            <button
-              type="button"
-              disabled
-              title="Configure Facebook OAuth credentials"
-              aria-label="Continue with Facebook"
-            >
-              <FacebookLogo />
-            </button>
-          )}
-        </div>
+        {!facebookLink && (
+          <>
+            <div className="customer-login__socials">
+              {googleEnabled ? (
+                // OAuth endpoints require a full browser navigation so the popup flow can receive redirects.
+                // eslint-disable-next-line @next/next/no-html-link-for-pages
+                <a href="/api/account/google" aria-label="Continue with Google">
+                  <GoogleLogo />
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  title="Configure Google OAuth credentials"
+                  aria-label="Continue with Google"
+                >
+                  <GoogleLogo />
+                </button>
+              )}
+              {facebookEnabled ? (
+                // eslint-disable-next-line @next/next/no-html-link-for-pages
+                <a href="/api/account/facebook" aria-label="Continue with Facebook">
+                  <FacebookLogo />
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  title="Configure Facebook OAuth credentials"
+                  aria-label="Continue with Facebook"
+                >
+                  <FacebookLogo />
+                </button>
+              )}
+            </div>
 
-        <div className="customer-login__divider">
-          <span>or</span>
-        </div>
+            <div className="customer-login__divider">
+              <span>or</span>
+            </div>
+          </>
+        )}
 
         <form action={action} className="customer-login__form">
           <input type="hidden" name="redirectTo" value={redirectTo} />

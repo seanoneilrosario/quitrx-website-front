@@ -1,141 +1,25 @@
-"use client";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { getCustomerSession } from "@/lib/auth/customer-session";
+import LoginPopup from "../login/LoginPopup";
+import FacebookLinkForm from "./FacebookLinkForm";
 
-import { useEffect, useState, type FormEvent } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-
-export default function AuthPopupCompletePage() {
-  const router = useRouter();
-  const { data: session, error: sessionError } = useQuery({
-    queryKey: ["api", "/api/auth/session"],
-    queryFn: async ({ signal }) => {
-      const response = await fetch("/api/auth/session", { cache: "no-store", signal });
-      if (!response.ok) throw new Error("Unable to check your login.");
-      return (await response.json()) as { user?: { needsCustomerEmail?: boolean } };
-    },
-    staleTime: 0,
-    gcTime: 0,
-  });
-  const needsEmail = session === undefined ? null : Boolean(session?.user?.needsCustomerEmail);
-  const [email, setEmail] = useState("");
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (needsEmail !== false) return;
-    router.replace("/account");
-    router.refresh();
-  }, [needsEmail, router]);
-
-  async function submitEmail(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!email.trim()) {
-      setError("Please enter your email address.");
-      return;
-    }
-
-    setPending(true);
-    setError("");
-    try {
-      const response = await fetch("/api/account/link-facebook", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data?.error ?? "Unable to link your Facebook account.");
-        return;
-      }
-
-      router.replace("/account");
-      router.refresh();
-    } catch {
-      setError("Unable to link your Facebook account.");
-    } finally {
-      setPending(false);
-    }
+export default async function AuthPopupCompletePage() {
+  const session = await auth();
+  if (!session?.user) redirect("/account/login");
+  if (session.user.email) redirect("/account");
+  if (session.user.provider !== "facebook" || !session.user.providerAccountId) {
+    redirect("/account/login?error=SessionRequired");
   }
-
-  if (needsEmail === null) {
-    return (
-      <main className="customer-login" role="status">
-        <section className="customer-login__dialog">
-          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">
-            <Image
-              src="/images/quitrx-logo-light.png"
-              width={174}
-              height={71}
-              alt="QuitRx"
-              priority
-            />
-          </Link>
-          <div className="customer-login__copy">
-            <h1>Signing in</h1>
-            <p>{error || sessionError?.message || "Please wait..."}</p>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  if (needsEmail) {
-    return (
-      <main className="customer-login" role="dialog" aria-modal="true">
-        <section className="customer-login__dialog">
-          <Link className="customer-login__brand" href="/" aria-label="QuitRx homepage">
-            <Image
-              src="/images/quitrx-logo-light.png"
-              width={174}
-              height={71}
-              alt="QuitRx"
-              priority
-            />
-          </Link>
-          <div className="customer-login__copy">
-            <h1>Almost there</h1>
-            <p>
-              Enter your email address once to connect your Facebook account to your QuitRx customer
-              account.
-            </p>
-          </div>
-          <form onSubmit={submitEmail} className="customer-login__form">
-            <label className="sr-only" htmlFor="facebook-link-email">
-              Email address
-            </label>
-            <div className="customer-login__field">
-              <input
-                id="facebook-link-email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder="Email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                autoFocus
-                disabled={pending}
-              />
-              <button type="submit" disabled={pending} aria-label="Connect Facebook account">
-                {pending ? (
-                  <span className="customer-login__spinner" />
-                ) : (
-                  <span aria-hidden="true">→</span>
-                )}
-              </button>
-            </div>
-            {error && (
-              <p className="customer-login__error" role="alert">
-                {error}
-              </p>
-            )}
-          </form>
-        </section>
-      </main>
-    );
-  }
-
-  return null;
+  const verifiedSession = await getCustomerSession();
+  if (verifiedSession?.email) return <FacebookLinkForm email={verifiedSession.email} />;
+  return (
+    <LoginPopup
+      redirectTo="/account/auth-popup"
+      googleEnabled={false}
+      facebookEnabled={false}
+      localLoginEnabled={false}
+      facebookLink
+    />
+  );
 }
