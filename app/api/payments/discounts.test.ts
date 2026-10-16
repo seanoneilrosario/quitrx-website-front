@@ -35,7 +35,10 @@ vi.mock("@/lib/payments/paypal", () => ({
   })),
   PayPalApiError: class extends Error {},
 }));
-vi.mock("@/lib/payments/eway-payment-session", () => ({ setPendingEwayPayment: vi.fn() }));
+vi.mock("@/lib/payments/eway-payment-session", () => ({
+  getPendingEwayPayment: vi.fn(async () => undefined),
+  setPendingEwayPayment: vi.fn(),
+}));
 vi.mock("@/lib/payments/paypal-payment-session", () => ({ setPendingPayPalPayment: vi.fn() }));
 
 import { POST as eway } from "./eway/route";
@@ -46,7 +49,10 @@ import { previewQuitHeroDiscounts } from "@/lib/quithero/discounts";
 import { QuitHeroApiError } from "@/lib/quithero/client";
 import { createEwayTransparentRedirect } from "@/lib/payments/eway";
 import { createPayPalOrder } from "@/lib/payments/paypal";
-import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
+import {
+  getPendingEwayPayment,
+  setPendingEwayPayment,
+} from "@/lib/payments/eway-payment-session";
 import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
 
 const preview = {
@@ -86,7 +92,25 @@ function request(extra = {}) {
 }
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(getPendingEwayPayment).mockResolvedValue(undefined);
   vi.mocked(previewQuitHeroDiscounts).mockResolvedValue(preview);
+});
+
+it("recovers an unresolved eWAY attempt instead of creating another charge", async () => {
+  vi.mocked(getPendingEwayPayment).mockResolvedValueOnce({
+    accessCode: "pending-access",
+    customerId: "authenticated-customer",
+    items: [{ variantId: "variant", quantity: 2 }],
+    subtotal: 60,
+    total: 72.9,
+    createdAt: Date.now(),
+  });
+  const response = await eway(request());
+  expect(response.status).toBe(409);
+  expect(await response.json()).toMatchObject({
+    recoveryUrl: "https://shop.test/api/payments/eway/callback?AccessCode=pending-access",
+  });
+  expect(createEwayTransparentRedirect).not.toHaveBeenCalled();
 });
 
 describe.each([
