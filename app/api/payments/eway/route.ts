@@ -13,13 +13,7 @@ import { createEwayTransparentRedirect, EwayApiError } from "@/lib/payments/eway
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
-import {
-  createQuitHeroCustomerAddress,
-  findQuitHeroCustomerByEmail,
-  getQuitHeroCustomerAddresses,
-  setDefaultQuitHeroCustomerAddress,
-  type QuitHeroAddress,
-} from "@/lib/quithero/customers";
+import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
 
 type PaymentRequest = {
   items?: unknown;
@@ -32,29 +26,6 @@ type PaymentRequest = {
 function requiredText(record: Record<string, unknown>, key: string, maxLength: number) {
   const value = typeof record[key] === "string" ? record[key].trim() : "";
   return value ? value.slice(0, maxLength) : undefined;
-}
-
-function sameAddress(address: QuitHeroAddress, candidate: QuitHeroAddress) {
-  const normalized = (value?: string) => value?.trim().toLowerCase() ?? "";
-  return (
-    normalized(address.address1 ?? address.line1) === normalized(candidate.address1) &&
-    normalized(address.address2 ?? address.line2) === normalized(candidate.address2) &&
-    normalized(address.city) === normalized(candidate.city) &&
-    normalized(address.state ?? address.province) === normalized(candidate.state) &&
-    normalized(address.postcode ?? address.zip) === normalized(candidate.postcode) &&
-    normalized(address.country) === normalized(candidate.country)
-  );
-}
-
-async function ensureDefaultShippingAddress(customerId: string, address: QuitHeroAddress) {
-  const addresses = await getQuitHeroCustomerAddresses(customerId);
-  const existing = addresses.find((entry) => sameAddress(entry, address));
-  if (existing?.isDefault) return;
-
-  const saved = existing ?? (await createQuitHeroCustomerAddress(customerId, address));
-  const addressId = saved.id ?? saved.addressId;
-  if (!addressId) throw new Error("Qoblex did not return a delivery address ID.");
-  await setDefaultQuitHeroCustomerAddress(customerId, addressId);
 }
 
 export async function POST(request: Request) {
@@ -191,27 +162,6 @@ export async function POST(request: Request) {
         { error: "Please contact support to complete an order with a zero total." },
         { status: 400 },
       );
-
-    try {
-      await ensureDefaultShippingAddress(customerAccount.id, {
-        firstName,
-        lastName,
-        phone,
-        address1: street1,
-        address2: requiredText(address, "address2", 50),
-        city,
-        state,
-        postcode: postalCode,
-        country: "Australia",
-      });
-    } catch (error) {
-      console.error("Unable to prepare the Qoblex delivery address:", error);
-      return NextResponse.json(
-        { error: "We couldn't save your delivery address. No payment was attempted." },
-        { status: 502 },
-      );
-    }
-
     const reference = `QuitRx-${Date.now()}`;
     const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
     const street2 = requiredText(address, "address2", 50);
@@ -289,18 +239,8 @@ export async function POST(request: Request) {
       ],
       subtotal: preview.subtotal,
       shippingTotal: preview.shippingTotal,
-      shippingMethod: body.shippingMethod,
       discountCode,
       discountTotal: preview.discountAmount,
-      taxTotal: 0,
-      billingFirstName: firstName,
-      billingLastName: lastName,
-      billingAddress1: street1,
-      billingCity: city,
-      billingProvince: state,
-      billingCountry: "Australia",
-      billingZip: postalCode,
-      billingPhone: phone,
       discountFingerprint: previewDiscountFingerprint(preview),
       total: totalCents / 100,
       createdAt: Date.now(),

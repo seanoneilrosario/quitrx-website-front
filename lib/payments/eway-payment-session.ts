@@ -19,18 +19,8 @@ export type PendingEwayPayment = {
   }>;
   subtotal: number;
   shippingTotal?: number;
-  shippingMethod?: "standard" | "express";
   discountCode?: string;
   discountTotal?: number;
-  taxTotal?: number;
-  billingFirstName?: string;
-  billingLastName?: string;
-  billingAddress1?: string;
-  billingCity?: string;
-  billingProvince?: string;
-  billingCountry?: string;
-  billingZip?: string;
-  billingPhone?: string;
   discountFingerprint?: string;
   total: number;
   createdAt: number;
