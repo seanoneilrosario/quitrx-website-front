@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 import { previewQuitHeroDiscounts, readDiscountCode } from "./discounts";
-import { createQuitHeroOrder, verifyOrderDiscountTotals } from "./orders";
+import {
+  createQuitHeroOrder,
+  updateQuitHeroOrderPaymentStatus,
+  verifyOrderDiscountTotals,
+} from "./orders";
 import { previewDiscountFingerprint } from "./discount-verification";
 import {
   deriveBuyXGetYPromotionalItems,
@@ -148,20 +152,100 @@ describe("discount API boundary", () => {
     expect(readDiscountCode(" ")).toBeUndefined();
     expect(() => readDiscountCode({ code: "SAVE" })).toThrow();
   });
-  it("sends the code and original shipping charge to order creation without a client discountTotal", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: "order" }), { status: 201 }));
+  it("sends the code and original shipping charge and unwraps the created order", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: "order" } }), { status: 201 }),
+    );
     const order = {
       customerId: "customer",
       source: "NATIVE" as const,
       currencyCode: "AUD" as const,
       subtotal: 60,
+      discountTotal: 0,
       total: 50,
       shippingTotal: 12.9,
+      shippingMethod: "standard" as const,
+      taxTotal: 0,
+      billingFirstName: "Sean",
+      billingLastName: "Rosario",
+      billingAddress1: "123 Main Street",
+      billingCity: "Melbourne",
+      billingProvince: "Victoria",
+      billingCountry: "Australia",
+      billingZip: "3000",
+      billingPhone: "0412345678",
       discountCode: "SAVE",
       items: payload.items,
     };
-    await createQuitHeroOrder(order);
+    await expect(createQuitHeroOrder(order)).resolves.toEqual({ id: "order" });
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(order);
+  });
+  it("preserves the Orders API validation message when order creation is rejected", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ message: ["billingAddress1 must be a string"] }), {
+        status: 400,
+      }),
+    );
+
+    await expect(
+      createQuitHeroOrder({
+        customerId: "customer",
+        source: "NATIVE",
+        currencyCode: "AUD",
+        subtotal: 60,
+        discountTotal: 0,
+        shippingTotal: 12.9,
+        shippingMethod: "standard",
+        taxTotal: 0,
+        billingFirstName: "Sean",
+        billingLastName: "Rosario",
+        billingAddress1: "123 Main Street",
+        billingCity: "Melbourne",
+        billingProvince: "Victoria",
+        billingCountry: "Australia",
+        billingZip: "3000",
+        billingPhone: "0412345678",
+        discountCode: "",
+        total: 72.9,
+        items: [{ variantId: "variant", quantity: 2 }],
+      }),
+    ).rejects.toThrow("billingAddress1 must be a string");
+  });
+  it("updates and confirms the QuitHero order payment status", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "order", paymentStatus: "PENDING" }), { status: 200 }),
+      );
+
+    await expect(updateQuitHeroOrderPaymentStatus("order", "PENDING")).resolves.toMatchObject({
+      id: "order",
+      paymentStatus: "PENDING",
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining("/orders/order"),
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ paymentStatus: "PENDING" }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining("/orders/order"),
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+  it("does not claim the payment status changed until QuitHero confirms it", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "order", paymentStatus: "PENDING" }), { status: 200 }),
+      );
+
+    await expect(updateQuitHeroOrderPaymentStatus("order", "PAID")).rejects.toThrow(
+      "QuitHero did not confirm that the order payment status is PAID.",
+    );
   });
 });
 

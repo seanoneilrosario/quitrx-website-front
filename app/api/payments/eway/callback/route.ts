@@ -1,5 +1,5 @@
 import {
-  getQuitHeroOrderById,
+  updateQuitHeroOrderPaymentStatus,
   verifyOrderDiscountTotals,
   orderConfirmationError,
 } from "@/lib/quithero/orders";
@@ -10,63 +10,36 @@ import {
   getPendingEwayPayment,
   setPendingEwayPayment,
 } from "@/lib/payments/eway-payment-session";
-import {
-  createQuitHeroOrder,
-  findRecentlyCreatedQuitHeroOrder,
-  type QuitHeroOrder,
-  type QuitHeroOrderPayload,
-} from "@/lib/quithero";
 
 function checkoutUrl(request: NextRequest, payment: string) {
   const url = new URL("/checkout", request.url);
   url.searchParams.set("payment", payment);
+  url.searchParams.set("method", "eway");
   return url;
 }
 
 const activeFinalizations = new Map<string, Promise<"success" | "failed" | "invalid">>();
 
 async function finalizeVerifiedEwayPayment(accessCode?: string) {
-  const pending = await getPendingEwayPayment();
-  if (!accessCode || !pending || pending.accessCode !== accessCode) {
+  let pending = await getPendingEwayPayment();
+  if (!pending || (accessCode && pending.accessCode !== accessCode)) {
     return "invalid" as const;
   }
 
-  const result = await getEwayPaymentResult(accessCode);
-  const expectedCents = Math.round(pending.total * 100);
-  if (!result.TransactionStatus || result.TotalAmount !== expectedCents || !result.TransactionID) {
-    await clearPendingEwayPayment();
-    return "failed" as const;
+  if (!pending.paymentVerified) {
+    const result = await getEwayPaymentResult(pending.accessCode);
+    const expectedCents = Math.round(pending.total * 100);
+    if (!result.TransactionStatus || result.TotalAmount !== expectedCents || !result.TransactionID) {
+      await clearPendingEwayPayment();
+      return "failed" as const;
+    }
+    pending = { ...pending, paymentVerified: true };
+    await setPendingEwayPayment(pending);
   }
 
-  const orderPayload: QuitHeroOrderPayload = {
-    source: "NATIVE",
-    currencyCode: "AUD",
-    subtotal: pending.subtotal,
-    discountTotal: pending.discountTotal ?? 0,
-    shippingTotal: pending.shippingTotal,
-    shippingMethod: pending.shippingMethod,
-    taxTotal: pending.taxTotal ?? 0,
-    billingFirstName: pending.billingFirstName,
-    billingLastName: pending.billingLastName,
-    billingAddress1: pending.billingAddress1,
-    billingCity: pending.billingCity,
-    billingProvince: pending.billingProvince,
-    billingCountry: pending.billingCountry,
-    billingZip: pending.billingZip,
-    billingPhone: pending.billingPhone,
-    discountCode: pending.discountCode ?? "",
-    total: pending.total,
-    customerId: pending.customerId,
-    items: pending.items,
-  };
-  let order = pending.retailOrderId
-    ? await getQuitHeroOrderById(pending.retailOrderId)
-    : await findRecentlyCreatedQuitHeroOrder(orderPayload, pending.createdAt - 5_000).catch(
-        () => undefined,
-      );
-  if (!order) order = (await createQuitHeroOrder(orderPayload)) as QuitHeroOrder | undefined;
-  if (order?.id && order.id !== pending.retailOrderId)
-    await setPendingEwayPayment({ ...pending, retailOrderId: order.id });
+  if (!pending.retailOrderId)
+    throw new Error("The payment session has no pre-created QuitHero order.");
+  const order = await updateQuitHeroOrderPaymentStatus(pending.retailOrderId, "PAID");
 
   verifyOrderDiscountTotals(order, pending);
   await clearPendingEwayPayment();
@@ -95,13 +68,9 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("Unable to finalize eWAY payment:", error);
-    return new NextResponse(orderConfirmationError(error), {
-      status: 502,
-      headers: {
-        "content-type": "text/plain; charset=utf-8",
-        "cache-control": "private, no-store",
-      },
-    });
+    const response = NextResponse.redirect(checkoutUrl(request, "review"));
+    response.headers.set("cache-control", "private, no-store");
+    return response;
   }
 }
 
@@ -128,11 +97,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Unable to finalize eWAY payment:", error);
-    return NextResponse.json(
-      {
-        error: orderConfirmationError(error),
-      },
-      { status: 502 },
-    );
+    return NextResponse.json({ error: orderConfirmationError(error) }, { status: 502 });
   }
 }

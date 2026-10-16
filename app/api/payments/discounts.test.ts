@@ -7,16 +7,28 @@ vi.mock("@/lib/auth/customer-session", () => ({
   getCustomerSession: vi.fn(async () => undefined),
 }));
 vi.mock("@/lib/quithero/customers", () => ({
-  findQuitHeroCustomerByEmail: vi.fn(async () => ({ id: "authenticated-customer" })),
+  findQuitHeroCustomerByEmail: vi.fn(async () => ({
+    id: "authenticated-customer",
+    addresses: [],
+  })),
   getQuitHeroCustomerAddresses: vi.fn(async () => []),
   createQuitHeroCustomerAddress: vi.fn(async () => ({ id: "checkout-address" })),
   setDefaultQuitHeroCustomerAddress: vi.fn(async () => ({})),
+  ensureDefaultQuitHeroCustomerAddress: vi.fn(async () => ({ id: "checkout-address" })),
 }));
 vi.mock("@/lib/quithero", () => ({
+  createQuitHeroOrder: vi.fn(async () => ({ id: "retail-order" })),
   getFreshQuitHeroProductById: vi.fn(async () => ({
     id: "product",
     name: "Product",
     variants: [{ id: "variant", price: 30 }],
+  })),
+}));
+vi.mock("@/lib/quithero/orders", async (original) => ({
+  ...(await original<typeof import("@/lib/quithero/orders")>()),
+  updateQuitHeroOrderPaymentStatus: vi.fn(async (_id: string, paymentStatus: string) => ({
+    id: "retail-order",
+    paymentStatus,
   })),
 }));
 vi.mock("@/lib/catalog/bundles", () => ({ getPurchasableStock: () => 99 }));
@@ -31,31 +43,18 @@ vi.mock("@/lib/payments/eway", () => ({
   })),
   EwayApiError: class extends Error {},
 }));
-vi.mock("@/lib/payments/paypal", () => ({
-  createPayPalOrder: vi.fn(async () => ({
-    id: "paypal-order",
-    links: [{ rel: "approve", href: "https://payment.test" }],
-  })),
-  PayPalApiError: class extends Error {},
-}));
 vi.mock("@/lib/payments/eway-payment-session", () => ({ setPendingEwayPayment: vi.fn() }));
-vi.mock("@/lib/payments/paypal-payment-session", () => ({ setPendingPayPalPayment: vi.fn() }));
 
 import { POST as eway } from "./eway/route";
-import { POST as paypal } from "./paypal/route";
 import { POST as previewRoute } from "../checkout/discounts/route";
 import { auth } from "@/auth";
 import { previewQuitHeroDiscounts } from "@/lib/quithero/discounts";
+import { createQuitHeroOrder } from "@/lib/quithero";
+import { updateQuitHeroOrderPaymentStatus } from "@/lib/quithero/orders";
+import { createQuitHeroCustomerAddress } from "@/lib/quithero/customers";
 import { QuitHeroApiError } from "@/lib/quithero/client";
 import { createEwayTransparentRedirect } from "@/lib/payments/eway";
-import { createPayPalOrder } from "@/lib/payments/paypal";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
-import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
-import {
-  createQuitHeroCustomerAddress,
-  getQuitHeroCustomerAddresses,
-  setDefaultQuitHeroCustomerAddress,
-} from "@/lib/quithero/customers";
 
 const preview = {
   subtotal: 60,
@@ -97,10 +96,48 @@ beforeEach(() => {
   vi.mocked(previewQuitHeroDiscounts).mockResolvedValue(preview);
 });
 
-describe.each([
-  ["eway", eway, createEwayTransparentRedirect, setPendingEwayPayment],
-  ["paypal", paypal, createPayPalOrder, setPendingPayPalPayment],
-] as const)("%s discount payment", (_name, handler, gateway, save) => {
+describe("eWAY discount payment", () => {
+  const handler = eway;
+  const gateway = createEwayTransparentRedirect;
+  const save = setPendingEwayPayment;
+  it("sends the supplied order contract with an empty code for an undiscounted checkout", async () => {
+    vi.mocked(previewQuitHeroDiscounts).mockResolvedValueOnce({
+      ...preview,
+      discountAmount: 0,
+      shippingAfterDiscount: 12.9,
+      totalAfterDiscount: 72.9,
+      appliedDiscounts: [],
+      lineDiscounts: [],
+    });
+    const response = await handler(request({ discountCode: "", expectedTotal: 72.9 }));
+    expect(response.status).toBe(200);
+    expect(createQuitHeroOrder).toHaveBeenCalledExactlyOnceWith({
+      customerId: "authenticated-customer",
+      source: "NATIVE",
+      currencyCode: "AUD",
+      subtotal: 60,
+      discountTotal: 0,
+      shippingTotal: 12.9,
+      shippingMethod: "standard",
+      taxTotal: 0,
+      total: 72.9,
+      billingFirstName: "Test",
+      billingLastName: "Customer",
+      billingAddress1: "Test street",
+      billingCity: "Brisbane",
+      billingProvince: "QLD",
+      billingCountry: "Australia",
+      billingZip: "4000",
+      billingPhone: "0400000000",
+      discountCode: "",
+      items: [{ variantId: "variant", quantity: 2 }],
+    });
+    expect(gateway).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Payment: expect.objectContaining({ TotalAmount: 7290 }),
+      }),
+    );
+  });
   it.each([
     ["no promotion", undefined, 0, 12.9, 72.9],
     ["automatic promotion", undefined, 5, 12.9, 67.9],
@@ -132,6 +169,52 @@ describe.each([
   it("charges the backend total and carries the code and original shipping into the signed session", async () => {
     const response = await handler(request());
     expect(response.status).toBe(200);
+    expect(createQuitHeroCustomerAddress).toHaveBeenCalledWith(
+      "authenticated-customer",
+      expect.objectContaining({
+        firstName: "Test",
+        lastName: "Customer",
+        phone: "0400000000",
+        address1: "Test street",
+        city: "Brisbane",
+        state: "QLD",
+        postcode: "4000",
+        country: "Australia",
+      }),
+    );
+    expect(createQuitHeroOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "NATIVE",
+        currencyCode: "AUD",
+        customerId: "authenticated-customer",
+        subtotal: 60,
+        discountTotal: 22.9,
+        shippingTotal: 12.9,
+        shippingMethod: "standard",
+        taxTotal: 0,
+        billingFirstName: "Test",
+        billingLastName: "Customer",
+        billingAddress1: "Test street",
+        billingCity: "Brisbane",
+        billingProvince: "QLD",
+        billingCountry: "Australia",
+        billingZip: "4000",
+        billingPhone: "0400000000",
+        discountCode: "SAVE",
+        total: 50,
+        items: [{ variantId: "variant", quantity: 2 }],
+      }),
+    );
+    expect(updateQuitHeroOrderPaymentStatus).toHaveBeenCalledWith("retail-order", "PENDING");
+    expect(vi.mocked(createQuitHeroCustomerAddress).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(createQuitHeroOrder).mock.invocationCallOrder[0],
+    );
+    expect(vi.mocked(createQuitHeroOrder).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(updateQuitHeroOrderPaymentStatus).mock.invocationCallOrder[0],
+    );
+    expect(vi.mocked(updateQuitHeroOrderPaymentStatus).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(createEwayTransparentRedirect).mock.invocationCallOrder[0],
+    );
     expect(previewQuitHeroDiscounts).toHaveBeenCalledWith(
       expect.objectContaining({
         customerId: "authenticated-customer",
@@ -142,82 +225,28 @@ describe.each([
     );
     expect(save).toHaveBeenCalledWith(
       expect.objectContaining({
+        retailOrderId: "retail-order",
         subtotal: 60,
+        taxTotal: 0,
         total: 50,
         discountCode: "SAVE",
         shippingTotal: 12.9,
         discountTotal: 22.9,
         discountFingerprint: expect.any(String),
-        ...(_name === "eway"
-          ? {
-              shippingMethod: "standard",
-              taxTotal: 0,
-              billingFirstName: "Test",
-              billingLastName: "Customer",
-              billingAddress1: "Test street",
-              billingCity: "Brisbane",
-              billingProvince: "QLD",
-              billingCountry: "Australia",
-              billingZip: "4000",
-              billingPhone: "0400000000",
-            }
-          : {}),
+        shippingMethod: "standard",
+        billingFirstName: "Test",
+        billingLastName: "Customer",
+        billingAddress1: "Test street",
+        billingCity: "Brisbane",
+        billingProvince: "QLD",
+        billingCountry: "Australia",
+        billingZip: "4000",
+        billingPhone: "0400000000",
       }),
     );
     const payload = vi.mocked(gateway).mock.calls[0][0];
-    if (_name === "eway")
-      expect(payload).toMatchObject({ Payment: { TotalAmount: 5000 }, Items: [{ Total: 5000 }] });
-    else expect(payload).toMatchObject({ purchase_units: [{ amount: { value: "50.00" } }] });
+    expect(payload).toMatchObject({ Payment: { TotalAmount: 5000 }, Items: [{ Total: 5000 }] });
   });
-  if (_name === "eway") {
-    it("creates and defaults the checkout address before starting payment", async () => {
-      const response = await handler(request());
-      expect(response.status).toBe(200);
-      expect(createQuitHeroCustomerAddress).toHaveBeenCalledWith(
-        "authenticated-customer",
-        expect.objectContaining({
-          address1: "Test street",
-          city: "Brisbane",
-          postcode: "4000",
-          country: "Australia",
-        }),
-      );
-      expect(setDefaultQuitHeroCustomerAddress).toHaveBeenCalledWith(
-        "authenticated-customer",
-        "checkout-address",
-      );
-    });
-
-    it("does not start payment when the delivery address cannot be saved", async () => {
-      vi.mocked(createQuitHeroCustomerAddress).mockRejectedValueOnce(new Error("address failed"));
-      const response = await handler(request());
-      expect(response.status).toBe(502);
-      expect(await response.json()).toEqual({
-        error: "We couldn't save your delivery address. No payment was attempted.",
-      });
-      expect(createEwayTransparentRedirect).not.toHaveBeenCalled();
-    });
-
-    it("reuses and defaults an existing matching checkout address", async () => {
-      vi.mocked(getQuitHeroCustomerAddresses).mockResolvedValueOnce([
-        {
-          id: "existing-address",
-          address1: "Test street",
-          city: "Brisbane",
-          state: "QLD",
-          postcode: "4000",
-          country: "Australia",
-        },
-      ]);
-      const response = await handler(request());
-      expect(response.status).toBe(200);
-      expect(createQuitHeroCustomerAddress).not.toHaveBeenCalled();
-      expect(setDefaultQuitHeroCustomerAddress).toHaveBeenCalledWith(
-        "authenticated-customer",
-        "existing-address",
-      );
-    });
-  }
   it("adds backend promotional items to the signed order session", async () => {
     vi.mocked(previewQuitHeroDiscounts).mockResolvedValue({
       ...preview,
@@ -266,9 +295,44 @@ describe.each([
     expect(await response.json()).toEqual({ error: "Customer is not eligible" });
     expect(gateway).not.toHaveBeenCalled();
   });
+  it("does not start eWAY if QuitHero rejects the order", async () => {
+    vi.mocked(createQuitHeroOrder).mockRejectedValueOnce(
+      new QuitHeroApiError("Internal server error", 500),
+    );
+
+    const response = await handler(request());
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({
+      error:
+        "The order service failed while creating your order (HTTP 500). Payment has not been submitted. Please contact support before trying again.",
+    });
+    expect(gateway).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+  });
+  it("does not start eWAY until QuitHero confirms the order is pending", async () => {
+    vi.mocked(updateQuitHeroOrderPaymentStatus).mockRejectedValue(
+      new Error("QuitHero did not confirm the pending payment status."),
+    );
+
+    await expect(handler(request())).resolves.toMatchObject({ status: 502 });
+    expect(createQuitHeroOrder).toHaveBeenCalled();
+    expect(gateway).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+  });
   it("requires review if discounts change before payment", async () => {
     const response = await handler(request({ expectedTotal: 60 }));
     expect(response.status).toBe(409);
+    expect(gateway).not.toHaveBeenCalled();
+  });
+  it("does not create an order or start eWAY if setting the default address fails", async () => {
+    vi.mocked(createQuitHeroCustomerAddress).mockRejectedValueOnce(
+      new Error("Address could not be set as default"),
+    );
+
+    const response = await handler(request());
+
+    expect(response.status).toBe(502);
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
     expect(gateway).not.toHaveBeenCalled();
   });
 });

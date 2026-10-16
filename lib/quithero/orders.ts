@@ -1,11 +1,10 @@
 import "server-only";
 
 import { orderDiscountFingerprint } from "./discount-verification";
-import { QuitHeroApiError, quitHeroPost, quitHeroFetch } from "./client";
+import { QuitHeroApiError, quitHeroPatch, quitHeroPost, quitHeroFetch } from "./client";
 
 export function orderConfirmationError(error: unknown) {
-  const detail =
-    error instanceof QuitHeroApiError && error.status === 400 ? `${error.message} ` : "";
+  const detail = error instanceof QuitHeroApiError ? `${error.message} ` : "";
   return `${detail}We could not confirm your order. If payment was taken, do not submit another payment. Contact support or retry confirmation from your payment return page.`;
 }
 
@@ -88,11 +87,48 @@ export async function getQuitHeroOrdersForCustomer(customerId: string) {
 }
 
 export async function getQuitHeroOrderById(id: string) {
-  return quitHeroFetch<QuitHeroOrder>(`/orders/${encodeURIComponent(id)}`);
+  const response = await quitHeroFetch<unknown>(`/orders/${encodeURIComponent(id)}`);
+  const order = unwrapQuitHeroOrder(response);
+  if (!order) throw new Error("QuitHero returned an invalid order response.");
+  return order;
 }
 
 export async function createQuitHeroOrder(payload: QuitHeroOrderPayload) {
-  return quitHeroPost<QuitHeroOrder>("/orders", payload);
+  const response = await quitHeroPost<unknown>("/orders", payload);
+  const order = unwrapQuitHeroOrder(response);
+  if (!order) throw new Error("QuitHero accepted the order but returned no order record.");
+  return order;
+}
+
+export async function updateQuitHeroOrderPaymentStatus(
+  id: string,
+  paymentStatus: "PENDING" | "PAID",
+) {
+  await quitHeroPatch<unknown>(`/orders/${encodeURIComponent(id)}`, {
+    paymentStatus,
+  });
+  const order = await getQuitHeroOrderById(id);
+  if (order.paymentStatus?.toUpperCase() !== paymentStatus)
+    throw new Error(`QuitHero did not confirm that the order payment status is ${paymentStatus}.`);
+  return order;
+}
+
+function unwrapQuitHeroOrder(value: unknown): QuitHeroOrder | undefined {
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const order = unwrapQuitHeroOrder(entry);
+      if (order) return order;
+    }
+    return undefined;
+  }
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.id === "string" && record.id) return record as QuitHeroOrder;
+  for (const key of ["data", "order", "result"]) {
+    const order = unwrapQuitHeroOrder(record[key]);
+    if (order) return order;
+  }
+  return undefined;
 }
 
 export async function findRecentlyCreatedQuitHeroOrder(

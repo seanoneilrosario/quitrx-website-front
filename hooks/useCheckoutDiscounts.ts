@@ -50,13 +50,13 @@ export function useCheckoutDiscounts(
     let active = true;
     async function preview() {
       try {
-        if (process.env.NODE_ENV === "development") {
-          console.log("[Checkout discounts] Request", {
-            endpoint: "/api/checkout/discounts",
-            accountCustomerId: customerId,
-            payload: JSON.parse(payload),
-          });
-        }
+        // if (process.env.NODE_ENV === "development") {
+        //   console.log("[Checkout discounts] Request", {
+        //     endpoint: "/api/checkout/discounts",
+        //     accountCustomerId: customerId,
+        //     payload: JSON.parse(payload),
+        //   });
+        // }
         const response = await fetch("/api/checkout/discounts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -64,42 +64,42 @@ export function useCheckoutDiscounts(
           signal: controller.signal,
         });
         const body = await response.json();
-        if (process.env.NODE_ENV === "development") {
-          console.log("[Checkout discounts] Response", {
-            request: JSON.parse(payload),
-            status: response.status,
-            ignored: !active,
-            data: body,
-          });
-        }
+        // if (process.env.NODE_ENV === "development") {
+        //   console.log("[Checkout discounts] Response", {
+        //     request: JSON.parse(payload),
+        //     status: response.status,
+        //     ignored: !active,
+        //     data: body,
+        //   });
+        // }
         if (!response.ok) throw new Error(body.error || "Unable to confirm checkout totals.");
         const preview = parseDiscountPreview(body);
-        if (active && process.env.NODE_ENV === "development") {
-          console.groupCollapsed(
-            `[Checkout discounts] Combination: ${preview.appliedDiscounts.length} applied (code: ${code || "none"})`,
-          );
-          console.table(preview.appliedDiscounts);
-          console.log("Totals", {
-            subtotal: preview.subtotal,
-            discountAmount: preview.discountAmount,
-            shippingBefore: preview.shippingTotal,
-            shippingAfter: preview.shippingAfterDiscount,
-            totalAfterDiscount: preview.totalAfterDiscount,
-          });
-          console.log("Line discounts", preview.lineDiscounts);
-          console.groupEnd();
-        }
+        // if (active && process.env.NODE_ENV === "development") {
+        //   console.groupCollapsed(
+        //     `[Checkout discounts] Combination: ${preview.appliedDiscounts.length} applied (code: ${code || "none"})`,
+        //   );
+        //   console.table(preview.appliedDiscounts);
+        //   console.log("Totals", {
+        //     subtotal: preview.subtotal,
+        //     discountAmount: preview.discountAmount,
+        //     shippingBefore: preview.shippingTotal,
+        //     shippingAfter: preview.shippingAfterDiscount,
+        //     totalAfterDiscount: preview.totalAfterDiscount,
+        //   });
+        //   console.log("Line discounts", preview.lineDiscounts);
+        //   console.groupEnd();
+        // }
         if (active) {
           saveCheckoutDiscount(customerId, code);
           setResult({ key, preview });
         }
       } catch (error) {
-        if (active && process.env.NODE_ENV === "development") {
-          console.error("[Checkout discounts] Error", {
-            request: JSON.parse(payload),
-            error,
-          });
-        }
+        // if (active && process.env.NODE_ENV === "development") {
+        //   console.error("[Checkout discounts] Error", {
+        //     request: JSON.parse(payload),
+        //     error,
+        //   });
+        // }
         if (active)
           setResult({
             key,

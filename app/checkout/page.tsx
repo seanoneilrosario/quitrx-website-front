@@ -49,6 +49,10 @@ function readPaymentStatus() {
   return new URLSearchParams(window.location.search).get("payment");
 }
 
+function readPaymentAccessCode() {
+  return new URLSearchParams(window.location.search).get("AccessCode");
+}
+
 export default function CheckoutPage() {
   const { customer } = useAccountCustomer();
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
@@ -56,7 +60,7 @@ export default function CheckoutPage() {
   const [discountInput, setDiscountInput] = useState<string>();
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentNeedsReview, setPaymentNeedsReview] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
   const submissionLock = useRef(false);
   const cardNameRef = useRef<HTMLInputElement>(null);
@@ -81,6 +85,12 @@ export default function CheckoutPage() {
     readPaymentStatus,
     () => null,
   );
+  const paymentAccessCode = useSyncExternalStore(
+    () => () => undefined,
+    readPaymentAccessCode,
+    () => null,
+  );
+  const paymentNeedsReview = paymentStatus === "review" || paymentStatus === "invalid";
   const items = useMemo<CartItem[]>(() => {
     try {
       return JSON.parse(storedCart);
@@ -109,9 +119,11 @@ export default function CheckoutPage() {
         ? "Payment was declined or could not be completed. Please try again."
         : paymentStatus === "cancelled"
           ? "Payment was cancelled. Your cart has not been changed."
-          : paymentStatus === "invalid"
-            ? "We couldn't verify that payment session. Please try again."
-            : "";
+          : paymentStatus === "review"
+            ? "Your payment may have been processed, but your order still needs confirmation. Do not pay again."
+            : paymentStatus === "invalid"
+              ? "We couldn't verify that payment session. Do not pay again. Please contact support."
+              : "";
   const displayedNotice =
     notice ||
     (completedPayment ? "Payment successful. Your order has been placed." : paymentNotice);
@@ -165,6 +177,7 @@ export default function CheckoutPage() {
     submissionLock.current = true;
     setIsSubmitting(true);
     setNotice("");
+    let navigating = false;
     try {
       const formData = new FormData(event.currentTarget);
       const response = await fetch(`/api/payments/${paymentMethod}`, {
@@ -193,32 +206,56 @@ export default function CheckoutPage() {
         paymentUrl?: string;
         formActionUrl?: string;
         accessCode?: string;
+        recoveryUrl?: string;
       };
-      if (
-        !response.ok ||
-        (paymentMethod === "eway" ? !result.formActionUrl : !result.paymentUrl)
-      ) {
+      if (result.recoveryUrl) {
+        window.location.assign(result.recoveryUrl);
+        navigating = true;
+        return;
+      }
+      if (!response.ok || (paymentMethod === "eway" ? !result.formActionUrl : !result.paymentUrl)) {
         discounts.refresh();
         throw new Error(result.error || "We couldn't start payment. Please try again.");
       }
       if (paymentMethod === "eway") {
         if (!result.accessCode) throw new Error("We couldn't verify the secure payment session.");
+        setIsRedirecting(true);
+        // Allow the loading UI to paint before handing navigation to the payment form.
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
         submitEwayPayment(result.formActionUrl!, result.accessCode);
+        navigating = true;
       } else {
         window.location.assign(result.paymentUrl!);
+        navigating = true;
       }
     } catch (error) {
       setNotice(
         error instanceof Error ? error.message : "We couldn't place your order. Please try again.",
       );
     } finally {
-      submissionLock.current = false;
-      setIsSubmitting(false);
+      if (!navigating) {
+        submissionLock.current = false;
+        setIsSubmitting(false);
+        setIsRedirecting(false);
+      }
     }
   }
 
   return (
     <main className={styles.page}>
+      {isSubmitting && (
+        <div className={styles.paymentLoadingOverlay}>
+          <div className={styles.paymentLoadingPanel} role="status" aria-live="polite">
+            <span className={styles.paymentSpinner} aria-hidden="true" />
+            <strong>
+              {isRedirecting ? "Connecting to secure payment…" : "Preparing your payment…"}
+            </strong>
+            <p>Please wait. Keep this page open.</p>
+          </div>
+        </div>
+      )}
       <div className={styles.checkoutShell}>
         <section className={styles.formColumn}>
           <Link className={styles.logo} href="/" aria-label="QuitRx homepage">
@@ -528,6 +565,14 @@ export default function CheckoutPage() {
                   {displayedNotice}
                 </p>
               )}
+              {paymentStatus === "review" && paymentAccessCode && (
+                <Link
+                  className={styles.submitButton}
+                  href={`/api/payments/eway/callback?AccessCode=${encodeURIComponent(paymentAccessCode)}`}
+                >
+                  Retry order confirmation
+                </Link>
+              )}
               <button
                 className={styles.submitButton}
                 type="submit"
@@ -550,10 +595,8 @@ export default function CheckoutPage() {
               Order summary{" "}
               <span>
                 {items.reduce((count, item) => count + item.quantity, 0) +
-                  (preview?.promotionalItems.reduce(
-                    (count, item) => count + item.quantity,
-                    0,
-                  ) ?? 0)}{" "}
+                  (preview?.promotionalItems.reduce((count, item) => count + item.quantity, 0) ??
+                    0)}{" "}
                 items
               </span>
             </h2>

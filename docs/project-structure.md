@@ -33,7 +33,7 @@ lib/
   catalog/              Catalog queries, stock, bundles, and product presentation
   checkout/             Checkout defaults and cart payloads
   forms/                External form URLs
-  payments/             eWAY and PayPal clients and payment sessions
+  payments/             eWAY client and payment session
   query/                Shared query cache policy
   quithero/             QuitHero API clients and response types
     cache/              Bounded server cache and reusable product card snapshots

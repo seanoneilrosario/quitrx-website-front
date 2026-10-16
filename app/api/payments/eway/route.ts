@@ -11,7 +11,8 @@ import { CHECKOUT_SHIPPING, isCheckoutShippingMethod } from "@/lib/checkout/chec
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { createEwayTransparentRedirect, EwayApiError } from "@/lib/payments/eway";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
-import { getFreshQuitHeroProductById } from "@/lib/quithero";
+import { createQuitHeroOrder, getFreshQuitHeroProductById } from "@/lib/quithero";
+import { updateQuitHeroOrderPaymentStatus } from "@/lib/quithero/orders";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import {
   createQuitHeroCustomerAddress,
@@ -52,12 +53,13 @@ async function ensureDefaultShippingAddress(customerId: string, address: QuitHer
   if (existing?.isDefault) return;
 
   const saved = existing ?? (await createQuitHeroCustomerAddress(customerId, address));
-  const addressId = saved.id ?? saved.addressId;
+  const addressId = saved?.id ?? saved?.addressId;
   if (!addressId) throw new Error("Qoblex did not return a delivery address ID.");
   await setDefaultQuitHeroCustomerAddress(customerId, addressId);
 }
 
 export async function POST(request: Request) {
+  let stage = "checking your checkout details";
   try {
     const session = await auth();
     const customerSession = await getCustomerSession();
@@ -212,6 +214,43 @@ export async function POST(request: Request) {
       );
     }
 
+    const orderItems = [
+      ...items.map(({ variantId, quantity }) => ({ variantId, quantity })),
+      ...preview.promotionalItems.map((item) => ({
+        variantId: item.variantId,
+        quantity: item.quantity,
+        isPromotional: true as const,
+        discountId: item.discountId,
+        benefitType: item.benefitType,
+      })),
+    ];
+    stage = "creating your order";
+    const order = await createQuitHeroOrder({
+      customerId: customerAccount.id,
+      source: "NATIVE",
+      currencyCode: "AUD",
+      subtotal: preview.subtotal,
+      discountTotal: preview.discountAmount,
+      shippingTotal: preview.shippingTotal,
+      shippingMethod: body.shippingMethod,
+      taxTotal: 0,
+      total: totalCents / 100,
+      billingFirstName: firstName,
+      billingLastName: lastName,
+      billingAddress1: street1,
+      billingCity: city,
+      billingProvince: state,
+      billingCountry: "Australia",
+      billingZip: postalCode,
+      billingPhone: phone,
+      discountCode: discountCode ?? "",
+      items: orderItems,
+    });
+    if (!order.id) throw new Error("QuitHero created an order without returning its ID.");
+    stage = "setting your order to pending payment";
+    await updateQuitHeroOrderPaymentStatus(order.id, "PENDING");
+    stage = "starting eWAY";
+
     const reference = `QuitRx-${Date.now()}`;
     const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
     const street2 = requiredText(address, "address2", 50);
@@ -277,16 +316,8 @@ export async function POST(request: Request) {
     await setPendingEwayPayment({
       accessCode: result.AccessCode,
       customerId: customerAccount.id,
-      items: [
-        ...items.map(({ variantId, quantity }) => ({ variantId, quantity })),
-        ...preview.promotionalItems.map((item) => ({
-          variantId: item.variantId,
-          quantity: item.quantity,
-          isPromotional: true as const,
-          discountId: item.discountId,
-          benefitType: item.benefitType,
-        })),
-      ],
+      retailOrderId: order.id,
+      items: orderItems,
       subtotal: preview.subtotal,
       shippingTotal: preview.shippingTotal,
       shippingMethod: body.shippingMethod,
@@ -315,7 +346,17 @@ export async function POST(request: Request) {
       (error instanceof QuitHeroApiError && error.status === 400)
     )
       return NextResponse.json({ error: error.message }, { status: 400 });
-    console.error("Unable to start eWAY payment:", error);
+    console.error("Unable to start eWAY payment:", {
+      stage,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    if (error instanceof QuitHeroApiError)
+      return NextResponse.json(
+        {
+          error: `The order service failed while ${stage} (HTTP ${error.status}). Payment has not been submitted. Please contact support before trying again.`,
+        },
+        { status: 502 },
+      );
     const isConfigurationError =
       error instanceof EwayApiError && (error.status === 401 || error.status === 403);
     const message =

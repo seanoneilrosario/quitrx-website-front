@@ -1,4 +1,5 @@
 import "server-only";
+import { QuitHeroApiError as BaseQuitHeroApiError, extractApiErrorMessage } from "./client";
 
 export type QuitHeroAddress = {
   id?: string;
@@ -78,12 +79,15 @@ const QUITHERO_REQUEST_TIMEOUT_MS = 10_000;
 
 const customerSyncs = new Map<string, Promise<QuitHeroCustomer | undefined>>();
 
-class QuitHeroApiError extends Error {
+class QuitHeroApiError extends BaseQuitHeroApiError {
   constructor(
     readonly status: number,
     readonly responseBody: unknown,
   ) {
-    super(`QuitHero request failed with status ${status}.`);
+    super(
+      extractApiErrorMessage(responseBody) || `QuitHero request failed with status ${status}.`,
+      status,
+    );
     this.name = "QuitHeroApiError";
   }
 }
@@ -223,6 +227,26 @@ async function quitHeroRequest<T>(path: string, init: RequestInit = {}) {
 }
 
 export async function findQuitHeroCustomerByEmail(email: string) {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail) {
+    return undefined;
+  }
+
+  const response = await quitHeroRequest<QuitHeroSearchResponse>(
+    `/customers?search=${encodeURIComponent(normalizedEmail)}`,
+  );
+
+  return extractCustomers(response).find(
+    (customer) =>
+      typeof customer.email === "string" && normalizeEmail(customer.email) === normalizedEmail,
+  );
+}
+
+export async function findQuitHeroCustomerByEmailAndFields(
+  email: string,
+  fields: (keyof QuitHeroCustomer)[],
+) {
   const normalizedEmail = normalizeEmail(email);
 
   if (!normalizedEmail) {
@@ -383,7 +407,17 @@ export async function syncQuitHeroCustomerWithoutBlocking(user: QuitHeroAuthenti
 export async function createQuitHeroCustomerAddress(customerId: string, address: QuitHeroAddress) {
   const response = await quitHeroRequest<unknown>(
     `/customers/${encodeURIComponent(customerId)}/addresses`,
-    { method: "POST", body: JSON.stringify(address) },
+    {
+      method: "POST",
+      body: JSON.stringify({
+        address1: address.address1 ?? address.line1,
+        address2: address.address2 ?? address.line2,
+        city: address.city,
+        state: address.state ?? address.province,
+        postcode: address.postcode ?? address.zip,
+        country: address.country,
+      }),
+    },
   );
   return extractAddresses(response)[0];
 }
@@ -391,8 +425,11 @@ export async function createQuitHeroCustomerAddress(customerId: string, address:
 export async function getQuitHeroCustomerAddresses(customerId: string) {
   const id = customerId.trim();
   if (!id) return [];
-  const response = await quitHeroRequest<unknown>(`/customers/${encodeURIComponent(id)}/addresses`);
-  return extractAddresses(response);
+  // Addresses are embedded in the customer record; the addresses route only supports POST.
+  const response = await quitHeroRequest<unknown>(`/customers/${encodeURIComponent(id)}`);
+  const customer = extractCustomers(response).find((entry) => entry.id === id);
+  if (!customer) throw new Error("QuitHero did not return the requested customer.");
+  return customer.addresses ?? (customer.address ? [customer.address] : []);
 }
 
 export async function updateQuitHeroCustomerAddress(
@@ -413,4 +450,19 @@ export async function setDefaultQuitHeroCustomerAddress(customerId: string, addr
     { method: "PATCH" },
   );
   return extractAddresses(response)[0];
+}
+
+export async function ensureDefaultQuitHeroCustomerAddress(
+  customerId: string,
+  address: QuitHeroAddress,
+) {
+  const createdAddress = await createQuitHeroCustomerAddress(customerId, {
+    ...address,
+    isDefault: true,
+  });
+  const addressId = createdAddress?.id ?? createdAddress?.addressId;
+  if (!addressId)
+    throw new Error("QuitHero created the delivery address but did not return its ID.");
+  await setDefaultQuitHeroCustomerAddress(customerId, addressId);
+  return { ...createdAddress, id: addressId, isDefault: true };
 }
