@@ -117,6 +117,7 @@ export function collectionPageQuery(
   slug: string,
   page: number,
   filters: CollectionPageFilters = {},
+  fresh = false,
 ) {
   const params = new URLSearchParams({
     collectionPage: slug,
@@ -168,8 +169,9 @@ export function collectionPageQuery(
     ] as const,
     queryFn: ({ signal }) =>
       getCatalogData<CollectionPageResponse>(
-        `/api/quithero-products?${params}`,
+        `/api/quithero-products?${params}${fresh ? "&fresh=1" : ""}`,
         signal,
+        fresh,
       ),
     staleTime: API_STALE_TIME,
     retry: false,

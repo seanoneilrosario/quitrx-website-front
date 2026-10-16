@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   collectionAvailableFiltersQuery,
@@ -8,16 +8,33 @@ import {
 } from "@/lib/catalog/catalog-queries";
 import type { CollectionFilterState } from "./useCollectionFilters";
 import { sortProducts } from "./sort-products";
+import { useReloadCollection } from "./useReloadCollection";
+
+const subscribe = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
+
 export function useCollectionData(
   collectionSlug: string,
   initialPage: CollectionPageResponse | undefined,
   { page, pageFilters, hasProductFilters, sort }: CollectionFilterState,
 ) {
+  // Browser query caches can contain data the server never rendered. Use the
+  // server snapshot through hydration, then allow cached/live results to render.
+  const hydrated = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
+  const initialData =
+    !hasProductFilters && initialPage?.pagination.page === page ? initialPage : undefined;
   /**
    * Products are filtered and paginated
    * by the backend.
    */
-  const { data, error, isPending, isFetching, refetch } = useQuery({
+  const {
+    data: queryData,
+    error,
+    isPending,
+    isFetching,
+    refetch,
+  } = useQuery({
     ...collectionPageQuery(collectionSlug, page, pageFilters),
 
     /**
@@ -27,8 +44,7 @@ export function useCollectionData(
      * Otherwise the initial snapshot would be
      * the unfiltered collection data.
      */
-    initialData:
-      !hasProductFilters && initialPage?.pagination.page === page ? initialPage : undefined,
+    initialData,
   });
 
   /**
@@ -42,17 +58,21 @@ export function useCollectionData(
     ...collectionAvailableFiltersQuery(collectionSlug, pageFilters),
   });
 
+  useReloadCollection(hydrated, collectionSlug, page, pageFilters);
+
+  const data = hydrated ? queryData : initialData;
   const products = useMemo(() => data?.products ?? [], [data]);
 
-  const collection = data?.collection ?? {
-    name: collectionSlug.replaceAll("-", " "),
-  };
+  const collection = initialPage?.collection ??
+    data?.collection ?? {
+      name: collectionSlug.replaceAll("-", " "),
+    };
 
-  const productsLoading = isPending;
+  const productsLoading = hydrated ? isPending : !initialData;
 
-  const productsError = error?.message ?? "";
+  const productsError = hydrated ? (error?.message ?? "") : "";
 
-  const availableFilters = availableFiltersData?.data?.filters ?? [];
+  const availableFilters = hydrated ? (availableFiltersData?.data?.filters ?? []) : [];
 
   /**
    * Availability is currently not part of
@@ -81,7 +101,7 @@ export function useCollectionData(
     totalProducts: data?.pagination.total ?? products.length,
     productsLoading,
     productsError,
-    isFetching,
+    isFetching: hydrated ? isFetching : false,
     refetch,
   };
 }

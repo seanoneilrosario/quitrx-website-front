@@ -132,12 +132,12 @@ export default function ProductCard({
             />
           ) : (
             <ProductImage
-              src={image?.url}
+              src={image?.url || image?.url}
               width={600}
               height={600}
               sizes="(max-width: 599px) 190px, (max-width: 989px) 50vw, 25vw"
               alt={image?.altText || product.name || "Product"}
-              className={styles.productImage}
+              className={`${styles.productImage} ${image?.url}`}
             />
           )}
         </span>

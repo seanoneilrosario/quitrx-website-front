@@ -83,3 +83,25 @@ it("shares product detail requests", async () => {
     client.clear();
   }
 });
+
+it("refreshes the same collection cache entry while retaining filters and bypassing HTTP caching", async () => {
+  const response = { ...cachedPage, products: [{ id: "new-image" }] };
+  const fetch = vi.fn().mockResolvedValue(Response.json(response));
+  vi.stubGlobal("fetch", fetch);
+  const client = new QueryClient();
+  try {
+    const filters = { brandId: ["brand-one"] };
+    const normal = collectionPageQuery("one", 2, filters);
+    const fresh = collectionPageQuery("one", 2, filters, true);
+    expect(fresh.queryKey).toEqual(normal.queryKey);
+    client.setQueryData(normal.queryKey, cachedPage);
+    await client.fetchQuery({ ...fresh, staleTime: 0 });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/quithero-products?collectionPage=one&page=2&limit=15&brandId=brand-one&fresh=1",
+      expect.objectContaining({ cache: "no-store", signal: expect.any(AbortSignal) }),
+    );
+    expect(client.getQueryData(normal.queryKey)).toEqual(response);
+  } finally {
+    client.clear();
+  }
+});
