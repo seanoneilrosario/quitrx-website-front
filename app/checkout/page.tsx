@@ -89,7 +89,7 @@ export default function CheckoutPage() {
     readPaymentAccessCode,
     () => null,
   );
-  const paymentNeedsReview = paymentStatus === "review";
+  const paymentNeedsReview = paymentStatus === "review" || paymentStatus === "invalid";
   const items = useMemo<CartItem[]>(() => {
     try {
       return JSON.parse(storedCart);
@@ -121,7 +121,7 @@ export default function CheckoutPage() {
           : paymentStatus === "review"
             ? "Your payment may have been processed, but your order still needs confirmation. Do not pay again."
           : paymentStatus === "invalid"
-            ? "We couldn't verify that payment session. Please try again."
+            ? "We couldn't verify that payment session. Do not pay again. Please contact support."
             : "";
   const displayedNotice =
     notice ||
@@ -544,7 +544,7 @@ export default function CheckoutPage() {
                   {displayedNotice}
                 </p>
               )}
-              {paymentNeedsReview && paymentAccessCode && (
+              {paymentStatus === "review" && paymentAccessCode && (
                 <Link
                   className={styles.submitButton}
                   href={`/api/payments/eway/callback?AccessCode=${encodeURIComponent(paymentAccessCode)}`}

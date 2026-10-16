@@ -1,0 +1,134 @@
+.section {
+  display: grid;
+  min-height: 400px;
+  place-items: center;
+  padding: 32px 24px 38px;
+  background: #f4f8fa;
+  color: #177687;
+}
+
+.content {
+  display: flex;
+  width: min(100%, 1240px);
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.icon {
+  display: grid;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 31px;
+  place-items: center;
+  border-radius: 50%;
+  background: #2c6270;
+}
+
+.icon svg {
+  width: 72px;
+  height: 72px;
+}
+
+.icon path {
+  fill: none;
+  stroke: #f4f8fa;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 7;
+}
+
+.title {
+  margin: 0 0 24px;
+  color: #006672;
+  font-size: 25px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+
+.lead,
+.message {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.lead {
+  margin-bottom: 18px;
+}
+
+.message {
+  max-width: 1180px;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 40px;
+  margin-top: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 17px;
+  border-radius: 7px;
+  background: #36edbd;
+  color: #006672;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.button:hover {
+  background: #22ddb0;
+  transform: translateY(-1px);
+}
+
+.button:focus-visible {
+  outline: 3px solid #006672;
+  outline-offset: 3px;
+}
+
+@media (max-width: 749px) {
+  .section {
+    min-height: 100svh;
+    padding: 40px 20px;
+  }
+
+  .icon {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 26px;
+  }
+
+  .icon svg {
+    width: 58px;
+    height: 58px;
+  }
+
+  .title {
+    margin-bottom: 20px;
+    font-size: 22px;
+  }
+
+  .lead,
+  .message {
+    font-size: 15px;
+  }
+
+  .lead {
+    margin-bottom: 14px;
+  }
+
+  .button {
+    margin-top: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}
