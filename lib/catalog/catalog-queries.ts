@@ -84,6 +84,15 @@ export function catalogListQuery(
   });
 }
 
+export function selectedCollectionsQuery() {
+  const url = "/api/quithero-collections?refresh=1";
+  return queryOptions({
+    queryKey: ["api", url] as const,
+    queryFn: ({ signal }) => getCatalogData<unknown>(url, signal, true),
+    staleTime: 0,
+  });
+}
+
 export function productDetailQuery(slug: string) {
   const url = `/api/quithero-products/${encodeURIComponent(slug)}`;
   return queryOptions({

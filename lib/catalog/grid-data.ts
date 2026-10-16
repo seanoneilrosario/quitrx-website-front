@@ -1,4 +1,6 @@
 export type GridCollection = {
+  _type?: string;
+  id?: string;
   title?: string;
   slug?: string;
   image?: string;
@@ -111,8 +113,24 @@ function normalizeCardLink(link?: string) {
   return `/${value}`;
 }
 
-export function selectedCollectionCards(collections: GridCollection[]): CollectionCardData[] {
-  return collections.flatMap((collection) => {
+export function selectedCollectionCards(
+  collections: GridCollection[],
+  payload?: unknown,
+): CollectionCardData[] {
+  const current = records(payload, ["collections", "data", "items"]);
+  return collections.flatMap((saved) => {
+    const live =
+      saved._type === "apiCollection"
+        ? current.find((item) => (saved.id ? item.id === saved.id : item.slug === saved.slug))
+        : undefined;
+    const collection = live
+      ? {
+          ...saved,
+          title: text(live, ["name", "title"]) || saved.title,
+          slug: text(live, ["slug"]) || saved.slug,
+          image: image(live),
+        }
+      : saved;
     const href =
       normalizeCardLink(collection.link) ||
       (collection.slug ? `/collections/${collection.slug}` : undefined);

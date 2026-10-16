@@ -49,6 +49,12 @@ it("filters hidden products before loading paginated card relations", async () =
 });
 
 it("loads fresh product variants by product ID for checkout validation", async () => {
+  cacheProductCard({
+    id: "product-one",
+    name: "Old catalog card",
+    images: [],
+    variants: [{ id: "variant-one", inventory: 99, price: 1 }],
+  });
   vi.mocked(quitHeroFetch).mockResolvedValue({
     data: {
       id: "product-one",

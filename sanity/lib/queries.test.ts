@@ -44,7 +44,13 @@ describe("dashboard collection tiles", () => {
     "reads the synced image and renamed slug in the page query",
     async (query) => {
       expect(await collectionTiles(query, [selected], [synced, asset])).toEqual([
-        { title: "Updated title", slug: "new-slug", image: asset.url },
+        {
+          _type: "apiCollection",
+          id: "collection-1",
+          title: "Updated title",
+          slug: "new-slug",
+          image: asset.url,
+        },
       ]);
     },
   );
@@ -56,12 +62,26 @@ describe("dashboard collection tiles", () => {
         [{ ...selected, id: undefined, slug: "new-slug" }],
         [synced, asset],
       ),
-    ).toEqual([{ title: "Updated title", slug: "new-slug", image: asset.url }]);
+    ).toEqual([
+      {
+        _type: "apiCollection",
+        id: null,
+        title: "Updated title",
+        slug: "new-slug",
+        image: asset.url,
+      },
+    ]);
   });
 
   it("keeps saved selections when no synced collection exists", async () => {
     expect(await collectionTiles(HOME_QUERY, [selected], [])).toEqual([
-      { title: selected.title, slug: selected.slug, image: selected.image },
+      {
+        _type: "apiCollection",
+        id: selected.id,
+        title: selected.title,
+        slug: selected.slug,
+        image: selected.image,
+      },
     ]);
   });
 

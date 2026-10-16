@@ -26,6 +26,8 @@ const PAGE_COMPONENTS = `
     displayMode,
     "collection": collection->{title, "slug": slug.current, "image": coalesce(image.asset->url, featuredImageUrl)},
     "collections": collections[]{
+      _type,
+      id,
       _type == "reference" => @->{title, "slug": slug.current, "image": coalesce(image.asset->url, featuredImageUrl)},
       _type == "apiCollection" => coalesce(
         *[_type == "productCollection" && (

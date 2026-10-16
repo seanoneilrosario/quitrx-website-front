@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+vi.mock("next/cache", () => ({ revalidateTag: vi.fn() }));
+import { revalidateTag } from "next/cache";
 
 vi.mock("@/lib/catalog/catalog-pagination", () => import("@/lib/catalog/catalog-pagination"));
 vi.mock("@/lib/quithero", () => ({
@@ -21,7 +23,13 @@ describe("collection refresh endpoint", () => {
         "https://example.com/api/quithero-products?collectionPage=all-products&page=1&limit=100&fresh=1",
       ),
     );
-    expect(getQuitHeroCollectionPage).toHaveBeenCalledWith("all-products", 1, 100);
+    expect(getQuitHeroCollectionPage).toHaveBeenCalledWith(
+      "all-products",
+      1,
+      100,
+      expect.any(Object),
+    );
+    expect(revalidateTag).toHaveBeenCalledWith("quithero-catalog-pages", { expire: 0 });
     expect(getFastQuitHeroCollectionPage).not.toHaveBeenCalled();
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toEqual({ products: [{ id: "new" }] });
@@ -31,7 +39,13 @@ describe("collection refresh endpoint", () => {
     const response = await GET(
       new Request("https://example.com/api/quithero-products?collectionPage=brand-a"),
     );
-    expect(getFastQuitHeroCollectionPage).toHaveBeenCalledWith("brand-a", 1, 15);
+    expect(getFastQuitHeroCollectionPage).toHaveBeenCalledWith(
+      "brand-a",
+      1,
+      15,
+      expect.any(Object),
+    );
+    expect(revalidateTag).not.toHaveBeenCalled();
     expect(getQuitHeroCollectionPage).not.toHaveBeenCalled();
     expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
@@ -41,6 +55,7 @@ describe("collection refresh endpoint", () => {
       new Request("https://example.com/api/quithero-products?collectionPage=brand-a&fresh=1"),
     );
     expect(response.status).toBe(502);
+    expect(revalidateTag).not.toHaveBeenCalled();
     expect(getFastQuitHeroCollectionPage).not.toHaveBeenCalled();
   });
 });

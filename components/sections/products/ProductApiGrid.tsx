@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import { hasActiveScript } from "@/lib/account/script-access";
-import { catalogListQuery } from "@/lib/catalog/catalog-queries";
+import { catalogListQuery, selectedCollectionsQuery } from "@/lib/catalog/catalog-queries";
 import {
   collectionCardsFrom,
   productCardsFrom,
@@ -32,6 +32,27 @@ type ProductApiGridProps = {
   collection?: GridCollection;
   collections?: GridCollection[];
 };
+
+function SelectedCollectionsGrid({ selections }: { selections: GridCollection[] }) {
+  const { data } = useQuery(selectedCollectionsQuery());
+  return <SelectedCollectionCards selections={selections} data={data} />;
+}
+
+function SelectedCollectionCards({
+  selections,
+  data,
+}: {
+  selections: GridCollection[];
+  data?: unknown;
+}) {
+  return (
+    <div className={styles.grid}>
+      {selectedCollectionCards(selections, data).map((item) => (
+        <CollectionGridCard key={item.href} collection={item} />
+      ))}
+    </div>
+  );
+}
 
 function CatalogGrid({ mode, limit }: { mode: "collections" | "products"; limit: number }) {
   const { data, error, isLoading } = useQuery(catalogListQuery(mode));
@@ -96,15 +117,12 @@ export default function ProductApiGrid({
     if (loading) return <ProductGridSkeleton count={Math.max(4, Math.min(productLimit, 8))} />;
     if (!hasAccess) return <ProductGridAccessNotice signedIn={Boolean(customer)} />;
 
-    // Explicit CMS selections override the display mode and do not fetch a catalog list.
+    // Preserve CMS ordering while refreshing API selections from the dashboard.
     if (selections.length) {
-      return (
-        <div className={styles.grid}>
-          {selectedCollectionCards(selections.slice(0, productLimit)).map((item) => (
-            <CollectionGridCard key={item.href} collection={item} />
-          ))}
-        </div>
-      );
+      if (!selections.some((item) => item._type === "apiCollection")) {
+        return <SelectedCollectionCards selections={selections.slice(0, productLimit)} />;
+      }
+      return <SelectedCollectionsGrid selections={selections.slice(0, productLimit)} />;
     }
     // Mount the query only once account access is confirmed.
     return <CatalogGrid mode={displayMode} limit={productLimit} />;

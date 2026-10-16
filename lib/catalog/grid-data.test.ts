@@ -33,9 +33,36 @@ describe("catalog grid data", () => {
     expect(
       selectedCollectionCards([{ slug: "second", title: "Second" }, {}, { slug: "first" }]),
     ).toEqual([
-      { slug: "second", title: "Second", image: undefined, placeholder: "title" },
-      { slug: "first", title: "Collection", image: undefined, placeholder: "title" },
+      {
+        slug: "second",
+        href: "/collections/second",
+        title: "Second",
+        image: undefined,
+        placeholder: "title",
+      },
+      {
+        slug: "first",
+        href: "/collections/first",
+        title: "Collection",
+        image: undefined,
+        placeholder: "title",
+      },
     ]);
+  });
+
+  it("refreshes API images by ID while preserving custom cards and selection order", () => {
+    const selections = [
+      { _type: "customLink", link: "/custom", image: "/custom.png" },
+      { _type: "apiCollection", id: "one", slug: "old", image: "/old.png" },
+      { _type: "apiCollection", slug: "removed-image", image: "/deleted.png" },
+    ];
+    const cards = selectedCollectionCards(selections, [
+      { slug: "removed-image", image: null },
+      { id: "one", slug: "new", name: "New", image: "/latest.png" },
+    ]);
+    expect(cards.map((card) => card.image)).toEqual(["/custom.png", "/latest.png", undefined]);
+    expect(cards[1].href).toBe("/collections/new");
+    expect(selectedCollectionCards(selections)[1].image).toBe("/old.png");
   });
 
   it("reads collection cards without inventing a link for missing slugs", () => {

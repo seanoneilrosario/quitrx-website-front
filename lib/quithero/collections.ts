@@ -6,7 +6,7 @@ import { createSummaryCache } from "./cache/summary-cache";
 import { ALL_PRODUCTS_PAGE_SIZE } from "@/lib/catalog/catalog-pagination";
 import { unstable_cache } from "next/cache";
 import type { QuitHeroProduct } from "./product-types";
-import { quitHeroFetch, QUITHERO_CACHE_SECONDS } from "./client";
+import { quitHeroFetch, QUITHERO_CACHE_SECONDS, QUITHERO_CATALOG_CACHE_SECONDS } from "./client";
 import { client } from "@/sanity/lib/client";
 import { productIsVisible } from "@/lib/catalog/bundles";
 import { getQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
@@ -218,6 +218,25 @@ async function loadCollectionPage(
 
 const collectionPageCache = createSummaryCache<QuitHeroCollectionPage>(100);
 
+// Use the same key for server rendering and API requests with empty/reordered filters.
+export function normalizeCollectionFilters(filters: QuitHeroCollectionFilters) {
+  const normalized: QuitHeroCollectionFilters = {};
+  for (const key of [
+    "brandId",
+    "productTypeId",
+    "status",
+    "sourceSystem",
+    "tags",
+    "attributeFilters",
+  ] as const) {
+    const values = [...new Set(filters[key]?.map((value) => value.trim()).filter(Boolean))].sort();
+    if (values.length) normalized[key] = values;
+  }
+  if (filters.minPrice !== undefined) normalized.minPrice = filters.minPrice;
+  if (filters.maxPrice !== undefined) normalized.maxPrice = filters.maxPrice;
+  return normalized;
+}
+
 function collectionPage(
   slug: string,
   page: number,
@@ -230,10 +249,11 @@ function collectionPage(
     1,
     Math.min(slug === "all-products" ? ALL_PRODUCTS_PAGE_SIZE : 100, Math.floor(limit)),
   );
-  const key = JSON.stringify([slug, normalizedPage, normalizedLimit, filters]);
+  const normalizedFilters = normalizeCollectionFilters(filters);
+  const key = JSON.stringify([slug, normalizedPage, normalizedLimit, normalizedFilters]);
   return collectionPageCache.get(
     key,
-    () => loadCollectionPage(slug, normalizedPage, normalizedLimit, filters, fresh),
+    () => loadCollectionPage(slug, normalizedPage, normalizedLimit, normalizedFilters, fresh),
     fresh,
   );
 }
@@ -248,9 +268,26 @@ export function getQuitHeroCollectionPage(
   return collectionPage(slug, page, limit, filters, true);
 }
 
+// Next's Data Cache persists beyond a single server process and serves stale
+// catalog results while revalidating. Payment validation never uses this cache.
+const getPersistentCollectionPage = unstable_cache(
+  (slug: string, page: number, limit: number, filters: QuitHeroCollectionFilters) =>
+    collectionPage(slug, page, limit, filters, false),
+  ["quithero-collection-pages-v1"],
+  { revalidate: QUITHERO_CATALOG_CACHE_SECONDS, tags: ["quithero-catalog-pages"] },
+);
+
 export const getFastQuitHeroCollectionPage = cache(
   (slug: string, page: number, limit: number, filters: QuitHeroCollectionFilters = {}) =>
-    collectionPage(slug, page, limit, filters, false),
+    getPersistentCollectionPage(
+      slug,
+      Math.max(1, Math.floor(page)),
+      Math.max(
+        1,
+        Math.min(slug === "all-products" ? ALL_PRODUCTS_PAGE_SIZE : 100, Math.floor(limit)),
+      ),
+      normalizeCollectionFilters(filters),
+    ),
 );
 
 export async function getQuitHeroCollection(slug: string) {

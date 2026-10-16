@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ProductImage from "@/components/commerce/ProductImage";
@@ -5,10 +8,17 @@ import type { CollectionCardData, ProductCardData } from "@/lib/catalog/grid-dat
 import styles from "./product-api-grid.module.css";
 
 export function CollectionGridCard({ collection }: { collection: CollectionCardData }) {
+  const [prefetch, setPrefetch] = useState(false);
   const { href, title, image, count, openInNewTab, placeholder } = collection;
+  const prepareCollection = () => {
+    if (!openInNewTab && href.startsWith("/collections/")) setPrefetch(true);
+  };
   return (
     <Link
       href={href}
+      prefetch={prefetch}
+      onMouseEnter={prepareCollection}
+      onFocus={prepareCollection}
       className={`${styles.card} ${styles.collectionCard}`}
       target={openInNewTab ? "_blank" : undefined}
       rel={openInNewTab ? "noopener noreferrer" : undefined}

@@ -45,7 +45,14 @@ process retains up to 1,000 compact product cards and 100 collection pages for
 five minutes. Concurrent requests share in-flight work. Named collection reads
 seed product cards; All Products reuses those cards instead of fetching their
 images and variants again. Failed refreshes leave successful entries intact.
-These caches are process-local and reset on restart; replicas do not share them.
+These inner caches are process-local and reset on restart. Collection pages also
+use Next's persistent Data Cache (300 seconds), returning cached results while
+revalidating in the background. Cross-instance sharing depends on the hosting
+platform's Data Cache support; self-hosted replicas need a shared cache handler.
+Filter keys are normalized so equivalent page and API requests share results.
+Successful explicit API refreshes expire the persistent catalog-page tag.
+Payment validation continues to fetch fresh product details outside these caches.
+Collection tiles prefetch their full route only on hover or keyboard focus.
 
 Collections display 15 products per numbered page. The URL stores the page and
 filter/sort selections. Browser queries cache each collection/page separately;

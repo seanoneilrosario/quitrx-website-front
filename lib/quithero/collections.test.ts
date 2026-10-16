@@ -17,6 +17,7 @@ import {
   getFastQuitHeroCollectionPage,
   getQuitHeroCollectionPage,
   getFreshQuitHeroCollections,
+  normalizeCollectionFilters,
 } from "./collections";
 
 afterEach(() => {
@@ -120,6 +121,30 @@ describe("collection picker pagination", () => {
 });
 
 describe("all-products pagination", () => {
+  it("shares cache entries for equivalent server and browser filters", async () => {
+    vi.stubEnv("QUITHERO_API_KEY", "test-key");
+    const fetchMock = vi.fn().mockImplementation(async () =>
+      Response.json({
+        data: { name: "Cache", slug: "cache-equivalent", products: [] },
+        pagination: { totalPages: 1 },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await getFastQuitHeroCollectionPage("cache-equivalent", 1, 15);
+    await getFastQuitHeroCollectionPage("cache-equivalent", 1, 15, {
+      brandId: [],
+      tags: [],
+      minPrice: undefined,
+      attributeFilters: [],
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(normalizeCollectionFilters({ brandId: [" b ", "a", "b"], minPrice: 0 })).toEqual({
+      brandId: ["a", "b"],
+      minPrice: 0,
+    });
+    await getFastQuitHeroCollectionPage("cache-equivalent", 1, 15, { brandId: ["a"] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
   it("shares simultaneous loads after normalizing the server and browser limits", async () => {
     vi.stubEnv("QUITHERO_API_KEY", "test-key");
     const fetchMock = vi
