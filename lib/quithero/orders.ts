@@ -13,7 +13,18 @@ export type QuitHeroOrderPayload = {
   source: "NATIVE";
   currencyCode: "AUD";
   subtotal: number;
+  discountTotal?: number;
   shippingTotal?: number;
+  shippingMethod?: "standard" | "express";
+  taxTotal?: number;
+  billingFirstName?: string;
+  billingLastName?: string;
+  billingAddress1?: string;
+  billingCity?: string;
+  billingProvince?: string;
+  billingCountry?: string;
+  billingZip?: string;
+  billingPhone?: string;
   discountCode?: string;
   total: number;
   customerId: string;

@@ -140,6 +140,20 @@ describe.each([
         shippingTotal: 12.9,
         discountTotal: 22.9,
         discountFingerprint: expect.any(String),
+        ...(_name === "eway"
+          ? {
+              shippingMethod: "standard",
+              taxTotal: 0,
+              billingFirstName: "Test",
+              billingLastName: "Customer",
+              billingAddress1: "Test street",
+              billingCity: "Brisbane",
+              billingProvince: "QLD",
+              billingCountry: "Australia",
+              billingZip: "4000",
+              billingPhone: "0400000000",
+            }
+          : {}),
       }),
     );
     const payload = vi.mocked(gateway).mock.calls[0][0];

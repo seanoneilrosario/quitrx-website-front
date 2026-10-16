@@ -23,7 +23,9 @@ function checkoutUrl(request: NextRequest, payment: string) {
   return url;
 }
 
-async function finalizeEwayPayment(accessCode?: string) {
+const activeFinalizations = new Map<string, Promise<"success" | "failed" | "invalid">>();
+
+async function finalizeVerifiedEwayPayment(accessCode?: string) {
   const pending = await getPendingEwayPayment();
   if (!accessCode || !pending || pending.accessCode !== accessCode) {
     return "invalid" as const;
@@ -40,8 +42,19 @@ async function finalizeEwayPayment(accessCode?: string) {
     source: "NATIVE",
     currencyCode: "AUD",
     subtotal: pending.subtotal,
+    discountTotal: pending.discountTotal ?? 0,
     shippingTotal: pending.shippingTotal,
-    discountCode: pending.discountCode,
+    shippingMethod: pending.shippingMethod,
+    taxTotal: pending.taxTotal ?? 0,
+    billingFirstName: pending.billingFirstName,
+    billingLastName: pending.billingLastName,
+    billingAddress1: pending.billingAddress1,
+    billingCity: pending.billingCity,
+    billingProvince: pending.billingProvince,
+    billingCountry: pending.billingCountry,
+    billingZip: pending.billingZip,
+    billingPhone: pending.billingPhone,
+    discountCode: pending.discountCode ?? "",
     total: pending.total,
     customerId: pending.customerId,
     items: pending.items,
@@ -58,6 +71,18 @@ async function finalizeEwayPayment(accessCode?: string) {
   verifyOrderDiscountTotals(order, pending);
   await clearPendingEwayPayment();
   return "success" as const;
+}
+
+function finalizeEwayPayment(accessCode?: string) {
+  if (!accessCode) return finalizeVerifiedEwayPayment();
+  const active = activeFinalizations.get(accessCode);
+  if (active) return active;
+
+  const finalization = finalizeVerifiedEwayPayment(accessCode).finally(() => {
+    activeFinalizations.delete(accessCode);
+  });
+  activeFinalizations.set(accessCode, finalization);
+  return finalization;
 }
 
 export async function GET(request: NextRequest) {

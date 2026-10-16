@@ -65,7 +65,17 @@ const pending = {
   subtotal: 60,
   total: 50,
   shippingTotal: 12.9,
+  shippingMethod: "standard" as const,
   discountTotal: 22.9,
+  taxTotal: 0,
+  billingFirstName: "Test",
+  billingLastName: "Customer",
+  billingAddress1: "Test street",
+  billingCity: "Brisbane",
+  billingProvince: "QLD",
+  billingCountry: "Australia",
+  billingZip: "4000",
+  billingPhone: "0400000000",
   discountCode: "SAVE",
   items: [{ variantId: "variant", quantity: 2 }],
   createdAt: Date.now(),
@@ -105,6 +115,15 @@ describe.each(["eway", "paypal"] as const)("%s order confirmation", (gateway) =>
         shippingTotal: 12.9,
         total: 50,
         items: pending.items,
+        ...(gateway === "eway"
+          ? {
+              discountTotal: 22.9,
+              shippingMethod: "standard",
+              taxTotal: 0,
+              billingFirstName: "Test",
+              billingPhone: "0400000000",
+            }
+          : {}),
       }),
     );
     expect(
@@ -137,4 +156,12 @@ describe.each(["eway", "paypal"] as const)("%s order confirmation", (gateway) =>
     expect(getQuitHeroOrderById).toHaveBeenCalledWith("retail-order");
     expect(createQuitHeroOrder).not.toHaveBeenCalled();
   });
+  if (gateway === "eway") {
+    it("coalesces simultaneous callbacks into one order creation", async () => {
+      const [first, second] = await Promise.all([invoke(), invoke()]);
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
+      expect(createQuitHeroOrder).toHaveBeenCalledTimes(1);
+    });
+  }
 });
