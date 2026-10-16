@@ -17,10 +17,9 @@ import {
   type QuitHeroOrderPayload,
 } from "@/lib/quithero";
 
-function checkoutUrl(request: NextRequest, payment: string, accessCode?: string) {
+function checkoutUrl(request: NextRequest, payment: string) {
   const url = new URL("/checkout", request.url);
   url.searchParams.set("payment", payment);
-  if (accessCode) url.searchParams.set("AccessCode", accessCode);
   return url;
 }
 
@@ -71,9 +70,13 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("Unable to finalize eWAY payment:", error);
-    const response = NextResponse.redirect(checkoutUrl(request, "review", accessCode));
-    response.headers.set("cache-control", "private, no-store");
-    return response;
+    return new NextResponse(orderConfirmationError(error), {
+      status: 502,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "private, no-store",
+      },
+    });
   }
 }
 

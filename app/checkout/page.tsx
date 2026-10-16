@@ -49,10 +49,6 @@ function readPaymentStatus() {
   return new URLSearchParams(window.location.search).get("payment");
 }
 
-function readPaymentAccessCode() {
-  return new URLSearchParams(window.location.search).get("AccessCode");
-}
-
 export default function CheckoutPage() {
   const { customer } = useAccountCustomer();
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express">("standard");
@@ -60,6 +56,7 @@ export default function CheckoutPage() {
   const [discountInput, setDiscountInput] = useState<string>();
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentNeedsReview, setPaymentNeedsReview] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
   const submissionLock = useRef(false);
   const cardNameRef = useRef<HTMLInputElement>(null);
@@ -84,12 +81,6 @@ export default function CheckoutPage() {
     readPaymentStatus,
     () => null,
   );
-  const paymentAccessCode = useSyncExternalStore(
-    () => () => undefined,
-    readPaymentAccessCode,
-    () => null,
-  );
-  const paymentNeedsReview = paymentStatus === "review" || paymentStatus === "invalid";
   const items = useMemo<CartItem[]>(() => {
     try {
       return JSON.parse(storedCart);
@@ -118,10 +109,8 @@ export default function CheckoutPage() {
         ? "Payment was declined or could not be completed. Please try again."
         : paymentStatus === "cancelled"
           ? "Payment was cancelled. Your cart has not been changed."
-          : paymentStatus === "review"
-            ? "Your payment may have been processed, but your order still needs confirmation. Do not pay again."
           : paymentStatus === "invalid"
-            ? "We couldn't verify that payment session. Do not pay again. Please contact support."
+            ? "We couldn't verify that payment session. Please try again."
             : "";
   const displayedNotice =
     notice ||
@@ -204,12 +193,7 @@ export default function CheckoutPage() {
         paymentUrl?: string;
         formActionUrl?: string;
         accessCode?: string;
-        recoveryUrl?: string;
       };
-      if (result.recoveryUrl) {
-        window.location.assign(result.recoveryUrl);
-        return;
-      }
       if (
         !response.ok ||
         (paymentMethod === "eway" ? !result.formActionUrl : !result.paymentUrl)
@@ -543,14 +527,6 @@ export default function CheckoutPage() {
                 <p className={styles.notice} role="status">
                   {displayedNotice}
                 </p>
-              )}
-              {paymentStatus === "review" && paymentAccessCode && (
-                <Link
-                  className={styles.submitButton}
-                  href={`/api/payments/eway/callback?AccessCode=${encodeURIComponent(paymentAccessCode)}`}
-                >
-                  Retry order confirmation
-                </Link>
               )}
               <button
                 className={styles.submitButton}

@@ -10,10 +10,7 @@ import { auth } from "@/auth";
 import { CHECKOUT_SHIPPING, isCheckoutShippingMethod } from "@/lib/checkout/checkout";
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { createEwayTransparentRedirect, EwayApiError } from "@/lib/payments/eway";
-import {
-  getPendingEwayPayment,
-  setPendingEwayPayment,
-} from "@/lib/payments/eway-payment-session";
+import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
@@ -48,27 +45,6 @@ export async function POST(request: Request) {
         { error: "Your customer account could not be found." },
         { status: 404 },
       );
-
-    // Never create another payment while an earlier eWAY attempt may already
-    // have captured funds. Send the customer through the idempotent result
-    // lookup/order-confirmation path instead.
-    const pendingPayment = await getPendingEwayPayment();
-    if (pendingPayment) {
-      if (pendingPayment.customerId !== customerAccount.id)
-        return NextResponse.json(
-          { error: "An unresolved payment session requires support before checkout can continue." },
-          { status: 409 },
-        );
-      const recoveryUrl = new URL("/api/payments/eway/callback", request.url);
-      recoveryUrl.searchParams.set("AccessCode", pendingPayment.accessCode);
-      return NextResponse.json(
-        {
-          error: "A previous payment is still being confirmed. Do not submit another payment.",
-          recoveryUrl: recoveryUrl.toString(),
-        },
-        { status: 409 },
-      );
-    }
 
     const body = (await request.json()) as PaymentRequest;
     if (

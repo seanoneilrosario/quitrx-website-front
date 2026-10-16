@@ -45,7 +45,7 @@ vi.mock("@/lib/quithero/orders", async (original) => ({
   getQuitHeroOrderById: vi.fn(),
 }));
 
-import { GET as ewayGet, POST as eway } from "./eway/callback/route";
+import { POST as eway } from "./eway/callback/route";
 import { GET as paypal } from "./paypal/callback/route";
 import { createQuitHeroOrder } from "@/lib/quithero";
 import { getQuitHeroOrderById } from "@/lib/quithero/orders";
@@ -137,16 +137,4 @@ describe.each(["eway", "paypal"] as const)("%s order confirmation", (gateway) =>
     expect(getQuitHeroOrderById).toHaveBeenCalledWith("retail-order");
     expect(createQuitHeroOrder).not.toHaveBeenCalled();
   });
-});
-
-it("locks checkout for review when an approved eWAY payment cannot be confirmed", async () => {
-  vi.mocked(createQuitHeroOrder).mockResolvedValue({ ...order, total: "51" });
-  const response = await ewayGet(
-    new NextRequest("https://shop.test/api/payments/eway/callback?AccessCode=access"),
-  );
-  expect(response.status).toBe(307);
-  expect(response.headers.get("location")).toBe(
-    "https://shop.test/checkout?payment=review&AccessCode=access",
-  );
-  expect(clearPendingEwayPayment).not.toHaveBeenCalled();
 });
