@@ -8,6 +8,9 @@ vi.mock("@/lib/auth/customer-session", () => ({
 }));
 vi.mock("@/lib/quithero/customers", () => ({
   findQuitHeroCustomerByEmail: vi.fn(async () => ({ id: "authenticated-customer" })),
+  getQuitHeroCustomerAddresses: vi.fn(async () => []),
+  createQuitHeroCustomerAddress: vi.fn(async () => ({ id: "checkout-address" })),
+  setDefaultQuitHeroCustomerAddress: vi.fn(async () => ({})),
 }));
 vi.mock("@/lib/quithero", () => ({
   getFreshQuitHeroProductById: vi.fn(async () => ({
@@ -48,6 +51,11 @@ import { createEwayTransparentRedirect } from "@/lib/payments/eway";
 import { createPayPalOrder } from "@/lib/payments/paypal";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
+import {
+  createQuitHeroCustomerAddress,
+  getQuitHeroCustomerAddresses,
+  setDefaultQuitHeroCustomerAddress,
+} from "@/lib/quithero/customers";
 
 const preview = {
   subtotal: 60,
@@ -161,6 +169,55 @@ describe.each([
       expect(payload).toMatchObject({ Payment: { TotalAmount: 5000 }, Items: [{ Total: 5000 }] });
     else expect(payload).toMatchObject({ purchase_units: [{ amount: { value: "50.00" } }] });
   });
+  if (_name === "eway") {
+    it("creates and defaults the checkout address before starting payment", async () => {
+      const response = await handler(request());
+      expect(response.status).toBe(200);
+      expect(createQuitHeroCustomerAddress).toHaveBeenCalledWith(
+        "authenticated-customer",
+        expect.objectContaining({
+          address1: "Test street",
+          city: "Brisbane",
+          postcode: "4000",
+          country: "Australia",
+        }),
+      );
+      expect(setDefaultQuitHeroCustomerAddress).toHaveBeenCalledWith(
+        "authenticated-customer",
+        "checkout-address",
+      );
+    });
+
+    it("does not start payment when the delivery address cannot be saved", async () => {
+      vi.mocked(createQuitHeroCustomerAddress).mockRejectedValueOnce(new Error("address failed"));
+      const response = await handler(request());
+      expect(response.status).toBe(502);
+      expect(await response.json()).toEqual({
+        error: "We couldn't save your delivery address. No payment was attempted.",
+      });
+      expect(createEwayTransparentRedirect).not.toHaveBeenCalled();
+    });
+
+    it("reuses and defaults an existing matching checkout address", async () => {
+      vi.mocked(getQuitHeroCustomerAddresses).mockResolvedValueOnce([
+        {
+          id: "existing-address",
+          address1: "Test street",
+          city: "Brisbane",
+          state: "QLD",
+          postcode: "4000",
+          country: "Australia",
+        },
+      ]);
+      const response = await handler(request());
+      expect(response.status).toBe(200);
+      expect(createQuitHeroCustomerAddress).not.toHaveBeenCalled();
+      expect(setDefaultQuitHeroCustomerAddress).toHaveBeenCalledWith(
+        "authenticated-customer",
+        "existing-address",
+      );
+    });
+  }
   it("adds backend promotional items to the signed order session", async () => {
     vi.mocked(previewQuitHeroDiscounts).mockResolvedValue({
       ...preview,
