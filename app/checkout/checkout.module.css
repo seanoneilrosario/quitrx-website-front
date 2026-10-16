@@ -287,6 +287,24 @@
   opacity: 0.7;
   transform: none;
 }
+.paymentSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgb(7 93 103 / 25%);
+  border-top-color: #075d67;
+  border-radius: 50%;
+  animation: payment-spin 0.7s linear infinite;
+}
+@keyframes payment-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paymentSpinner {
+    animation-duration: 1.4s;
+  }
+}
 .notice {
   margin: 0;
   padding: 13px 15px;

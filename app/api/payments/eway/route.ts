@@ -17,6 +17,7 @@ import {
 import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
+import { acquirePaymentLock } from "@/lib/payments/payment-idempotency";
 
 type PaymentRequest = {
   items?: unknown;
@@ -24,6 +25,7 @@ type PaymentRequest = {
   customer?: unknown;
   discountCode?: unknown;
   expectedTotal?: unknown;
+  idempotencyKey?: unknown;
 };
 
 function requiredText(record: Record<string, unknown>, key: string, maxLength: number) {
@@ -32,6 +34,8 @@ function requiredText(record: Record<string, unknown>, key: string, maxLength: n
 }
 
 export async function POST(request: Request) {
+  let releasePaymentLock: (() => void) | undefined;
+  let paymentSessionCreated = false;
   try {
     const session = await auth();
     const customerSession = await getCustomerSession();
@@ -71,6 +75,18 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as PaymentRequest;
+    const idempotencyKey =
+      typeof body.idempotencyKey === "string" ? body.idempotencyKey.trim() : "";
+    if (!/^[a-zA-Z0-9_-]{8,100}$/.test(idempotencyKey))
+      return NextResponse.json({ error: "The payment request is invalid." }, { status: 400 });
+
+    releasePaymentLock = acquirePaymentLock(`eway:${customerAccount.id}:${idempotencyKey}`);
+    if (!releasePaymentLock)
+      return NextResponse.json(
+        { error: "This payment is already processing. Do not submit it again." },
+        { status: 409 },
+      );
+
     if (
       !Array.isArray(body.items) ||
       !body.items.length ||
@@ -269,6 +285,7 @@ export async function POST(request: Request) {
       total: totalCents / 100,
       createdAt: Date.now(),
     });
+    paymentSessionCreated = true;
     return NextResponse.json(
       { formActionUrl: result.FormActionURL, accessCode: result.AccessCode },
       { headers: { "cache-control": "private, no-store" } },
@@ -287,5 +304,7 @@ export async function POST(request: Request) {
         ? "Payments are temporarily unavailable because the payment gateway is not configured correctly. Please contact support."
         : "We couldn't start the secure payment. Please try again.";
     return NextResponse.json({ error: message }, { status: 502 });
+  } finally {
+    if (!paymentSessionCreated) releasePaymentLock?.();
   }
 }

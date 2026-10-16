@@ -62,6 +62,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedPayment, setCompletedPayment] = useState(false);
   const submissionLock = useRef(false);
+  const paymentAttemptId = useRef<string | undefined>(undefined);
   const cardNameRef = useRef<HTMLInputElement>(null);
   const cardNumberRef = useRef<HTMLInputElement>(null);
   const cardExpiryMonthRef = useRef<HTMLInputElement>(null);
@@ -174,8 +175,10 @@ export default function CheckoutPage() {
     }
 
     submissionLock.current = true;
+    paymentAttemptId.current ||= crypto.randomUUID();
     setIsSubmitting(true);
     setNotice("");
+    let paymentStarted = false;
     try {
       const formData = new FormData(event.currentTarget);
       const response = await fetch(`/api/payments/${paymentMethod}`, {
@@ -185,6 +188,7 @@ export default function CheckoutPage() {
           shippingMethod,
           discountCode: discounts.code || undefined,
           expectedTotal: preview.totalAfterDiscount,
+          idempotencyKey: paymentAttemptId.current,
           items: orderItems,
           customer: {
             email: formData.get("email"),
@@ -207,6 +211,7 @@ export default function CheckoutPage() {
         recoveryUrl?: string;
       };
       if (result.recoveryUrl) {
+        paymentStarted = true;
         window.location.assign(result.recoveryUrl);
         return;
       }
@@ -220,16 +225,21 @@ export default function CheckoutPage() {
       if (paymentMethod === "eway") {
         if (!result.accessCode) throw new Error("We couldn't verify the secure payment session.");
         submitEwayPayment(result.formActionUrl!, result.accessCode);
+        paymentStarted = true;
       } else {
+        paymentStarted = true;
         window.location.assign(result.paymentUrl!);
       }
     } catch (error) {
+      paymentAttemptId.current = undefined;
       setNotice(
         error instanceof Error ? error.message : "We couldn't place your order. Please try again.",
       );
     } finally {
-      submissionLock.current = false;
-      setIsSubmitting(false);
+      if (!paymentStarted) {
+        submissionLock.current = false;
+        setIsSubmitting(false);
+      }
     }
   }
 
@@ -557,8 +567,16 @@ export default function CheckoutPage() {
                 type="submit"
                 disabled={paymentNeedsReview || isSubmitting || !preview || discounts.loading}
               >
-                {isSubmitting ? "Processing…" : "Pay Securely Now"}{" "}
-                <span aria-hidden="true">→</span>
+                {isSubmitting ? (
+                  <>
+                    <span className={styles.paymentSpinner} aria-hidden="true" />
+                    Processing…
+                  </>
+                ) : (
+                  <>
+                    Pay Securely Now <span aria-hidden="true">→</span>
+                  </>
+                )}
               </button>
               <p className={styles.terms}>
                 By continuing, you agree to our <Link href="/terms-and-conditions">terms</Link> and{" "}
