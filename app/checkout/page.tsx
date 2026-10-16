@@ -562,22 +562,24 @@ export default function CheckoutPage() {
                   Retry order confirmation
                 </Link>
               )}
-              <button
-                className={styles.submitButton}
-                type="submit"
-                disabled={paymentNeedsReview || isSubmitting || !preview || discounts.loading}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className={styles.paymentSpinner} aria-hidden="true" />
-                    Processing…
-                  </>
-                ) : (
-                  <>
-                    Pay Securely Now <span aria-hidden="true">→</span>
-                  </>
-                )}
-              </button>
+              {!paymentNeedsReview && (
+                <button
+                  className={styles.submitButton}
+                  type="submit"
+                  disabled={isSubmitting || !preview || discounts.loading}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className={styles.paymentSpinner} aria-hidden="true" />
+                      Processing…
+                    </>
+                  ) : (
+                    <>
+                      Pay Securely Now <span aria-hidden="true">→</span>
+                    </>
+                  )}
+                </button>
+              )}
               <p className={styles.terms}>
                 By continuing, you agree to our <Link href="/terms-and-conditions">terms</Link> and{" "}
                 <Link href="/privacy-policy">privacy policy</Link>.
