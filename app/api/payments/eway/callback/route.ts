@@ -17,8 +17,6 @@ import {
   type QuitHeroOrderPayload,
 } from "@/lib/quithero";
 
-const callbackAttempts = new Map<string, Promise<"invalid" | "failed" | "success">>();
-
 function checkoutUrl(request: NextRequest, payment: string, accessCode?: string) {
   const url = new URL("/checkout", request.url);
   url.searchParams.set("payment", payment);
@@ -63,24 +61,11 @@ async function finalizeEwayPayment(accessCode?: string) {
   return "success" as const;
 }
 
-function finalizeEwayPaymentOnce(accessCode?: string) {
-  if (!accessCode) return finalizeEwayPayment(accessCode);
-
-  const existing = callbackAttempts.get(accessCode);
-  if (existing) return existing;
-
-  const attempt = finalizeEwayPayment(accessCode).finally(() => {
-    callbackAttempts.delete(accessCode);
-  });
-  callbackAttempts.set(accessCode, attempt);
-  return attempt;
-}
-
 export async function GET(request: NextRequest) {
   const accessCode = request.nextUrl.searchParams.get("AccessCode")?.trim();
 
   try {
-    const status = await finalizeEwayPaymentOnce(accessCode);
+    const status = await finalizeEwayPayment(accessCode);
     const response = NextResponse.redirect(checkoutUrl(request, status));
     response.headers.set("cache-control", "private, no-store");
     return response;
@@ -96,7 +81,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => ({}))) as { accessCode?: unknown };
     const accessCode = typeof body.accessCode === "string" ? body.accessCode.trim() : undefined;
-    const status = await finalizeEwayPaymentOnce(accessCode);
+    const status = await finalizeEwayPayment(accessCode);
 
     if (status === "invalid")
       return NextResponse.json(

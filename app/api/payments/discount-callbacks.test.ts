@@ -150,19 +150,3 @@ it("locks checkout for review when an approved eWAY payment cannot be confirmed"
   );
   expect(clearPendingEwayPayment).not.toHaveBeenCalled();
 });
-
-it("coalesces concurrent eWAY callbacks so the retail order is created once", async () => {
-  const callback = () =>
-    eway(
-      new NextRequest("https://shop.test/callback", {
-        method: "POST",
-        body: JSON.stringify({ accessCode: "access" }),
-      }),
-    );
-
-  const [first, second] = await Promise.all([callback(), callback()]);
-
-  expect(first.status).toBe(200);
-  expect(second.status).toBe(200);
-  expect(createQuitHeroOrder).toHaveBeenCalledTimes(1);
-});

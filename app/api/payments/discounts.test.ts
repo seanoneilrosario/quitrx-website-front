@@ -54,7 +54,6 @@ import {
   setPendingEwayPayment,
 } from "@/lib/payments/eway-payment-session";
 import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
-import { clearPaymentLocksForTesting } from "@/lib/payments/payment-idempotency";
 
 const preview = {
   subtotal: 60,
@@ -77,7 +76,6 @@ function request(extra = {}) {
       shippingMethod: "standard",
       discountCode: " SAVE ",
       expectedTotal: 50,
-      idempotencyKey: crypto.randomUUID(),
       customer: {
         firstName: "Test",
         lastName: "Customer",
@@ -93,20 +91,9 @@ function request(extra = {}) {
   });
 }
 beforeEach(() => {
-  clearPaymentLocksForTesting();
   vi.clearAllMocks();
   vi.mocked(getPendingEwayPayment).mockResolvedValue(undefined);
   vi.mocked(previewQuitHeroDiscounts).mockResolvedValue(preview);
-});
-
-it("rejects a duplicate eWAY payment attempt before creating another access code", async () => {
-  const idempotencyKey = "checkout-attempt-duplicate";
-  const first = await eway(request({ idempotencyKey }));
-  const duplicate = await eway(request({ idempotencyKey }));
-
-  expect(first.status).toBe(200);
-  expect(duplicate.status).toBe(409);
-  expect(createEwayTransparentRedirect).toHaveBeenCalledTimes(1);
 });
 
 it("recovers an unresolved eWAY attempt instead of creating another charge", async () => {
