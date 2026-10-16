@@ -5,6 +5,8 @@ const PAGE_COMPONENTS = `
     sectionId,
     hideSection,
     title,
+    lead,
+    message,
     link,
     link_open_in_new_tab,
     heading,

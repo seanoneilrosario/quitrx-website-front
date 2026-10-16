@@ -27,6 +27,7 @@ import ProductHighlights from "./products/ProductHighlights";
 import IntakeForm from "./forms/IntakeForm";
 import UploadPrescription from "./forms/UploadPrescription";
 import EscriptRequest from "./forms/EscriptRequest";
+import FormSuccess from "./forms/FormSuccess";
 
 const sectionRenderers: Record<
   SectionType,
@@ -264,6 +265,15 @@ const sectionRenderers: Record<
       title={component.title}
       paddingTop={component.paddingTop}
       paddingBottom={component.paddingBottom}
+    />
+  ),
+  formSuccess: (component) => (
+    <FormSuccess
+      title={component.title}
+      lead={component.lead}
+      message={component.message}
+      buttonText={component.buttonText}
+      homeHref={component.buttonLink}
     />
   ),
 };

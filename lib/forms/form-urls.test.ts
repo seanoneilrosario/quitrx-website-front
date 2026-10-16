@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildQuitRxFormUrl } from "./form-urls";
+import { buildQuitRxFormUrl, formatAustralianPhoneForForm } from "./form-urls";
 
 const customer = {
   email: "alex+forms@example.com",
@@ -22,9 +22,20 @@ describe("buildQuitRxFormUrl", () => {
       email: customer.email,
       firstname: customer.firstName,
       lastname: customer.lastName,
-      phone: customer.phone,
+      phone: "0400123456",
     });
     expect(url.toString()).toContain("email=alex%2Bforms%40example.com");
+  });
+
+  it.each([
+    ["+61 481 870 441", "0481870441"],
+    ["%2B61481870441", "0481870441"],
+    ["61481870441", "0481870441"],
+    ["0481 870 441", "0481870441"],
+    ["481870441", "0481870441"],
+  ])("formats %s for embedded form phone fields", (phone, expected) => {
+    expect(formatAustralianPhoneForForm(phone)).toBe(expected);
+    expect(buildQuitRxFormUrl("intake", { phone }).searchParams.get("phone")).toBe(expected);
   });
 
   it("uses the required eScript address field names", () => {

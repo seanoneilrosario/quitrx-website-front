@@ -5,6 +5,7 @@ type FormSuccessProps = {
   title?: string;
   lead?: string;
   message?: string;
+  buttonText?: string;
   homeHref?: string;
 };
 
@@ -13,6 +14,7 @@ export default function FormSuccess({
   lead = "Your intake form has been submitted successfully.",
   message =
     "A QuitRX doctor will review your confidential information and respond within 24 hours. You will receive an email once your prescription is ready.",
+  buttonText = "Back to Home",
   homeHref = "/",
 }: FormSuccessProps) {
   return (
@@ -31,7 +33,7 @@ export default function FormSuccess({
         <p className={styles.message}>{message}</p>
 
         <Link className={styles.button} href={homeHref}>
-          Back to Home
+          {buttonText}
         </Link>
       </div>
     </section>

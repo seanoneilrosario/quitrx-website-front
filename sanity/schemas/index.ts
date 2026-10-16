@@ -37,6 +37,7 @@ import product_highlights from "./sections/product-highlights";
 import { intakeForm } from "./sections/intake-form";
 import { uploadPrescription } from "./sections/upload-prescription";
 import { escriptRequest } from "./sections/escript-request";
+import { formSuccess } from "./sections/form-success";
 import { productCollectionType } from "./documents/product-collection";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
@@ -80,6 +81,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
       intakeForm,
       uploadPrescription,
       escriptRequest,
+      formSuccess,
     ].map((section) => ({ ...section, fields: [hideSectionField, ...section.fields] })),
   ],
 };

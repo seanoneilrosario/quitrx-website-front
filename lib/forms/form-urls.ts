@@ -30,6 +30,25 @@ const FORM_URLS: Record<QuitRxForm, string> = {
     "https://forms.quithero.com.au/quickrx/form/QuitRXScriptRenewal/formperma/Zc9s8aLGPTVQntvZrepRaqSCsgNugnAh0z_ApC8x2XY",
 };
 
+export function formatAustralianPhoneForForm(phone = "") {
+  let decoded = phone.trim();
+
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch {
+    // Keep the original value if it contains malformed URL encoding.
+  }
+
+  const digits = decoded.replace(/\D/g, "");
+
+  if (/^61\d{9}$/.test(digits)) return `0${digits.slice(2)}`;
+  if (/^0061\d{9}$/.test(digits)) return `0${digits.slice(4)}`;
+  if (/^0\d{9}$/.test(digits)) return digits;
+  if (/^4\d{8}$/.test(digits)) return `0${digits}`;
+
+  return decoded;
+}
+
 export function buildQuitRxFormUrl(form: QuitRxForm, customer?: QuitRxFormCustomer) {
   const url = new URL(FORM_URLS[form]);
   const address = customer?.address ?? customer?.addresses?.[0];
@@ -37,7 +56,7 @@ export function buildQuitRxFormUrl(form: QuitRxForm, customer?: QuitRxFormCustom
     email: customer?.email ?? "",
     firstName: customer?.firstName ?? "",
     lastName: customer?.lastName ?? "",
-    phone: customer?.phone ?? "",
+    phone: formatAustralianPhoneForForm(customer?.phone),
   };
 
   const parameters: Record<QuitRxForm, Record<string, string>> = {

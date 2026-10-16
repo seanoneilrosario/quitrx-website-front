@@ -117,7 +117,8 @@ export type SectionType =
   | "product_highlights"
   | "intakeForm"
   | "uploadPrescription"
-  | "escriptRequest";
+  | "escriptRequest"
+  | "formSuccess";
 
 export interface ContentSection {
   hideSection?: boolean;
@@ -132,6 +133,8 @@ export interface ContentSection {
   _type: SectionType;
   sectionId?: string;
   title?: string;
+  lead?: string;
+  message?: string;
   heading?: string;
   video_url?: string;
   image?: string;

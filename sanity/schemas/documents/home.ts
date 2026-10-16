@@ -91,6 +91,7 @@ export const homeType = defineType({
         { type: "intakeForm" },
         { type: "uploadPrescription" },
         { type: "escriptRequest" },
+        { type: "formSuccess" },
       ],
       options: {
         insertMenu: {
@@ -136,6 +137,7 @@ export const homeType = defineType({
                 "intakeForm",
                 "uploadPrescription",
                 "escriptRequest",
+                "formSuccess",
               ],
             },
           ],

@@ -28,6 +28,7 @@ vi.mock("./products/ProductHighlights", () => ({ default: () => null }));
 vi.mock("./forms/IntakeForm", () => ({ default: () => null }));
 vi.mock("./forms/UploadPrescription", () => ({ default: () => null }));
 vi.mock("./forms/EscriptRequest", () => ({ default: () => null }));
+vi.mock("./forms/FormSuccess", () => ({ default: () => null }));
 import SectionRenderer from "./SectionRenderer";
 
 it("renders every ProductApiGrid in CMS order", () => {

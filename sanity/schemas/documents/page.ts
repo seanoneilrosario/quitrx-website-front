@@ -90,6 +90,7 @@ export const pageType = defineType({
         { type: "intakeForm" },
         { type: "uploadPrescription" },
         { type: "escriptRequest" },
+        { type: "formSuccess" },
       ],
       options: {
         insertMenu: {
@@ -137,6 +138,7 @@ export const pageType = defineType({
                 "intakeForm",
                 "uploadPrescription",
                 "escriptRequest",
+                "formSuccess",
               ],
             },
           ],
