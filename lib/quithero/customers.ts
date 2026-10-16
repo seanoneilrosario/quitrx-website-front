@@ -381,10 +381,11 @@ export async function syncQuitHeroCustomerWithoutBlocking(user: QuitHeroAuthenti
 }
 
 export async function createQuitHeroCustomerAddress(customerId: string, address: QuitHeroAddress) {
-  return quitHeroRequest<QuitHeroAddress>(
+  const response = await quitHeroRequest<unknown>(
     `/customers/${encodeURIComponent(customerId)}/addresses`,
     { method: "POST", body: JSON.stringify(address) },
   );
+  return extractAddresses(response)[0];
 }
 
 export async function getQuitHeroCustomerAddresses(customerId: string) {
@@ -399,15 +400,17 @@ export async function updateQuitHeroCustomerAddress(
   addressId: string,
   address: QuitHeroAddress,
 ) {
-  return quitHeroRequest<QuitHeroAddress>(
+  const response = await quitHeroRequest<unknown>(
     `/customers/${encodeURIComponent(customerId)}/addresses/${encodeURIComponent(addressId)}`,
     { method: "PATCH", body: JSON.stringify(address) },
   );
+  return extractAddresses(response)[0];
 }
 
 export async function setDefaultQuitHeroCustomerAddress(customerId: string, addressId: string) {
-  return quitHeroRequest<QuitHeroAddress>(
+  const response = await quitHeroRequest<unknown>(
     `/customers/${encodeURIComponent(customerId)}/addresses/${encodeURIComponent(addressId)}/default`,
     { method: "PATCH" },
   );
+  return extractAddresses(response)[0];
 }

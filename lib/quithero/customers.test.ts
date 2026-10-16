@@ -6,6 +6,7 @@ import {
   findQuitHeroCustomerByEmail,
   getQuitHeroCustomerAddresses,
   findQuitHeroCustomerByOAuth,
+  createQuitHeroCustomerAddress,
   linkQuitHeroCustomerOAuth,
   syncQuitHeroCustomer,
   syncQuitHeroCustomerWithoutBlocking,
@@ -89,6 +90,16 @@ describe("QuitHero customer synchronization", () => {
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://retail-api.test/customers/customer%2F123/addresses",
     );
+  });
+
+  it("unwraps a newly created customer address", async () => {
+    fetchMock.mockResolvedValueOnce(
+      response({ data: { id: "checkout-address", address1: "14c Milsom St" } }, 201),
+    );
+
+    await expect(
+      createQuitHeroCustomerAddress("customer", { address1: "14c Milsom St" }),
+    ).resolves.toEqual({ id: "checkout-address", address1: "14c Milsom St" });
   });
 
   it("requires a customer ID before updating", async () => {
