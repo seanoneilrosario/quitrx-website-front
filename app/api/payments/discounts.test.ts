@@ -15,6 +15,7 @@ vi.mock("@/lib/quithero/customers", () => ({
   createQuitHeroCustomerAddress: vi.fn(async () => ({ id: "checkout-address" })),
   setDefaultQuitHeroCustomerAddress: vi.fn(async () => ({})),
   ensureDefaultQuitHeroCustomerAddress: vi.fn(async () => ({ id: "checkout-address" })),
+  updateQuitHeroCustomer: vi.fn(async () => ({})),
 }));
 vi.mock("@/lib/quithero", () => ({
   createQuitHeroOrder: vi.fn(async () => ({ id: "retail-order" })),
@@ -51,7 +52,10 @@ import { auth } from "@/auth";
 import { previewQuitHeroDiscounts } from "@/lib/quithero/discounts";
 import { createQuitHeroOrder } from "@/lib/quithero";
 import { updateQuitHeroOrderPaymentStatus } from "@/lib/quithero/orders";
-import { createQuitHeroCustomerAddress } from "@/lib/quithero/customers";
+import {
+  ensureDefaultQuitHeroCustomerAddress,
+  updateQuitHeroCustomer,
+} from "@/lib/quithero/customers";
 import { QuitHeroApiError } from "@/lib/quithero/client";
 import { createEwayTransparentRedirect } from "@/lib/payments/eway";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
@@ -169,7 +173,7 @@ describe("eWAY discount payment", () => {
   it("charges the backend total and carries the code and original shipping into the signed session", async () => {
     const response = await handler(request());
     expect(response.status).toBe(200);
-    expect(createQuitHeroCustomerAddress).toHaveBeenCalledWith(
+    expect(ensureDefaultQuitHeroCustomerAddress).toHaveBeenCalledWith(
       "authenticated-customer",
       expect.objectContaining({
         firstName: "Test",
@@ -182,6 +186,11 @@ describe("eWAY discount payment", () => {
         country: "Australia",
       }),
     );
+    expect(updateQuitHeroCustomer).toHaveBeenCalledWith("authenticated-customer", {
+      firstName: "Test",
+      lastName: "Customer",
+      phone: "0400000000",
+    });
     expect(createQuitHeroOrder).toHaveBeenCalledWith(
       expect.objectContaining({
         source: "NATIVE",
@@ -206,7 +215,7 @@ describe("eWAY discount payment", () => {
       }),
     );
     expect(updateQuitHeroOrderPaymentStatus).toHaveBeenCalledWith("retail-order", "PENDING");
-    expect(vi.mocked(createQuitHeroCustomerAddress).mock.invocationCallOrder[0]).toBeLessThan(
+    expect(vi.mocked(ensureDefaultQuitHeroCustomerAddress).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(createQuitHeroOrder).mock.invocationCallOrder[0],
     );
     expect(vi.mocked(createQuitHeroOrder).mock.invocationCallOrder[0]).toBeLessThan(
@@ -325,7 +334,7 @@ describe("eWAY discount payment", () => {
     expect(gateway).not.toHaveBeenCalled();
   });
   it("does not create an order or start eWAY if setting the default address fails", async () => {
-    vi.mocked(createQuitHeroCustomerAddress).mockRejectedValueOnce(
+    vi.mocked(ensureDefaultQuitHeroCustomerAddress).mockRejectedValueOnce(
       new Error("Address could not be set as default"),
     );
 

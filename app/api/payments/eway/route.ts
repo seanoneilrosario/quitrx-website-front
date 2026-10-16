@@ -16,6 +16,7 @@ import { getPurchasableStock } from "@/lib/catalog/bundles";
 import {
   ensureDefaultQuitHeroCustomerAddress,
   findQuitHeroCustomerByEmail,
+  updateQuitHeroCustomer,
 } from "@/lib/quithero/customers";
 import { updateQuitHeroOrderPaymentStatus } from "@/lib/quithero/orders";
 
@@ -181,6 +182,15 @@ export async function POST(request: Request) {
         benefitType: item.benefitType,
       })),
     ];
+    const missingCustomerDetails = {
+      ...(!customerAccount.firstName?.trim() ? { firstName } : {}),
+      ...(!customerAccount.lastName?.trim() ? { lastName } : {}),
+      ...(!customerAccount.phone?.trim() ? { phone } : {}),
+    };
+    if (Object.keys(missingCustomerDetails).length) {
+      stage = "updating your customer details";
+      await updateQuitHeroCustomer(customerAccount.id, missingCustomerDetails);
+    }
     stage = "saving your delivery address";
     await ensureDefaultQuitHeroCustomerAddress(customerAccount.id, {
       firstName,
