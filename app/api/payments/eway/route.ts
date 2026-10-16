@@ -12,15 +12,12 @@ import { getCustomerSession } from "@/lib/auth/customer-session";
 import { createEwayTransparentRedirect, EwayApiError } from "@/lib/payments/eway";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { createQuitHeroOrder, getFreshQuitHeroProductById } from "@/lib/quithero";
-import { updateQuitHeroOrderPaymentStatus } from "@/lib/quithero/orders";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import {
-  createQuitHeroCustomerAddress,
+  ensureDefaultQuitHeroCustomerAddress,
   findQuitHeroCustomerByEmail,
-  getQuitHeroCustomerAddresses,
-  setDefaultQuitHeroCustomerAddress,
-  type QuitHeroAddress,
 } from "@/lib/quithero/customers";
+import { updateQuitHeroOrderPaymentStatus } from "@/lib/quithero/orders";
 
 type PaymentRequest = {
   items?: unknown;
@@ -33,29 +30,6 @@ type PaymentRequest = {
 function requiredText(record: Record<string, unknown>, key: string, maxLength: number) {
   const value = typeof record[key] === "string" ? record[key].trim() : "";
   return value ? value.slice(0, maxLength) : undefined;
-}
-
-function sameAddress(address: QuitHeroAddress, candidate: QuitHeroAddress) {
-  const normalized = (value?: string) => value?.trim().toLowerCase() ?? "";
-  return (
-    normalized(address.address1 ?? address.line1) === normalized(candidate.address1) &&
-    normalized(address.address2 ?? address.line2) === normalized(candidate.address2) &&
-    normalized(address.city) === normalized(candidate.city) &&
-    normalized(address.state ?? address.province) === normalized(candidate.state) &&
-    normalized(address.postcode ?? address.zip) === normalized(candidate.postcode) &&
-    normalized(address.country) === normalized(candidate.country)
-  );
-}
-
-async function ensureDefaultShippingAddress(customerId: string, address: QuitHeroAddress) {
-  const addresses = await getQuitHeroCustomerAddresses(customerId);
-  const existing = addresses.find((entry) => sameAddress(entry, address));
-  if (existing?.isDefault) return;
-
-  const saved = existing ?? (await createQuitHeroCustomerAddress(customerId, address));
-  const addressId = saved?.id ?? saved?.addressId;
-  if (!addressId) throw new Error("Qoblex did not return a delivery address ID.");
-  await setDefaultQuitHeroCustomerAddress(customerId, addressId);
 }
 
 export async function POST(request: Request) {
@@ -126,6 +100,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    const street2 = requiredText(address, "address2", 50);
 
     const products = await Promise.all(
       [...new Set(items.map((item) => item.productId))].map(getFreshQuitHeroProductById),
@@ -194,26 +169,8 @@ export async function POST(request: Request) {
         { status: 400 },
       );
 
-    try {
-      await ensureDefaultShippingAddress(customerAccount.id, {
-        firstName,
-        lastName,
-        phone,
-        address1: street1,
-        address2: requiredText(address, "address2", 50),
-        city,
-        state,
-        postcode: postalCode,
-        country: "Australia",
-      });
-    } catch (error) {
-      console.error("Unable to prepare the Qoblex delivery address:", error);
-      return NextResponse.json(
-        { error: "We couldn't save your delivery address. No payment was attempted." },
-        { status: 502 },
-      );
-    }
-
+    const reference = `QuitRx-${Date.now()}`;
+    const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
     const orderItems = [
       ...items.map(({ variantId, quantity }) => ({ variantId, quantity })),
       ...preview.promotionalItems.map((item) => ({
@@ -224,9 +181,20 @@ export async function POST(request: Request) {
         benefitType: item.benefitType,
       })),
     ];
+    stage = "saving your delivery address";
+    await ensureDefaultQuitHeroCustomerAddress(customerAccount.id, {
+      firstName,
+      lastName,
+      phone,
+      address1: street1,
+      address2: street2,
+      city,
+      state,
+      postcode: postalCode,
+      country: "Australia",
+    });
     stage = "creating your order";
     const order = await createQuitHeroOrder({
-      customerId: customerAccount.id,
       source: "NATIVE",
       currencyCode: "AUD",
       subtotal: preview.subtotal,
@@ -234,7 +202,6 @@ export async function POST(request: Request) {
       shippingTotal: preview.shippingTotal,
       shippingMethod: body.shippingMethod,
       taxTotal: 0,
-      total: totalCents / 100,
       billingFirstName: firstName,
       billingLastName: lastName,
       billingAddress1: street1,
@@ -244,17 +211,15 @@ export async function POST(request: Request) {
       billingZip: postalCode,
       billingPhone: phone,
       discountCode: discountCode ?? "",
+      total: totalCents / 100,
+      customerId: customerAccount.id,
       items: orderItems,
     });
     if (!order.id) throw new Error("QuitHero created an order without returning its ID.");
     stage = "setting your order to pending payment";
     await updateQuitHeroOrderPaymentStatus(order.id, "PENDING");
+
     stage = "starting eWAY";
-
-    const reference = `QuitRx-${Date.now()}`;
-    const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
-    const street2 = requiredText(address, "address2", 50);
-
     const result = await createEwayTransparentRedirect({
       Customer: {
         FirstName: firstName,
@@ -313,10 +278,11 @@ export async function POST(request: Request) {
     if (!result.AccessCode || !result.FormActionURL)
       throw new Error("eWAY did not provide a secure payment form action.");
 
+    stage = "saving your payment session";
     await setPendingEwayPayment({
       accessCode: result.AccessCode,
-      customerId: customerAccount.id,
       retailOrderId: order.id,
+      customerId: customerAccount.id,
       items: orderItems,
       subtotal: preview.subtotal,
       shippingTotal: preview.shippingTotal,
@@ -348,6 +314,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     console.error("Unable to start eWAY payment:", {
       stage,
+      status:
+        error instanceof QuitHeroApiError || error instanceof EwayApiError
+          ? error.status
+          : undefined,
       message: error instanceof Error ? error.message : "Unknown error",
     });
     if (error instanceof QuitHeroApiError)
