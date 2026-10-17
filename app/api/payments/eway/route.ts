@@ -11,14 +11,13 @@ import { CHECKOUT_SHIPPING, isCheckoutShippingMethod } from "@/lib/checkout/chec
 import { getCustomerSession } from "@/lib/auth/customer-session";
 import { createEwayTransparentRedirect, EwayApiError } from "@/lib/payments/eway";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
-import { createQuitHeroOrder, getFreshQuitHeroProductById } from "@/lib/quithero";
+import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
 import {
   ensureDefaultQuitHeroCustomerAddress,
   findQuitHeroCustomerByEmail,
   updateQuitHeroCustomer,
 } from "@/lib/quithero/customers";
-import { updateQuitHeroOrderPaymentStatus } from "@/lib/quithero/orders";
 
 type PaymentRequest = {
   items?: unknown;
@@ -203,32 +202,6 @@ export async function POST(request: Request) {
       postcode: postalCode,
       country: "Australia",
     });
-    stage = "creating your order";
-    const order = await createQuitHeroOrder({
-      source: "NATIVE",
-      currencyCode: "AUD",
-      subtotal: preview.subtotal,
-      discountTotal: preview.discountAmount,
-      shippingTotal: preview.shippingTotal,
-      shippingMethod: body.shippingMethod,
-      taxTotal: 0,
-      billingFirstName: firstName,
-      billingLastName: lastName,
-      billingAddress1: street1,
-      billingCity: city,
-      billingProvince: state,
-      billingCountry: "Australia",
-      billingZip: postalCode,
-      billingPhone: phone,
-      discountCode: discountCode ?? "",
-      total: totalCents / 100,
-      customerId: customerAccount.id,
-      items: orderItems,
-    });
-    if (!order.id) throw new Error("QuitHero created an order without returning its ID.");
-    stage = "setting your order to pending payment";
-    await updateQuitHeroOrderPaymentStatus(order.id, "PENDING");
-
     stage = "starting eWAY";
     const result = await createEwayTransparentRedirect({
       Customer: {
@@ -291,7 +264,6 @@ export async function POST(request: Request) {
     stage = "saving your payment session";
     await setPendingEwayPayment({
       accessCode: result.AccessCode,
-      retailOrderId: order.id,
       customerId: customerAccount.id,
       items: orderItems,
       subtotal: preview.subtotal,

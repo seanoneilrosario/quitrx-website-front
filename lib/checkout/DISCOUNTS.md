@@ -8,18 +8,18 @@ Successfully validated codes are saved per customer in browser session storage. 
 
 Both payment entry routes request a fresh backend preview. A different total returns a review error before opening the gateway. Discounted gateway payments use the backend total without allocating discounts locally. Original item details remain in the retail order payload. The signed payment session retains the selected code, original shipping charge, totals, and a compact fingerprint of the expected promotion history and line savings.
 
-Checkout creates a QuitHero order and sets its payment status to `PENDING` before opening eWAY. After eWAY confirms the payment, the callback updates the same order to `PAID` and verifies its saved totals. The order ID and verified-payment marker are retained so retries update the existing order without charging again.
+Checkout opens eWAY before creating a QuitHero order. After eWAY confirms payment, the callback posts the order using the signed checkout details, saves its ID, marks it `PAID`, and verifies its saved totals. The order ID and verified-payment marker are retained so retries update the existing order without charging again.
 
 ## Verification and release checks
 
 - Automated tests cover preview validation, backend eligibility errors, authenticated identity, shipping changes, payment totals for automatic/product/order/shipping combinations, order payloads, persisted history, and confirmation retries.
 - A live preview using the supplied sample cart confirmed automatic free shipping and the response format. No order or payment was created during that check.
-- Before release, use approved test promotions and the eWAY sandbox to verify valid/expired codes, segment inclusion/exclusion, combinations, quantity changes, pending-to-paid order status updates, and successful saved orders. Browser interaction and the full payment-to-fulfilment flow still require this acceptance check.
+- Before release, use approved test promotions and the eWAY sandbox to verify valid/expired codes, segment inclusion/exclusion, combinations, quantity changes, payment-first order creation and paid status updates, and successful saved orders. Browser interaction and the full payment-to-fulfilment flow still require this acceptance check.
 - Confirm shipping changes and rapid cart edits do not display stale totals; rejected codes must leave the cart intact.
 
 ## Existing payment-flow constraints
 
-Retail orders are created before payment, marked pending, and changed to paid only after eWAY confirms payment. If payment is abandoned or declined, the order can remain pending. The current Orders OpenAPI publishes empty create/update DTO schemas, so the `paymentStatus` PATCH contract must be confirmed with a sandbox transaction before production use. A durable backend quote/reservation and payment-linked idempotency would further reduce pricing races and ambiguous mutation failures.
+Retail orders are created only after eWAY verifies successful payment. Abandoned or declined payments do not create orders. If order creation or confirmation fails after payment, the session is retained for confirmation recovery without charging again. An ambiguous order-create failure (such as a lost response) still requires backend idempotency to guarantee that retries cannot duplicate an order. The current Orders OpenAPI publishes empty create/update DTO schemas, so the `paymentStatus` PATCH contract must be confirmed with a sandbox transaction before production use. A durable backend quote/reservation and payment-linked idempotency would further reduce pricing races and ambiguous mutation failures.
 
 Zero-total orders currently return a support message before opening the gateway. An approved zero-payment order workflow is needed to support them automatically.
 

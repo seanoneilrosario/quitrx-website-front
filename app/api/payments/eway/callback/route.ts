@@ -1,3 +1,4 @@
+import { createQuitHeroOrder } from "@/lib/quithero";
 import {
   updateQuitHeroOrderPaymentStatus,
   verifyOrderDiscountTotals,
@@ -29,7 +30,11 @@ async function finalizeVerifiedEwayPayment(accessCode?: string) {
   if (!pending.paymentVerified) {
     const result = await getEwayPaymentResult(pending.accessCode);
     const expectedCents = Math.round(pending.total * 100);
-    if (!result.TransactionStatus || result.TotalAmount !== expectedCents || !result.TransactionID) {
+    if (
+      !result.TransactionStatus ||
+      result.TotalAmount !== expectedCents ||
+      !result.TransactionID
+    ) {
       await clearPendingEwayPayment();
       return "failed" as const;
     }
@@ -37,8 +42,33 @@ async function finalizeVerifiedEwayPayment(accessCode?: string) {
     await setPendingEwayPayment(pending);
   }
 
-  if (!pending.retailOrderId)
-    throw new Error("The payment session has no pre-created QuitHero order.");
+  if (!pending.retailOrderId) {
+    const order = await createQuitHeroOrder({
+      source: "NATIVE",
+      currencyCode: "AUD",
+      customerId: pending.customerId,
+      items: pending.items,
+      subtotal: pending.subtotal,
+      shippingTotal: pending.shippingTotal,
+      shippingMethod: pending.shippingMethod,
+      discountCode: pending.discountCode ?? "",
+      discountTotal: pending.discountTotal,
+      taxTotal: pending.taxTotal,
+      billingFirstName: pending.billingFirstName,
+      billingLastName: pending.billingLastName,
+      billingAddress1: pending.billingAddress1,
+      billingCity: pending.billingCity,
+      billingProvince: pending.billingProvince,
+      billingCountry: pending.billingCountry,
+      billingZip: pending.billingZip,
+      billingPhone: pending.billingPhone,
+      total: pending.total,
+    });
+    if (!order.id) throw new Error("QuitHero created an order without returning its ID.");
+    pending = { ...pending, retailOrderId: order.id };
+    await setPendingEwayPayment(pending);
+  }
+  if (!pending.retailOrderId) throw new Error("The payment session has no QuitHero order ID.");
   const order = await updateQuitHeroOrderPaymentStatus(pending.retailOrderId, "PAID");
 
   verifyOrderDiscountTotals(order, pending);

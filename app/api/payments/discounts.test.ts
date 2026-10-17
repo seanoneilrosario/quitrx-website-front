@@ -104,7 +104,7 @@ describe("eWAY discount payment", () => {
   const handler = eway;
   const gateway = createEwayTransparentRedirect;
   const save = setPendingEwayPayment;
-  it("sends the supplied order contract with an empty code for an undiscounted checkout", async () => {
+  it("starts payment without posting an order for an undiscounted checkout", async () => {
     vi.mocked(previewQuitHeroDiscounts).mockResolvedValueOnce({
       ...preview,
       discountAmount: 0,
@@ -115,27 +115,8 @@ describe("eWAY discount payment", () => {
     });
     const response = await handler(request({ discountCode: "", expectedTotal: 72.9 }));
     expect(response.status).toBe(200);
-    expect(createQuitHeroOrder).toHaveBeenCalledExactlyOnceWith({
-      customerId: "authenticated-customer",
-      source: "NATIVE",
-      currencyCode: "AUD",
-      subtotal: 60,
-      discountTotal: 0,
-      shippingTotal: 12.9,
-      shippingMethod: "standard",
-      taxTotal: 0,
-      total: 72.9,
-      billingFirstName: "Test",
-      billingLastName: "Customer",
-      billingAddress1: "Test street",
-      billingCity: "Brisbane",
-      billingProvince: "QLD",
-      billingCountry: "Australia",
-      billingZip: "4000",
-      billingPhone: "0400000000",
-      discountCode: "",
-      items: [{ variantId: "variant", quantity: 2 }],
-    });
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ total: 72.9, discountTotal: 0 }));
     expect(gateway).toHaveBeenCalledWith(
       expect.objectContaining({
         Payment: expect.objectContaining({ TotalAmount: 7290 }),
@@ -191,39 +172,8 @@ describe("eWAY discount payment", () => {
       lastName: "Customer",
       phone: "0400000000",
     });
-    expect(createQuitHeroOrder).toHaveBeenCalledWith(
-      expect.objectContaining({
-        source: "NATIVE",
-        currencyCode: "AUD",
-        customerId: "authenticated-customer",
-        subtotal: 60,
-        discountTotal: 22.9,
-        shippingTotal: 12.9,
-        shippingMethod: "standard",
-        taxTotal: 0,
-        billingFirstName: "Test",
-        billingLastName: "Customer",
-        billingAddress1: "Test street",
-        billingCity: "Brisbane",
-        billingProvince: "QLD",
-        billingCountry: "Australia",
-        billingZip: "4000",
-        billingPhone: "0400000000",
-        discountCode: "SAVE",
-        total: 50,
-        items: [{ variantId: "variant", quantity: 2 }],
-      }),
-    );
-    expect(updateQuitHeroOrderPaymentStatus).toHaveBeenCalledWith("retail-order", "PENDING");
-    expect(vi.mocked(ensureDefaultQuitHeroCustomerAddress).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(createQuitHeroOrder).mock.invocationCallOrder[0],
-    );
-    expect(vi.mocked(createQuitHeroOrder).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(updateQuitHeroOrderPaymentStatus).mock.invocationCallOrder[0],
-    );
-    expect(vi.mocked(updateQuitHeroOrderPaymentStatus).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(createEwayTransparentRedirect).mock.invocationCallOrder[0],
-    );
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
+    expect(updateQuitHeroOrderPaymentStatus).not.toHaveBeenCalled();
     expect(previewQuitHeroDiscounts).toHaveBeenCalledWith(
       expect.objectContaining({
         customerId: "authenticated-customer",
@@ -234,7 +184,6 @@ describe("eWAY discount payment", () => {
     );
     expect(save).toHaveBeenCalledWith(
       expect.objectContaining({
-        retailOrderId: "retail-order",
         subtotal: 60,
         taxTotal: 0,
         total: 50,
@@ -303,30 +252,6 @@ describe("eWAY discount payment", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "Customer is not eligible" });
     expect(gateway).not.toHaveBeenCalled();
-  });
-  it("does not start eWAY if QuitHero rejects the order", async () => {
-    vi.mocked(createQuitHeroOrder).mockRejectedValueOnce(
-      new QuitHeroApiError("Internal server error", 500),
-    );
-
-    const response = await handler(request());
-    expect(response.status).toBe(502);
-    expect(await response.json()).toEqual({
-      error:
-        "The order service failed while creating your order (HTTP 500). Payment has not been submitted. Please contact support before trying again.",
-    });
-    expect(gateway).not.toHaveBeenCalled();
-    expect(save).not.toHaveBeenCalled();
-  });
-  it("does not start eWAY until QuitHero confirms the order is pending", async () => {
-    vi.mocked(updateQuitHeroOrderPaymentStatus).mockRejectedValue(
-      new Error("QuitHero did not confirm the pending payment status."),
-    );
-
-    await expect(handler(request())).resolves.toMatchObject({ status: 502 });
-    expect(createQuitHeroOrder).toHaveBeenCalled();
-    expect(gateway).not.toHaveBeenCalled();
-    expect(save).not.toHaveBeenCalled();
   });
   it("requires review if discounts change before payment", async () => {
     const response = await handler(request({ expectedTotal: 60 }));

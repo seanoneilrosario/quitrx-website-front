@@ -65,7 +65,6 @@ beforeEach(() => {
   vi.mocked(getPendingEwayPayment).mockResolvedValue({
     ...pending,
     accessCode: "access",
-    retailOrderId: "retail-order",
   });
   vi.mocked(createQuitHeroOrder).mockResolvedValue(order);
   vi.mocked(updateQuitHeroOrderPaymentStatus).mockResolvedValue(order);
@@ -87,6 +86,7 @@ describe("eWAY order confirmation", () => {
     vi.mocked(getEwayPaymentResult).mockResolvedValueOnce(result);
     const response = await invoke();
     expect(response.status).toBe(402);
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
     expect(updateQuitHeroOrderPaymentStatus).not.toHaveBeenCalled();
     expect(setPendingEwayPayment).not.toHaveBeenCalled();
   });
@@ -100,6 +100,7 @@ describe("eWAY order confirmation", () => {
     );
     expect(response.status).toBe(400);
     expect(getEwayPaymentResult).not.toHaveBeenCalled();
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
     expect(updateQuitHeroOrderPaymentStatus).not.toHaveBeenCalled();
   });
 
@@ -108,13 +109,24 @@ describe("eWAY order confirmation", () => {
     const response = await invoke();
     expect(response.status).toBe(502);
     expect(clearPendingEwayPayment).not.toHaveBeenCalled();
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
     expect(updateQuitHeroOrderPaymentStatus).not.toHaveBeenCalled();
   });
-  it("retrieves the pre-created QuitHero order and verifies payment totals", async () => {
+  it("posts the order only after eWAY verifies payment and then marks it paid", async () => {
     const response = await invoke();
     expect(response.status).toBe(200);
     expect(updateQuitHeroOrderPaymentStatus).toHaveBeenCalledWith("retail-order", "PAID");
-    expect(createQuitHeroOrder).not.toHaveBeenCalled();
+    expect(createQuitHeroOrder).toHaveBeenCalledExactlyOnceWith({
+      ...Object.fromEntries(Object.entries(pending).filter(([key]) => key !== "createdAt")),
+      source: "NATIVE",
+      currencyCode: "AUD",
+    });
+    expect(vi.mocked(getEwayPaymentResult).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(createQuitHeroOrder).mock.invocationCallOrder[0],
+    );
+    expect(setPendingEwayPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentVerified: true, retailOrderId: "retail-order" }),
+    );
     expect(setPendingEwayPayment).toHaveBeenCalledWith(
       expect.objectContaining({ paymentVerified: true }),
     );
@@ -157,12 +169,30 @@ describe("eWAY order confirmation", () => {
     expect(createQuitHeroOrder).not.toHaveBeenCalled();
   });
 
+  it("retains verified payment when order creation fails so confirmation can be retried", async () => {
+    vi.mocked(createQuitHeroOrder).mockRejectedValueOnce(new Error("Order service unavailable"));
+    expect((await invoke()).status).toBe(502);
+    expect(setPendingEwayPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentVerified: true }),
+    );
+    expect(clearPendingEwayPayment).not.toHaveBeenCalled();
+    expect(updateQuitHeroOrderPaymentStatus).not.toHaveBeenCalled();
+
+    vi.mocked(getPendingEwayPayment).mockResolvedValue({
+      ...pending,
+      accessCode: "access",
+      paymentVerified: true,
+    });
+    expect((await invoke()).status).toBe(200);
+    expect(getEwayPaymentResult).toHaveBeenCalledTimes(1);
+  });
+
   it("coalesces simultaneous callbacks into one order creation", async () => {
     const [first, second] = await Promise.all([invoke(), invoke()]);
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
     expect(updateQuitHeroOrderPaymentStatus).toHaveBeenCalledTimes(1);
-    expect(createQuitHeroOrder).not.toHaveBeenCalled();
+    expect(createQuitHeroOrder).toHaveBeenCalledTimes(1);
   });
 });
 
