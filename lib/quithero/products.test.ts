@@ -39,7 +39,7 @@ it("excludes NOTOSHOP tags from every page of the search catalog", async () => {
 
 it("filters hidden products before loading paginated card relations", async () => {
   vi.mocked(quitHeroFetch).mockResolvedValue([
-    { id: "hidden-scalar" },
+    { id: "hidden-scalar", tags: ["NOTOSHOP"] },
     { id: "hidden-page-card", tags: [{ name: "NOTOSHOP" }] },
     { id: "visible-page-card", images: [], variants: [] },
   ]);
@@ -76,12 +76,8 @@ it("loads missing card relations only for the requested page and paginates varia
     const url = new URL(path, "https://example.test");
     if (url.pathname === "/products")
       return {
-        data: Array.from({ length: 20 }, (_, index) =>
-          index === 1
-            ? { id: "one", name: "One", productType: "Bundle" }
-            : { id: `other-${index}`, name: `Other ${index}` },
-        ),
-        pagination: { total: 20, totalPages: 1 },
+        data: [{ id: "one", name: "One", productType: "Bundle" }],
+        pagination: { total: 20, totalPages: 20 },
       };
     expect(url.searchParams.get("productId")).toBe("one");
     if (url.pathname === "/product-images")
@@ -106,9 +102,12 @@ it("loads missing card relations only for the requested page and paginates varia
   const result = await loadQuitHeroProductsPage(2, 1);
   const card = toCollectionProduct(result.products[0]);
   expect(fetch).toHaveBeenCalledTimes(4);
-  expect(fetch).toHaveBeenCalledWith("/products?page=1&limit=100&status=active", {
-    beforeRequest: expect.any(Function),
-  });
+  expect(fetch).toHaveBeenCalledWith(
+    expect.stringContaining("/products?page=2&limit=1&status=ACTIVE&excludeTags=NOTOSHOP&fields="),
+    {
+      beforeRequest: expect.any(Function),
+    },
+  );
   expect(card.images?.[0].url).toBe("https://example.test/product.png");
   expect(card.available).toBe(true);
   expect(card.variants).toHaveLength(2);
@@ -136,4 +135,37 @@ it("reuses a card seeded by a named collection without fetching its relations", 
     available: true,
     images: [{ url: "image" }],
   });
+});
+
+it("loads page 11 card relations without loading relations for earlier pages", async () => {
+  const fetch = vi.mocked(quitHeroFetch).mockImplementation(async (path) => {
+    const url = new URL(path, "https://example.test");
+    if (url.pathname === "/products") {
+      expect(url.searchParams.get("excludeTags")).toBe("NOTOSHOP");
+      expect(url.searchParams.get("fields")).toBe(
+        "id,name,slug,status,brand,productType,variants,images,tags",
+      );
+      expect(url.searchParams.has("productFields")).toBe(false);
+      expect(url.searchParams.get("page")).toBe("11");
+      expect(url.searchParams.get("limit")).toBe("15");
+      const offset = 150;
+      return {
+        data: Array.from({ length: 15 }, (_, index) => ({
+          id: `page-eleven-${offset + index}`,
+          name: `Product ${offset + index}`,
+        })),
+        pagination: { total: 165, totalPages: 11 },
+      };
+    }
+    const id = Number(url.searchParams.get("productId")?.replace("page-eleven-", ""));
+    expect(id).toBeGreaterThanOrEqual(150);
+    expect(id).toBeLessThan(165);
+    return { data: [], pagination: { totalPages: 1 } };
+  });
+  const result = await loadQuitHeroProductsPage(11, 15, "page-eleven");
+  expect(result.products).toHaveLength(15);
+  expect(result.total).toBe(165);
+  expect(fetch).toHaveBeenCalledTimes(31);
+  await loadQuitHeroProductsPage(11, 15, "page-eleven");
+  expect(fetch).toHaveBeenCalledTimes(31);
 });

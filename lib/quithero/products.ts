@@ -10,6 +10,7 @@ import { toCollectionProduct } from "@/lib/catalog/collection-product";
 import { QuitHeroCollectionFilters } from "./collections";
 import { productIsListedInShop } from "./helpers";
 import { filterShopProducts } from "./shop-visibility";
+import { COLLECTION_PRODUCT_FIELDS } from "./catalog-fields";
 import { visibleProductPage } from "./visible-product-pages";
 
 type QuitHeroProductsResponse =
@@ -86,7 +87,9 @@ export async function loadQuitHeroProductsPage(
     requests += 1;
   };
   const query = new URLSearchParams({
-    status: "active",
+    status: "ACTIVE",
+    excludeTags: "NOTOSHOP",
+    fields: COLLECTION_PRODUCT_FIELDS,
   });
 
   if (search) query.set("search", search);
@@ -125,6 +128,7 @@ export async function loadQuitHeroProductsPage(
       });
       return {
         products: productsFrom(payload),
+        total: Array.isArray(payload) ? payload.length : Number(payload.pagination?.total),
         totalPages: Array.isArray(payload) ? 1 : Number(payload.pagination?.totalPages ?? 1),
       };
     },

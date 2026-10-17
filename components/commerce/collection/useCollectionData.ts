@@ -58,7 +58,7 @@ export function useCollectionData(
     ...collectionAvailableFiltersQuery(collectionSlug, pageFilters),
   });
 
-  useReloadCollection(hydrated, collectionSlug, page, pageFilters);
+  useReloadCollection(hydrated, collectionSlug, page, pageFilters, Boolean(initialData));
 
   const data = hydrated ? queryData : initialData;
   const products = useMemo(() => data?.products ?? [], [data]);

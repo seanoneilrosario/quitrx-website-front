@@ -10,8 +10,8 @@ let root: Root;
 let client: QueryClient;
 let container: HTMLDivElement;
 const filters = { brandId: ["one"] };
-function Harness() {
-  useReloadCollection(true, "e-liquids", 2, filters);
+function Harness({ hasServerData = false }: { hasServerData?: boolean }) {
+  useReloadCollection(true, "e-liquids", 2, filters, hasServerData);
   return null;
 }
 beforeEach(() => {
@@ -30,13 +30,13 @@ afterEach(async () => {
   client.clear();
   vi.unstubAllGlobals();
 });
-async function render(restoring = false) {
+async function render(restoring = false, hasServerData = false) {
   await act(async () => {
     root.render(
       <React.StrictMode>
         <QueryClientProvider client={client}>
           <IsRestoringProvider value={restoring}>
-            <Harness />
+            <Harness hasServerData={hasServerData} />
           </IsRestoringProvider>
         </QueryClientProvider>
       </React.StrictMode>,
@@ -78,5 +78,12 @@ it("does not refresh a different collection visited after the document reload", 
   const fetch = vi.fn();
   vi.stubGlobal("fetch", fetch);
   await render();
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+it("does not force a second backend load when SSR already supplied the page", async () => {
+  const fetch = vi.fn();
+  vi.stubGlobal("fetch", fetch);
+  await render(false, true);
   expect(fetch).not.toHaveBeenCalled();
 });

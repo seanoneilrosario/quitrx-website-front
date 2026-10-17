@@ -161,7 +161,7 @@ export function collectionPageQuery(
     queryKey: [
       "api",
       "/api/quithero-products",
-      "collection-page-v2",
+      "collection-page-v4",
       slug,
       page,
       COLLECTION_PAGE_SIZE,

@@ -12,6 +12,7 @@ import { productIsVisible } from "@/lib/catalog/bundles";
 import { getQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
 import { productIsListedInShop, productMatchesCollectionRules } from "./helpers";
 import { filterShopProducts } from "./shop-visibility";
+import { COLLECTION_PRODUCT_FIELDS } from "./catalog-fields";
 import { visibleProductPage } from "./visible-product-pages";
 import type {
   QuitHeroCollection,
@@ -28,18 +29,6 @@ type QuitHeroCollectionsResponse =
       items?: QuitHeroCollection[];
       pagination?: { totalPages?: number };
     };
-
-const COLLECTION_PRODUCT_FIELDS = [
-  "id",
-  "name",
-  "slug",
-  "status",
-  "brand",
-  "productType",
-  "variants",
-  "images",
-  "tags",
-].join(",");
 
 function collectionsFrom(payload: QuitHeroCollectionsResponse) {
   if (Array.isArray(payload)) return payload;
@@ -146,7 +135,8 @@ async function loadCollectionPage(
   }
 
   const params = new URLSearchParams({
-    status: "active",
+    status: "ACTIVE",
+    excludeTags: "NOTOSHOP",
     productFields: COLLECTION_PRODUCT_FIELDS,
   });
 
@@ -203,6 +193,7 @@ async function loadCollectionPage(
       return {
         collection: { name: response.data.name, slug: response.data.slug },
         products: response.data.products ?? [],
+        total: response.pagination.total,
         totalPages: response.pagination.totalPages,
       };
     },
@@ -273,7 +264,7 @@ export function getQuitHeroCollectionPage(
 const getPersistentCollectionPage = unstable_cache(
   (slug: string, page: number, limit: number, filters: QuitHeroCollectionFilters) =>
     collectionPage(slug, page, limit, filters, false),
-  ["quithero-collection-pages-v1"],
+  ["quithero-collection-pages-v3"],
   { revalidate: QUITHERO_CATALOG_CACHE_SECONDS, tags: ["quithero-catalog-pages"] },
 );
 
