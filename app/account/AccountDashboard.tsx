@@ -8,7 +8,7 @@ import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero/customers
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import OrderHistoryTable from "@/components/account/OrderHistoryTable";
 import type { QuitHeroOrder } from "@/lib/quithero";
-import { hasActiveScript } from "@/lib/account/script-access";
+import { canRenewScript, hasActiveScript } from "@/lib/account/script-access";
 
 function addressLines(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];
@@ -42,21 +42,6 @@ function isCancelled(order: QuitHeroOrder) {
   return [order.fulfillmentStatus, order.status].some((status) =>
     /^cancell?ed$/.test(status?.trim().toLowerCase() || ""),
   );
-}
-
-function isWithinRenewalWindow(expiry: string) {
-  const expiryDate = new Date(expiry);
-  if (Number.isNaN(expiryDate.getTime())) return false;
-
-  const renewalStart = new Date(expiryDate);
-  // Clamp to the last day of the target month for dates such as May 31.
-  renewalStart.setDate(1);
-  renewalStart.setMonth(renewalStart.getMonth() - 3);
-  const lastDay = new Date(renewalStart.getFullYear(), renewalStart.getMonth() + 1, 0).getDate();
-  renewalStart.setDate(Math.min(expiryDate.getDate(), lastDay));
-
-  const now = new Date();
-  return now >= renewalStart && now <= expiryDate;
 }
 
 function formatMoney(amount: number, currency: string) {
@@ -132,8 +117,7 @@ export default function AccountDashboard({
   const escriptHref = customer.tags?.some((tag) => tag.trim().toLowerCase() === "scriptuploaded")
     ? "https://quitrx.com.au/intake-form"
     : "/request-script";
-  const canRenewScript =
-    scriptIsActive && (!customer.scriptExpiry || isWithinRenewalWindow(customer.scriptExpiry));
+  const showRenewButton = canRenewScript(customer);
 
   if (customer.consultPurchase === false) {
     return (
@@ -200,7 +184,7 @@ export default function AccountDashboard({
               <strong>Expiry Date:</strong> {formatDate(customer.scriptExpiry)}
             </p>
           </div>
-          {canRenewScript && (
+          {showRenewButton && (
             <Link
               href={renewalHref}
               className="account-button account-button--primary account-button--compact"
