@@ -476,11 +476,39 @@
 }
 
 .productImage {
+  grid-area: 1 / 1;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: transform 0.25s ease;
+  transition: transform 0.25s ease, opacity 0.25s ease;
   mix-blend-mode: multiply;
+}
+
+.productHoverImage {
+  opacity: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .productCard:hover .productHoverImage {
+    opacity: 1;
+  }
+  .productCard:hover .productPrimaryImage {
+    opacity: 0;
+  }
+}
+
+.productLink:focus-visible .productHoverImage {
+  opacity: 1;
+}
+
+.productLink:focus-visible .productPrimaryImage {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .productImage {
+    transition: none;
+  }
 }
 
 .productCard:hover .productImage {

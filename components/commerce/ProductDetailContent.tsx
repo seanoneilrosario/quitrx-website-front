@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ProductDetailData } from "@/lib/catalog/product-detail-data";
 import ProductImageZoom from "./ProductImageZoom";
-import ProductPurchasePanel from "./ProductPurchasePanel";
+import ProductPurchasePanel, { type Variant } from "./ProductPurchasePanel";
 import ProductAccessGate from "./ProductAccessGate";
 import styles from "@/app/store.module.css";
+import React from "react";
 
 export default function ProductDetailContent({ initialData }: { initialData: ProductDetailData }) {
   const {
@@ -20,11 +21,18 @@ export default function ProductDetailContent({ initialData }: { initialData: Pro
     relatedProducts,
   } = initialData;
 
+  const [activeVariant, setActiveVariant] = React.useState<Variant | null>(null);
+
   return (
     <ProductAccessGate productName={product.name || "Product"}>
       <main className={styles.productPage}>
         <div className={`${styles.productDetail} page-width`}>
-          <ProductImageZoom image={image} alt={product.name || "Product"} />
+          <ProductImageZoom
+            image={image}
+            alt={product.name || "Product"}
+            product={product}
+            activeVariant={activeVariant}
+          />
 
           <div className={styles.productContent}>
             {product.brand?.slug ? (
@@ -44,6 +52,7 @@ export default function ProductDetailContent({ initialData }: { initialData: Pro
               isBundle={isBundle}
               bundleDropdowns={bundleDropdowns}
               relatedProducts={relatedProducts}
+              setActiveVariant={setActiveVariant}
             />
 
             {descriptionSections.details && (

@@ -28,7 +28,10 @@ it("keeps card/filter data while removing details and preserving bundle availabi
   });
   expect(summary.isBundle).toBe(true);
   expect(productIsAvailable(summary)).toBe(true);
-  expect(summary.images).toEqual([{ url: "primary", altText: undefined }]);
+  expect(summary.images).toEqual([
+    { url: "primary", altText: undefined },
+    { url: "other", altText: undefined },
+  ]);
   expect(summary.variants?.[0]).toMatchObject({
     id: "variant",
     price: 20,

@@ -264,7 +264,7 @@ export function getQuitHeroCollectionPage(
 const getPersistentCollectionPage = unstable_cache(
   (slug: string, page: number, limit: number, filters: QuitHeroCollectionFilters) =>
     collectionPage(slug, page, limit, filters, false),
-  ["quithero-collection-pages-v3"],
+  ["quithero-collection-pages-v4-hover-images"],
   { revalidate: QUITHERO_CATALOG_CACHE_SECONDS, tags: ["quithero-catalog-pages"] },
 );
 
