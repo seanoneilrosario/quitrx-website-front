@@ -129,6 +129,9 @@ export default function AccountDashboard({
   const renewalHref = customer.tags?.some((tag) => tag.trim().toLowerCase() === "scriptuploaded")
     ? "https://quitrx.com.au/intake-form"
     : "/account/prescriptions";
+  const escriptHref = customer.tags?.some((tag) => tag.trim().toLowerCase() === "scriptuploaded")
+    ? "https://quitrx.com.au/intake-form"
+    : "/request-script";
   const canRenewScript =
     scriptIsActive && (!customer.scriptExpiry || isWithinRenewalWindow(customer.scriptExpiry));
 
@@ -293,7 +296,7 @@ export default function AccountDashboard({
               <p>Get a $49 eScript to use at your local pharmacy.</p>
             </div>
           </div>
-          <Link href="/request-script" className="account-button account-button--banner">
+          <Link href={escriptHref} className="account-button account-button--banner">
             Get eScript
           </Link>
         </section>

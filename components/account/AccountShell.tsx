@@ -56,7 +56,7 @@ export default function AccountShell({ children }: { children: React.ReactNode }
   const scriptIsActive = hasActiveScript(identity);
   const escriptHref = identity?.tags?.some((tag) => tag.trim().toLowerCase() === "scriptuploaded")
     ? "https://quitrx.com.au/intake-form"
-    : "/account/prescriptions";
+    : "/request-script";
 
   if (pathname === "/account/login" || pathname === "/account/auth-popup") {
     return <main className="account-login-page">{children}</main>;
@@ -110,9 +110,10 @@ export default function AccountShell({ children }: { children: React.ReactNode }
             }
 
             const destination = href === "/request-script" ? escriptHref : href;
-            const active = destination === "/account"
-              ? pathname === destination
-              : pathname.startsWith(destination);
+            const active =
+              destination === "/account"
+                ? pathname === destination
+                : pathname.startsWith(destination);
             return (
               <Link
                 key={href}
