@@ -2,12 +2,15 @@
 
 import { cache } from "react";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { defineQuery } from "next-sanity";
 import { SanityDocument } from "sanity";
 
 import Pages from "@/components/pages/Page";
 import ActiveScriptAccessGuard from "@/components/account/ActiveScriptAccessGuard";
+import { auth } from "@/auth";
+import { getInitialAccount } from "@/lib/account/account-data";
+import { getCustomerSession } from "@/lib/auth/customer-session";
 import { client } from "@/sanity/lib/client";
 import { sanityFetch } from "@/sanity/lib/live";
 import { ALLPAGE_QUERY, PAGE_QUERY } from "@/sanity/lib/queries";
@@ -119,6 +122,22 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 
 export default async function Page({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
+  const customerOnlyPages = ["intake-form", "request-script", "upload-prescription"];
+
+  if (customerOnlyPages.includes(slug)) {
+    const next = `/${slug}`;
+    const customerSession = await getCustomerSession();
+    const oauthSession = customerSession?.email ? undefined : await auth();
+    const email = customerSession?.email ?? oauthSession?.user?.email;
+
+    if (!email) {
+      redirect(`/account/login?next=${encodeURIComponent(next)}`);
+    }
+
+    if (!(await getInitialAccount())) {
+      redirect(`/account/login?error=AccountNotFound&next=${encodeURIComponent(next)}`);
+    }
+  }
 
   const page = await getPage(slug);
 

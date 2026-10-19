@@ -1,20 +1,20 @@
 export type QuitRxFormCustomer = {
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
   address?: {
-    address1?: string;
-    address2?: string;
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    province?: string;
-    postcode?: string;
-    zip?: string;
-  };
-  addresses?: QuitRxFormCustomer["address"][];
+    address1?: string | null;
+    address2?: string | null;
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    province?: string | null;
+    postcode?: string | null;
+    zip?: string | null;
+  } | null;
+  addresses?: (QuitRxFormCustomer["address"] | null)[] | null;
 };
 
 export type QuitRxForm = "intake" | "uploadScript" | "escriptRequest" | "renewal";
@@ -30,8 +30,8 @@ const FORM_URLS: Record<QuitRxForm, string> = {
     "https://forms.quithero.com.au/quickrx/form/QuitRXScriptRenewal/formperma/Zc9s8aLGPTVQntvZrepRaqSCsgNugnAh0z_ApC8x2XY",
 };
 
-export function formatAustralianPhoneForForm(phone = "") {
-  let decoded = phone.trim();
+export function formatAustralianPhoneForForm(phone?: string | null) {
+  let decoded = phone?.trim() ?? "";
 
   try {
     decoded = decodeURIComponent(decoded);
@@ -51,7 +51,7 @@ export function formatAustralianPhoneForForm(phone = "") {
 
 export function buildQuitRxFormUrl(form: QuitRxForm, customer?: QuitRxFormCustomer) {
   const url = new URL(FORM_URLS[form]);
-  const address = customer?.address ?? customer?.addresses?.[0];
+  const address = customer?.address ?? customer?.addresses?.find(Boolean);
   const common = {
     email: customer?.email ?? "",
     firstName: customer?.firstName ?? "",

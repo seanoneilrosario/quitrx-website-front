@@ -58,4 +58,27 @@ describe("buildQuitRxFormUrl", () => {
     });
     expect(url.toString()).not.toMatch(/undefined|null/);
   });
+
+  it("handles a null phone returned by the customer API", () => {
+    expect(formatAustralianPhoneForForm(null)).toBe("");
+    expect(buildQuitRxFormUrl("intake", { phone: null }).searchParams.get("phone")).toBe("");
+  });
+
+  it.each(["intake", "uploadScript", "escriptRequest", "renewal"] as const)(
+    "builds the %s form URL when all optional customer fields are null",
+    (form) => {
+      const url = buildQuitRxFormUrl(form, {
+        email: null,
+        firstName: null,
+        lastName: null,
+        phone: null,
+        address: null,
+        addresses: [null],
+      });
+
+      expect(url.protocol).toBe("https:");
+      expect(url.searchParams.get("zf_rszfm")).toBe("1");
+      expect(url.toString()).not.toMatch(/undefined|null/);
+    },
+  );
 });
