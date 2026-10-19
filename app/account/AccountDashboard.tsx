@@ -132,8 +132,6 @@ export default function AccountDashboard({
   const canRenewScript =
     scriptIsActive && (!customer.scriptExpiry || isWithinRenewalWindow(customer.scriptExpiry));
 
-  console.log(customer);
-
   if (customer.consultPurchase === false) {
     return (
       <>

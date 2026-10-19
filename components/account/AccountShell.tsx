@@ -54,6 +54,9 @@ export default function AccountShell({ children }: { children: React.ReactNode }
   const [menuOpen, setMenuOpen] = useState(false);
   const accountName = identity?.firstName?.trim() || identity?.email?.split("@")[0]?.trim();
   const scriptIsActive = hasActiveScript(identity);
+  const escriptHref = identity?.tags?.some((tag) => tag.trim().toLowerCase() === "scriptuploaded")
+    ? "https://quitrx.com.au/intake-form"
+    : "/account/prescriptions";
 
   if (pathname === "/account/login" || pathname === "/account/auth-popup") {
     return <main className="account-login-page">{children}</main>;
@@ -106,11 +109,14 @@ export default function AccountShell({ children }: { children: React.ReactNode }
               );
             }
 
-            const active = href === "/account" ? pathname === href : pathname.startsWith(href);
+            const destination = href === "/request-script" ? escriptHref : href;
+            const active = destination === "/account"
+              ? pathname === destination
+              : pathname.startsWith(destination);
             return (
               <Link
                 key={href}
-                href={href}
+                href={destination}
                 className={active ? "active" : ""}
                 onClick={() => setMenuOpen(false)}
               >
