@@ -52,11 +52,7 @@ function isWithinRenewalWindow(expiry: string) {
   // Clamp to the last day of the target month for dates such as May 31.
   renewalStart.setDate(1);
   renewalStart.setMonth(renewalStart.getMonth() - 3);
-  const lastDay = new Date(
-    renewalStart.getFullYear(),
-    renewalStart.getMonth() + 1,
-    0,
-  ).getDate();
+  const lastDay = new Date(renewalStart.getFullYear(), renewalStart.getMonth() + 1, 0).getDate();
   renewalStart.setDate(Math.min(expiryDate.getDate(), lastDay));
 
   const now = new Date();
@@ -130,9 +126,13 @@ export default function AccountDashboard({
   const headerName = fullName || customer.email?.trim() || "Customer";
   const addresses = addressLines(customer);
   const scriptIsActive = hasActiveScript(customer);
+  const renewalHref = customer.tags?.some((tag) => tag.trim().toLowerCase() === "scriptuploaded")
+    ? "https://quitrx.com.au/intake-form"
+    : "/account/prescriptions";
   const canRenewScript =
-    scriptIsActive &&
-    (!customer.scriptExpiry || isWithinRenewalWindow(customer.scriptExpiry));
+    scriptIsActive && (!customer.scriptExpiry || isWithinRenewalWindow(customer.scriptExpiry));
+
+  console.log(customer);
 
   if (customer.consultPurchase === false) {
     return (
@@ -201,7 +201,7 @@ export default function AccountDashboard({
           </div>
           {canRenewScript && (
             <Link
-              href="/account/prescriptions"
+              href={renewalHref}
               className="account-button account-button--primary account-button--compact"
             >
               Renew for free
