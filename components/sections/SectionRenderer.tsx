@@ -269,6 +269,7 @@ const sectionRenderers: Record<
   ),
   formSuccess: (component) => (
     <FormSuccess
+      icon={component.icon}
       title={component.title}
       lead={component.lead}
       message={component.message}

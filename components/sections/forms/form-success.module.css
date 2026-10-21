@@ -25,9 +25,14 @@
   background: #2c6270;
 }
 
-.icon svg {
+.icon svg,
+.icon img {
   width: 72px;
   height: 72px;
+}
+
+.icon img {
+  object-fit: contain;
 }
 
 .icon path {
@@ -103,7 +108,8 @@
     margin-bottom: 26px;
   }
 
-  .icon svg {
+  .icon svg,
+  .icon img {
     width: 58px;
     height: 58px;
   }
