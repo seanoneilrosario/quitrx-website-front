@@ -134,8 +134,14 @@ export default async function Page({ params }: { params: Promise<Params> }) {
       redirect(`/account/login?next=${encodeURIComponent(next)}`);
     }
 
-    if (!(await getInitialAccount())) {
+    const customer = await getInitialAccount();
+
+    if (!customer) {
       redirect(`/account/login?error=AccountNotFound&next=${encodeURIComponent(next)}`);
+    }
+
+    if (slug === "request-script" && customer.consultPurchase === false) {
+      redirect("/intake-required");
     }
   }
 
