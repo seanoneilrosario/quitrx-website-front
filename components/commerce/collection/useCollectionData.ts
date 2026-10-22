@@ -27,7 +27,7 @@ export function useCollectionData(
     // initialPage?.pagination.page === page
     //   ? initialPage
     //   : undefined;
-    // sort === "MANUAL" &&
+    sort === "MANUAL" &&
     initialPage?.pagination.page === page
       ? initialPage
       : undefined;
