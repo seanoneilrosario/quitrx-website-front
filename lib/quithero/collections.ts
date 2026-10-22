@@ -1,3 +1,4 @@
+import { parseCollectionSort, type Sort } from "@/lib/catalog/collection-sort";
 import "server-only";
 
 import { cache } from "react";
@@ -69,6 +70,7 @@ const getCachedQuitHeroCollections = unstable_cache(
 export const getQuitHeroCollections = cache(getCachedQuitHeroCollections);
 
 export type QuitHeroCollectionFilters = {
+  sort?: Sort;
   brandId?: string[];
   productTypeId?: string[];
   status?: string[];
@@ -100,44 +102,45 @@ async function loadCollectionPage(
     hasNextPage: boolean;
   };
 
-  if (slug === "all-products") {
-    const { products, total, totalPages } = await loadQuitHeroProductsPage(
-      normalizedPage,
-      normalizedLimit,
-      undefined,
-      fresh,
-      filters,
-    );
+  // if (slug === "all-products") {
+  //   const { products, total, totalPages } = await loadQuitHeroProductsPage(
+  //     normalizedPage,
+  //     normalizedLimit,
+  //     undefined,
+  //     fresh,
+  //     filters,
+  //   );
 
-    console.log("[All Products Pagination]", {
-      page: normalizedPage,
-      limit: normalizedLimit,
-      products: products.length,
-      total,
-      totalPages,
-      hasNextPage: normalizedPage < totalPages,
-    });
+  //   console.log("[All Products Pagination]", {
+  //     page: normalizedPage,
+  //     limit: normalizedLimit,
+  //     products: products.length,
+  //     total,
+  //     totalPages,
+  //     hasNextPage: normalizedPage < totalPages,
+  //   });
 
-    return {
-      collection: {
-        name: "All Products",
-        slug,
-      },
-      products,
-      pagination: {
-        page: normalizedPage,
-        limit: normalizedLimit,
-        total,
-        totalPages,
-        hasNextPage: normalizedPage < totalPages,
-      },
-    };
-  }
+  //   return {
+  //     collection: {
+  //       name: "All Products",
+  //       slug,
+  //     },
+  //     products,
+  //     pagination: {
+  //       page: normalizedPage,
+  //       limit: normalizedLimit,
+  //       total,
+  //       totalPages,
+  //       hasNextPage: normalizedPage < totalPages,
+  //     },
+  //   };
+  // }
 
   const params = new URLSearchParams({
     status: "ACTIVE",
     excludeTags: "NOTOSHOP",
     productFields: COLLECTION_PRODUCT_FIELDS,
+    sort: parseCollectionSort(filters.sort),
   });
 
   filters.brandId?.forEach((value) => {
@@ -211,7 +214,7 @@ const collectionPageCache = createSummaryCache<QuitHeroCollectionPage>(100);
 
 // Use the same key for server rendering and API requests with empty/reordered filters.
 export function normalizeCollectionFilters(filters: QuitHeroCollectionFilters) {
-  const normalized: QuitHeroCollectionFilters = {};
+  const normalized: QuitHeroCollectionFilters = { sort: parseCollectionSort(filters.sort) };
   for (const key of [
     "brandId",
     "productTypeId",
@@ -264,7 +267,7 @@ export function getQuitHeroCollectionPage(
 const getPersistentCollectionPage = unstable_cache(
   (slug: string, page: number, limit: number, filters: QuitHeroCollectionFilters) =>
     collectionPage(slug, page, limit, filters, false),
-  ["quithero-collection-pages-v4-hover-images"],
+  ["quithero-collection-pages-v5-sort"],
   { revalidate: QUITHERO_CATALOG_CACHE_SECONDS, tags: ["quithero-catalog-pages"] },
 );
 
@@ -282,16 +285,16 @@ export const getFastQuitHeroCollectionPage = cache(
 );
 
 export async function getQuitHeroCollection(slug: string) {
-  if (slug === "all-products") {
-    const products = await getQuitHeroProducts();
-    return {
-      brand: {
-        name: "All Products",
-        slug: "all-products",
-      },
-      products,
-    };
-  }
+  // if (slug === "all-products") {
+  //   const products = await getQuitHeroProducts();
+  //   return {
+  //     brand: {
+  //       name: "All Products",
+  //       slug: "all-products",
+  //     },
+  //     products,
+  //   };
+  // }
   const [products, apiCollections, assignment] = await Promise.all([
     getQuitHeroProducts(),
     getQuitHeroCollections().catch(() => []),

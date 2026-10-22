@@ -139,6 +139,7 @@ describe("all-products pagination", () => {
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(normalizeCollectionFilters({ brandId: [" b ", "a", "b"], minPrice: 0 })).toEqual({
+      sort: "MANUAL",
       brandId: ["a", "b"],
       minPrice: 0,
     });
@@ -297,4 +298,29 @@ it("preserves next-page navigation when every product on a backend page is hidde
   expect(url.searchParams.get("page")).toBe("11");
   expect(url.searchParams.get("limit")).toBe("15");
   expect(url.searchParams.get("status")).toBe("ACTIVE");
+});
+
+it("forwards sort to the backend and separates server cache entries", async () => {
+  vi.stubEnv("QUITHERO_API_KEY", "test-key");
+  const fetchMock = vi.fn().mockImplementation(async () =>
+    Response.json({
+      data: {
+        name: "Sorted",
+        slug: "sorted",
+        products: [
+          { id: "b", name: "B", variants: [], images: [] },
+          { id: "a", name: "A", variants: [], images: [] },
+        ],
+      },
+      pagination: { total: 2, totalPages: 1 },
+    }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  const { COLLECTION_SORT_OPTIONS } = await import("@/lib/catalog/collection-sort");
+  for (const { value } of COLLECTION_SORT_OPTIONS) {
+    const result = await getFastQuitHeroCollectionPage("sorted", 1, 10, { sort: value });
+    expect(new URL(fetchMock.mock.lastCall![0]).searchParams.get("sort")).toBe(value);
+    expect(result.products.map((p) => p.id)).toEqual(["b", "a"]);
+  }
+  expect(fetchMock).toHaveBeenCalledTimes(8);
 });

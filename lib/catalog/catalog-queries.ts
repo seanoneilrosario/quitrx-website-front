@@ -1,3 +1,4 @@
+import { parseCollectionSort, type Sort } from "@/lib/catalog/collection-sort";
 import { queryOptions } from "@tanstack/react-query";
 import type { QuitHeroCollectionPage } from "@/lib/quithero";
 import type { ProductDetailData } from "./product-detail-data";
@@ -11,7 +12,11 @@ export function selectedHighlightsQuery(ids: string[]) {
   selected.forEach((id) => params.append("productId", id));
   return queryOptions({
     queryKey: ["api", "/api/quithero-highlights", selected] as const,
-    queryFn: ({ signal }) => getCatalogData<Pick<QuitHeroCollectionPage, "products">>(`/api/quithero-highlights?${params}`, signal),
+    queryFn: ({ signal }) =>
+      getCatalogData<Pick<QuitHeroCollectionPage, "products">>(
+        `/api/quithero-highlights?${params}`,
+        signal,
+      ),
     staleTime: API_STALE_TIME,
     retry: false,
     refetchOnWindowFocus: false,
@@ -103,6 +108,7 @@ export function productDetailQuery(slug: string) {
 }
 
 export type CollectionPageFilters = {
+  sort?: Sort;
   brandId?: string[];
   productTypeId?: string[];
   status?: string[];
@@ -120,6 +126,7 @@ export function collectionPageQuery(
   fresh = false,
 ) {
   const params = new URLSearchParams({
+    sort: parseCollectionSort(filters.sort),
     collectionPage: slug,
     page: String(page),
     limit: String(COLLECTION_PAGE_SIZE),
@@ -161,7 +168,7 @@ export function collectionPageQuery(
     queryKey: [
       "api",
       "/api/quithero-products",
-      "collection-page-v4",
+      "collection-page-v5-sort",
       slug,
       page,
       COLLECTION_PAGE_SIZE,
@@ -180,104 +187,63 @@ export function collectionPageQuery(
   });
 }
 
-export function collectionAvailableFiltersQuery(
-  slug: string,
-  filters: CollectionPageFilters = {},
-) {
+export function collectionAvailableFiltersQuery(slug: string, filters: CollectionPageFilters = {}) {
   const params = new URLSearchParams();
 
   if (filters.brandId?.length) {
     filters.brandId.forEach((value) => {
-      params.append('brandId', value);
+      params.append("brandId", value);
     });
   }
 
   if (filters.productTypeId?.length) {
-    filters.productTypeId.forEach(
-      (value) => {
-        params.append(
-          'productTypeId',
-          value,
-        );
-      },
-    );
+    filters.productTypeId.forEach((value) => {
+      params.append("productTypeId", value);
+    });
   }
 
   if (filters.status?.length) {
     filters.status.forEach((value) => {
-      params.append('status', value);
+      params.append("status", value);
     });
   }
 
   if (filters.sourceSystem?.length) {
-    filters.sourceSystem.forEach(
-      (value) => {
-        params.append(
-          'sourceSystem',
-          value,
-        );
-      },
-    );
+    filters.sourceSystem.forEach((value) => {
+      params.append("sourceSystem", value);
+    });
   }
 
   if (filters.tags?.length) {
     filters.tags.forEach((value) => {
-      params.append('tags', value);
+      params.append("tags", value);
     });
   }
 
-  if (
-    filters.minPrice !== undefined
-  ) {
-    params.set(
-      'minPrice',
-      String(filters.minPrice),
-    );
+  if (filters.minPrice !== undefined) {
+    params.set("minPrice", String(filters.minPrice));
   }
 
-  if (
-    filters.maxPrice !== undefined
-  ) {
-    params.set(
-      'maxPrice',
-      String(filters.maxPrice),
-    );
+  if (filters.maxPrice !== undefined) {
+    params.set("maxPrice", String(filters.maxPrice));
   }
 
-  if (
-    filters.attributeFilters?.length
-  ) {
-    filters.attributeFilters.forEach(
-      (value) => {
-        params.append(
-          'attributeFilters',
-          value,
-        );
-      },
-    );
+  if (filters.attributeFilters?.length) {
+    filters.attributeFilters.forEach((value) => {
+      params.append("attributeFilters", value);
+    });
   }
 
-  const query =
-    params.toString();
+  const query = params.toString();
 
   const url =
     `/api/quithero-collection-filters?collection=${encodeURIComponent(slug)}` +
-    (query ? `&${query}` : '');
+    (query ? `&${query}` : "");
 
   return queryOptions({
-    queryKey: [
-      'api',
-      '/api/quithero-collection-filters',
-      slug,
-      filters,
-    ] as const,
+    queryKey: ["api", "/api/quithero-collection-filters", slug, filters] as const,
 
-    queryFn: ({ signal }) =>
-      getCatalogData<CollectionAvailableFiltersResponse>(
-        url,
-        signal,
-        true,
-      ),
+    queryFn: ({ signal }) => getCatalogData<CollectionAvailableFiltersResponse>(url, signal, true),
 
     staleTime: API_STALE_TIME,
     retry: false,

@@ -59,3 +59,18 @@ describe("collection refresh endpoint", () => {
     expect(getFastQuitHeroCollectionPage).not.toHaveBeenCalled();
   });
 });
+
+it("passes the selected sort through the collection endpoint", async () => {
+  vi.mocked(getFastQuitHeroCollectionPage).mockResolvedValue({ products: [] } as never);
+  await GET(
+    new Request(
+      "https://example.com/api/quithero-products?collectionPage=test&sort=BEST_SELLING&page=2&limit=10",
+    ),
+  );
+  expect(getFastQuitHeroCollectionPage).toHaveBeenCalledWith(
+    "test",
+    2,
+    10,
+    expect.objectContaining({ sort: "BEST_SELLING" }),
+  );
+});

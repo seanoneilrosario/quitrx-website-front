@@ -66,6 +66,7 @@ it.each([false, true])(
     const browser = new QueryClient();
     clients.push(server, browser);
     const filters = {
+      sort: "MANUAL" as const,
       brandId: filtered ? ["one"] : [],
       productTypeId: [],
       status: [],

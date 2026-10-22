@@ -6,7 +6,7 @@ import type {
   CollectionAvailableFilter,
   CollectionPageFilters,
 } from "@/lib/catalog/catalog-queries";
-import type { Sort } from "./sort-products";
+import { parseCollectionSort, type Sort } from "@/lib/catalog/collection-sort";
 function filterQueryKey(filter: CollectionAvailableFilter) {
   switch (filter.type) {
     case "BRAND":
@@ -69,6 +69,8 @@ export function selectedValuesForFilter(
 export function useCollectionFilters() {
   const searchParams = useSearchParams();
 
+  const sort = parseCollectionSort(searchParams.get("sort"));
+
   const page = parseCollectionPage(searchParams.get("page"));
 
   /**
@@ -77,6 +79,7 @@ export function useCollectionFilters() {
    */
   const pageFilters = useMemo<CollectionPageFilters>(
     () => ({
+      sort,
       brandId: searchParams.getAll("brandId").filter(Boolean),
 
       productTypeId: searchParams.getAll("productTypeId").filter(Boolean),
@@ -105,7 +108,7 @@ export function useCollectionFilters() {
         return values.length ? [values.join(",")] : [];
       })(),
     }),
-    [searchParams],
+    [searchParams, sort],
   );
 
   const hasProductFilters = Boolean(
@@ -118,16 +121,6 @@ export function useCollectionFilters() {
     pageFilters.maxPrice !== undefined ||
     pageFilters.attributeFilters?.length,
   );
-
-  const sortParam = searchParams.get("sort");
-
-  const sort: Sort =
-    sortParam === "price-asc" ||
-    sortParam === "price-desc" ||
-    sortParam === "name-asc" ||
-    sortParam === "name-desc"
-      ? sortParam
-      : "featured";
 
   const rawMaxPrice = searchParams.get("maxPrice");
 

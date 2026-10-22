@@ -10,7 +10,7 @@ import { CollectionPagination } from "./collection/CollectionPagination";
 import { LockedProductDialog } from "./collection/LockedProductDialog";
 import { useCollectionFilters } from "./collection/useCollectionFilters";
 import { useCollectionData } from "./collection/useCollectionData";
-import type { Sort } from "./collection/sort-products";
+import { COLLECTION_SORT_OPTIONS, type Sort } from "@/lib/catalog/collection-sort";
 import styles from "./collection-catalog.module.css";
 import storeStyles from "@/app/store.module.css";
 
@@ -33,6 +33,8 @@ export default function CollectionCatalog({
   }, [collectionSlug]);
 
   const productsLocked = !hasActiveScript(customer);
+  // const sortingUnavailable = collectionSlug === "all-products";
+  const sortOptions = COLLECTION_SORT_OPTIONS.filter((option) => option.value !== "MANUAL");
 
   const filters = useCollectionFilters();
   const { page, sort, setSort } = filters;
@@ -83,15 +85,16 @@ export default function CollectionCatalog({
             <label>
               Sort by:
               <select value={sort} onChange={(event) => setSort(event.target.value as Sort)}>
-                <option value="featured">Featured</option>
-
-                <option value="price-asc">Price: low to high</option>
-
-                <option value="price-desc">Price: high to low</option>
-
-                <option value="name-asc">Name: A–Z</option>
-
-                <option value="name-desc">Name: Z–A</option>
+                {/* {sortingUnavailable && (
+                  <option value="" disabled>
+                    Sorting unavailable
+                  </option>
+                )} */}
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
 

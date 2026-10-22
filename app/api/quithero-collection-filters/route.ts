@@ -3,24 +3,17 @@ import { quitHeroFetch } from "@/lib/quithero/client";
 
 export async function GET(request: Request) {
   try {
-    const searchParams =
-      new URL(request.url).searchParams;
+    const searchParams = new URL(request.url).searchParams;
 
-    const collectionSlug =
-      searchParams.get("collection")?.trim();
+    const collectionSlug = searchParams.get("collection")?.trim();
 
     if (!collectionSlug) {
-      return NextResponse.json(
-        { error: "Collection is required." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Collection is required." }, { status: 400 });
     }
 
-    const isAllProducts =
-      collectionSlug === "all-products";
+    const isAllProducts = collectionSlug === "all-products";
 
-    const backendParams =
-      new URLSearchParams();
+    const backendParams = new URLSearchParams();
 
     searchParams.forEach((value, key) => {
       if (key === "collection") {
@@ -39,15 +32,15 @@ export async function GET(request: Request) {
 
     const query = backendParams.toString();
 
-    const basePath = isAllProducts
-      ? "/products/available-filters"
-      : `/collections/${encodeURIComponent(
-          collectionSlug,
-        )}/available-filters`;
+    const basePath = `/collections/${encodeURIComponent(collectionSlug)}/available-filters`;
 
-    const path = query
-      ? `${basePath}?${query}`
-      : basePath;
+    // const basePath = isAllProducts
+    //   ? "/products/available-filters"
+    //   : `/collections/${encodeURIComponent(
+    //       collectionSlug,
+    //     )}/available-filters`;
+
+    const path = query ? `${basePath}?${query}` : basePath;
 
     const response = await quitHeroFetch(path);
 
@@ -57,10 +50,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error(
-      "[collection-available-filters] Failed:",
-      error,
-    );
+    console.error("[collection-available-filters] Failed:", error);
 
     return NextResponse.json(
       {

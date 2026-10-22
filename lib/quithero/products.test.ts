@@ -169,3 +169,12 @@ it("loads page 11 card relations without loading relations for earlier pages", a
   await loadQuitHeroProductsPage(11, 15, "page-eleven");
   expect(fetch).toHaveBeenCalledTimes(31);
 });
+
+it("does not send collection sort values to the all-products endpoint", async () => {
+  vi.mocked(quitHeroFetch).mockResolvedValue({ data: [], pagination: { total: 0, totalPages: 1 } });
+  await loadQuitHeroProductsPage(1, 15, undefined, true, { sort: "MANUAL" });
+  expect(quitHeroFetch).toHaveBeenCalled();
+  for (const [path] of vi.mocked(quitHeroFetch).mock.calls) {
+    expect(new URL(path, "https://example.test").searchParams.has("sort")).toBe(false);
+  }
+});

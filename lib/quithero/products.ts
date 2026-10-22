@@ -92,6 +92,7 @@ export async function loadQuitHeroProductsPage(
     fields: COLLECTION_PRODUCT_FIELDS,
   });
 
+  // The /products endpoint rejects collection-specific sort parameters.
   if (search) query.set("search", search);
 
   // Multiple selected brands use the products endpoint's brandIds parameter.
