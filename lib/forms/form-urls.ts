@@ -31,7 +31,7 @@ const FORM_URLS: Record<QuitRxForm, string> = {
 };
 
 export function formatAustralianPhoneForForm(phone = "") {
-  let decoded = phone.trim();
+  let decoded = phone?.trim();
 
   try {
     decoded = decodeURIComponent(decoded);
