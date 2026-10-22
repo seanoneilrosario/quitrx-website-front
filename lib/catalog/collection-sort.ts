@@ -13,7 +13,7 @@ export type Sort = (typeof COLLECTION_SORT_OPTIONS)[number]["value"];
 
 export function parseCollectionSort(value: string | null | undefined): Sort {
   const legacy: Record<string, Sort> = {
-    featured: "MANUAL",
+    default: "MANUAL",
     "price-asc": "PRICE_ASC",
     "price-desc": "PRICE_DESC",
     "name-asc": "TITLE_ASC",

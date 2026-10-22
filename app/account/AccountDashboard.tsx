@@ -136,7 +136,7 @@ export default function AccountDashboard({
             <h2>Start Online Assessment</h2>
           </div>
           <p className="account-assessment-card__copy">
-            Complete your assessment in just 2 minutes to get your free prescription.
+            Complete your assessment in just 2 minutes (no-cost)
           </p>
           <Link href="/intake-form" className="account-assessment-card__button">
             Start Assessment

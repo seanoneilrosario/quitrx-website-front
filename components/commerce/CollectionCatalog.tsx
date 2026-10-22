@@ -34,7 +34,10 @@ export default function CollectionCatalog({
 
   const productsLocked = !hasActiveScript(customer);
   // const sortingUnavailable = collectionSlug === "all-products";
-  const sortOptions = COLLECTION_SORT_OPTIONS.filter((option) => option.value !== "MANUAL");
+  // const sortOptions = COLLECTION_SORT_OPTIONS.filter((option) => option.value !== "MANUAL");
+  const sortOptions = COLLECTION_SORT_OPTIONS;
+
+  console.log(sortOptions);
 
   const filters = useCollectionFilters();
   const { page, sort, setSort } = filters;
@@ -92,7 +95,7 @@ export default function CollectionCatalog({
                 )} */}
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {option.label == "Manual order" ? "Default" : option.label}
                   </option>
                 ))}
               </select>
