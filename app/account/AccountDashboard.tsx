@@ -142,9 +142,9 @@ export default function AccountDashboard({
             Start Assessment
           </Link>
           <p className="account-assessment-card__disclaimer">
-            This assessment is not for nicotine pouch prescriptions. In accordance with the
-            TGA&apos;s advertising requirements for therapeutic vaping goods, we cannot publicly
-            advertise or describe certain treatment options.
+            This assessment is not for nicotine pouch prescriptions. In accordance with the TGA's
+            advertising requirements, we cannot publicly advertise or describe certain treatment
+            options.
           </p>
         </section>
       </>
