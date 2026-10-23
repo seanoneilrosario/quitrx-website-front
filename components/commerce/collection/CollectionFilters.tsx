@@ -1,4 +1,5 @@
 import type { CollectionAvailableFilter } from "@/lib/catalog/catalog-queries";
+import { COLLECTION_SORT_OPTIONS, type Sort } from "@/lib/catalog/collection-sort";
 import { selectedValuesForFilter, type CollectionFilterState } from "./useCollectionFilters";
 import styles from "../collection-catalog.module.css";
 
@@ -114,6 +115,23 @@ export function CollectionFilters({
             <span />
           </button>
         </div>
+
+        <label className={styles.mobileSort}>
+          Sort by:
+          <select
+            value={filters.sort}
+            onChange={(event) => {
+              filters.setSort(event.target.value as Sort);
+              setFiltersOpen(false);
+            }}
+          >
+            {COLLECTION_SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <div className={styles.filtersHeader}>
           <h2>Filter:</h2>
