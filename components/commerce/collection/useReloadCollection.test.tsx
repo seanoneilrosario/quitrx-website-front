@@ -10,8 +10,8 @@ let root: Root;
 let client: QueryClient;
 let container: HTMLDivElement;
 const filters = { brandId: ["one"] };
-function Harness({ hasServerData = false }: { hasServerData?: boolean }) {
-  useReloadCollection(true, "e-liquids", 2, filters, hasServerData);
+function Harness() {
+  useReloadCollection(true, "e-liquids", 2, filters);
   return null;
 }
 beforeEach(() => {
@@ -30,13 +30,13 @@ afterEach(async () => {
   client.clear();
   vi.unstubAllGlobals();
 });
-async function render(restoring = false, hasServerData = false) {
+async function render(restoring = false) {
   await act(async () => {
     root.render(
       <React.StrictMode>
         <QueryClientProvider client={client}>
           <IsRestoringProvider value={restoring}>
-            <Harness hasServerData={hasServerData} />
+            <Harness />
           </IsRestoringProvider>
         </QueryClientProvider>
       </React.StrictMode>,
@@ -81,9 +81,15 @@ it("does not refresh a different collection visited after the document reload", 
   expect(fetch).not.toHaveBeenCalled();
 });
 
-it("does not force a second backend load when SSR already supplied the page", async () => {
-  const fetch = vi.fn();
+it("refreshes a cached server snapshot to pick up dashboard reorder changes", async () => {
+  const key = collectionPageQuery("e-liquids", 2, filters).queryKey;
+  client.setQueryData(key, { collection: { name: "E-liquids", slug: "e-liquids" }, pagination: { page: 2, limit: 15, total: 17, totalPages: 2, hasNextPage: false }, products: [{ id: "old-first" }, { id: "new-first" }] });
+  const fresh = { products: [{ id: "new-first" }, { id: "old-first" }] };
+  const fetch = vi.fn().mockResolvedValue(Response.json(fresh));
   vi.stubGlobal("fetch", fetch);
-  await render(false, true);
-  expect(fetch).not.toHaveBeenCalled();
+  await render();
+  await vi.waitFor(() => expect(client.getQueryData(key)).toEqual(fresh));
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch.mock.calls[0][0]).toContain("sort=MANUAL");
+  expect(fetch.mock.calls[0][0]).toContain("fresh=1");
 });

@@ -1,5 +1,5 @@
 export const COLLECTION_SORT_OPTIONS = [
-  { value: "MANUAL", label: "Manual order" },
+  { value: "MANUAL", label: "Default" },
   { value: "PRICE_ASC", label: "Price: low to high" },
   { value: "PRICE_DESC", label: "Price: high to low" },
   { value: "BEST_SELLING", label: "Best selling" },

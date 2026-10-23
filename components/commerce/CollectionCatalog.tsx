@@ -37,8 +37,6 @@ export default function CollectionCatalog({
   // const sortOptions = COLLECTION_SORT_OPTIONS.filter((option) => option.value !== "MANUAL");
   const sortOptions = COLLECTION_SORT_OPTIONS;
 
-  console.log(sortOptions);
-
   const filters = useCollectionFilters();
   const { page, sort, setSort } = filters;
   const {
@@ -95,7 +93,7 @@ export default function CollectionCatalog({
                 )} */}
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label == "Manual order" ? "Default" : option.label}
+                    {option.label}
                   </option>
                 ))}
               </select>

@@ -324,3 +324,43 @@ it("forwards sort to the backend and separates server cache entries", async () =
   }
   expect(fetchMock).toHaveBeenCalledTimes(8);
 });
+
+it.each([undefined, "MANUAL"] as const)(
+  "preserves testsortcollection manual order with sort %s",
+  async (sort) => {
+    vi.stubEnv("QUITHERO_API_KEY", "test-key");
+    const products = [
+      {
+        id: "20e9a71e-b4d2-4cbc-aeef-105aeb0378b6",
+        name: "AIRSCREAM AIREGG KIT",
+        slug: "airscream-airegg-kit",
+      },
+      {
+        id: "779cccc7-db3c-4654-98d2-48437e79daff",
+        name: "AIRSCREAM AIRSPOPS EMPTY REPLACEMENT PODS & COILS",
+        slug: "airscream-airspops",
+      },
+      {
+        id: "1d4a93eb-be57-41ff-8d33-f83ce9a89056",
+        name: "FLOW 2 VAPING DEVICE",
+        slug: "flow-2-vaping-device",
+      },
+    ];
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        data: { name: "Test sort", slug: "testsortcollection", products },
+        pagination: { page: 1, limit: 15, total: 3, totalPages: 1 },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await getQuitHeroCollectionPage("testsortcollection", 1, 15, { sort });
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toBe("/collections/testsortcollection");
+    expect(url.searchParams.get("sort")).toBe("MANUAL");
+    expect(url.searchParams.get("page")).toBe("1");
+    expect(url.searchParams.get("limit")).toBe("15");
+    expect(result.products.map((product) => product.id)).toEqual(
+      products.map((product) => product.id),
+    );
+  },
+);

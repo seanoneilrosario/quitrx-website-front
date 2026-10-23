@@ -21,7 +21,6 @@ export function useReloadCollection(
   slug: string,
   page: number,
   filters: CollectionPageFilters,
-  hasServerData = false,
 ) {
   const client = useQueryClient();
   const restoring = useIsRestoring();
@@ -30,7 +29,6 @@ export function useReloadCollection(
   useEffect(() => {
     if (!hydrated || restoring || checked.current) return;
     checked.current = true;
-    if (hasServerData) return;
     if (!isCurrentDocumentReload()) return;
 
     const query = collectionPageQuery(slug, page, filters, true);
@@ -42,5 +40,5 @@ export function useReloadCollection(
       .catch(() => {
         // React Query exposes failures to the catalog's existing error/retry UI.
       });
-  }, [client, hydrated, restoring, slug, page, filters, hasServerData]);
+  }, [client, hydrated, restoring, slug, page, filters]);
 }
