@@ -1,6 +1,9 @@
+import { notFound } from "next/navigation";
+
 const API_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export default async function CustomerDebugPage() {
+  if (process.env.NODE_ENV === "production") notFound();
   let result: unknown;
 
   try {

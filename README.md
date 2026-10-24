@@ -11,6 +11,12 @@ domain folders under `lib/`, and CMS schemas in `sanity/schemas/`.
 
 ## Getting Started
 
+Use Node.js 26.x (minimum 26.12.1). The `.nvmrc` file pins the local
+development version. With nvm, run `nvm install` and `nvm use`, then `npm ci`.
+On nvm-windows, run `nvm install 26.12.1` and `nvm use 26.12.1` explicitly.
+Configure the hosting build and runtime to use Node.js 26.x and redeploy for
+the runtime update to take effect. Keep the runtime on the latest 26.x patch.
+
 For collection and product fetching, see the [QuitHero file guide and examples](lib/quithero/README.md).
 
 Create a local `.env` file with the server-only QuitHero configuration:
