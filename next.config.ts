@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async redirects() {
+    return [
+      {
+        source: "/drlee",
+        destination:
+          "https://workdrive.zohopublic.com.au/external/cfaa90dd1e16252b61174ac10d1e983aa703a4722e125584119ae0f601be82b3",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {
