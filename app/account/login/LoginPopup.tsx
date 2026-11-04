@@ -90,7 +90,7 @@ export default function LoginPopup({
           <p>
             {facebookLink
               ? "Facebook did not share an email address. Verify your account email to finish connecting Facebook."
-              : "Sign in to your account"}
+              : "Sign in or create an account using google, facebook or email."}
           </p>
         </div>
 
@@ -241,7 +241,7 @@ export default function LoginPopup({
         </form>
 
         <p id="customer-login-help" className="customer-login__note">
-          Enter the email linked to your account. We will send your confirmation code by email.
+          Enter your email to sign in or create an account. We will send you a confirmation code.
         </p>
       </section>
     </div>

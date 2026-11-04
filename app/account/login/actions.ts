@@ -3,12 +3,11 @@
 import { createHmac, randomInt, randomUUID, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
+import { findQuitHeroCustomerByEmail, syncQuitHeroCustomer } from "@/lib/quithero/customers";
 import { setCustomerSession } from "@/lib/auth/customer-session";
 
 const EMAIL_CODE_COOKIE = "quitrx_email_code";
 const CODE_MAX_AGE_SECONDS = 10 * 60;
-
 
 type EmailCodeChallenge = {
   id: string;
@@ -119,14 +118,6 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
 
   try {
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
-    if (!customer) {
-      return {
-        step: "code",
-        email: normalizedEmail,
-        message: "If an account exists for this email, a sign-in code has been sent.",
-      };
-    }
-
     const id = randomUUID();
     await sendLoginCode(normalizedEmail, code);
     await storeChallenge({
@@ -141,7 +132,7 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
     return {
       step: "code",
       email: normalizedEmail,
-      message: "If an account exists for this email, a sign-in code has been sent.",
+      message: "A sign-in code has been sent to your email.",
     };
   } catch (error) {
     console.error("Email sign-in code delivery failed.", {
@@ -225,7 +216,11 @@ export async function accessCustomerAccount(
           "That code is invalid, expired, or has reached its attempt limit. Request a new code if needed.",
       };
     }
-    await setCustomerSession({ id: challenge.customerId, email: challenge.email });
+    // Only create a customer after ownership of the email has been verified.
+    const customerId =
+      challenge.customerId ?? (await syncQuitHeroCustomer({ email: challenge.email }))?.id;
+    if (!customerId) throw new Error("Customer synchronization did not return a customer ID.");
+    await setCustomerSession({ id: customerId, email: challenge.email });
     cookieStore.delete(EMAIL_CODE_COOKIE);
   } catch (error) {
     console.error("Customer session creation failed.", {
