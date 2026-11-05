@@ -118,6 +118,9 @@ export default function AccountDashboard({
     ? "https://quitrx.com.au/intake-form"
     : "/request-script";
   const showRenewButton = canRenewScript(customer);
+  const awaitingDoctor =
+    customer.consultPurchase === true &&
+    !customer.tags?.some((tag) => ["script", "scriptactive"].includes(tag.trim().toLowerCase()));
 
   if (customer.consultPurchase === false) {
     return (
@@ -176,9 +179,13 @@ export default function AccountDashboard({
           </div>
           <div className="account-panel__content">
             <p
-              className={scriptIsActive ? "account-script-status active" : "account-script-status"}
+              className={
+                scriptIsActive && !awaitingDoctor
+                  ? "account-script-status active"
+                  : "account-script-status"
+              }
             >
-              {scriptIsActive ? "Active" : "Inactive"}
+              {awaitingDoctor ? "Awaiting doctor" : scriptIsActive ? "Active" : "Inactive"}
             </p>
             <p>
               <strong>Expiry Date:</strong> {formatDate(customer.scriptExpiry)}
