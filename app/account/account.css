@@ -623,7 +623,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #a6b5b2;
+  background: #f2ac27;
 }
 .account-script-status.active::before {
   background: #27d277;
