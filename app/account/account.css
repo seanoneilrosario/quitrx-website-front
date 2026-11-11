@@ -634,13 +634,11 @@
   font-weight: 700;
   text-underline-offset: 3px;
 }
-
 .account-panel__content p {
   margin: 0;
   font-size: 14px;
   color: #3d5f67;
 }
-
 .account-panel__status-row {
   margin-top: 8px;
 }
