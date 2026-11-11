@@ -7,15 +7,7 @@ vi.mock("@/lib/auth/customer-session", () => ({
   getCustomerSession: vi.fn(async () => undefined),
 }));
 vi.mock("@/lib/quithero/customers", () => ({
-  findQuitHeroCustomerByEmail: vi.fn(async () => ({
-    id: "authenticated-customer",
-    addresses: [],
-  })),
-  getQuitHeroCustomerAddresses: vi.fn(async () => []),
-  createQuitHeroCustomerAddress: vi.fn(async () => ({ id: "checkout-address" })),
-  setDefaultQuitHeroCustomerAddress: vi.fn(async () => ({})),
-  ensureDefaultQuitHeroCustomerAddress: vi.fn(async () => ({ id: "checkout-address" })),
-  updateQuitHeroCustomer: vi.fn(async () => ({})),
+  findQuitHeroCustomerByEmail: vi.fn(async () => ({ id: "authenticated-customer" })),
 }));
 vi.mock("@/lib/quithero", () => ({
   createQuitHeroOrder: vi.fn(async () => ({ id: "retail-order" })),
@@ -59,6 +51,7 @@ import {
 import { QuitHeroApiError } from "@/lib/quithero/client";
 import { createEwayTransparentRedirect } from "@/lib/payments/eway";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
+import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
 
 const preview = {
   subtotal: 60,
@@ -191,15 +184,6 @@ describe("eWAY discount payment", () => {
         shippingTotal: 12.9,
         discountTotal: 22.9,
         discountFingerprint: expect.any(String),
-        shippingMethod: "standard",
-        billingFirstName: "Test",
-        billingLastName: "Customer",
-        billingAddress1: "Test street",
-        billingCity: "Brisbane",
-        billingProvince: "QLD",
-        billingCountry: "Australia",
-        billingZip: "4000",
-        billingPhone: "0400000000",
       }),
     );
     const payload = vi.mocked(gateway).mock.calls[0][0];
