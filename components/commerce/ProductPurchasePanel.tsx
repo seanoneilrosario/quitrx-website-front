@@ -9,7 +9,7 @@ import { buildMultiItemCartPayload } from "@/lib/checkout/storefront-cart";
 import type { StorefrontCartItem } from "@/lib/checkout/storefront-cart";
 import { getAvailableStock } from "@/lib/catalog/available-stock";
 
-type Variant = {
+export type Variant = {
   id?: string;
   name?: string;
   price?: number | string;
@@ -18,6 +18,9 @@ type Variant = {
   size?: string;
   options?: Record<string, string>;
   bundleComponents?: unknown;
+  productId?: string;
+  imageId?: string | null;
+  image?: { url?: string; src?: string } | null;
 };
 
 type RelatedProduct = {
@@ -103,6 +106,7 @@ export default function ProductPurchasePanel({
   isBundle,
   bundleDropdowns,
   relatedProducts,
+  setActiveVariant,
 }: {
   productId: string;
   productName: string;
@@ -112,6 +116,7 @@ export default function ProductPurchasePanel({
   isBundle: boolean;
   bundleDropdowns: BundleDropdown[];
   relatedProducts: RelatedProduct[];
+  setActiveVariant: (variant: Variant | null) => void;
 }) {
   const [selectedIndex, setSelectedIndex] = useState(() =>
     isBundle ? 0 : firstAvailableVariantIndex(variants),
@@ -232,6 +237,8 @@ export default function ProductPurchasePanel({
     window.setTimeout(() => setAdded(false), 2200);
   }
 
+  console.log(variants);
+
   return (
     <>
       <p className={styles.detailPrice}>
@@ -251,7 +258,10 @@ export default function ProductPurchasePanel({
                 className={selectedIndex === index ? styles.variantActive : ""}
                 disabled={!variantIsAvailable(variant)}
                 title={variantLabel(variant, index)}
-                onClick={() => selectParentVariant(index)}
+                onClick={() => {
+                  selectParentVariant(index);
+                  setActiveVariant(variant);
+                }}
               >
                 {relatedVariantLabel(productName, variant, index)}
               </button>

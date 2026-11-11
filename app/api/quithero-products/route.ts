@@ -1,3 +1,4 @@
+import { parseCollectionSort } from "@/lib/catalog/collection-sort";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { COLLECTION_PAGE_SIZE } from "@/lib/catalog/catalog-pagination";
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
       const maxPriceValue = searchParams.get("maxPrice");
 
       const filters = {
+        sort: parseCollectionSort(searchParams.get("sort")),
         brandId: searchParams
           .getAll("brandId")
           .map((value) => value.trim())

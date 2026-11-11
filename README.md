@@ -11,6 +11,13 @@ domain folders under `lib/`, and CMS schemas in `sanity/schemas/`.
 
 ## Getting Started
 
+Use Node.js 24.x. The `.nvmrc` file selects the local development major
+version. With nvm, run `nvm install` and `nvm use`, then `npm ci`.
+On nvm-windows, install the latest 24.x version and run `nvm use` with that
+exact version explicitly.
+Configure the hosting build and runtime to use Node.js 24.x and redeploy for
+the runtime update to take effect. Keep the runtime on the latest 24.x patch.
+
 For collection and product fetching, see the [QuitHero file guide and examples](lib/quithero/README.md).
 
 Create a local `.env` file with the server-only QuitHero configuration:
@@ -31,15 +38,11 @@ EMAIL_LOGIN_ENABLED=true
 EWAY_API_KEY=your_eway_api_key
 EWAY_PASSWORD=your_eway_password
 EWAY_ENVIRONMENT=sandbox
-PAYPAL_CLIENT_ID=your_paypal_client_id
-PAYPAL_CLIENT_SECRET=your_paypal_client_secret
-PAYPAL_ENVIRONMENT=sandbox
-NEXT_PUBLIC_PAYPAL_ENABLED=false
 ```
 
 Do not prefix these variables with `NEXT_PUBLIC_`; API keys and OAuth secrets must never be included in browser code.
 
-Use `sandbox` while testing eWAY and PayPal. Set each gateway's environment to `production` only after replacing its credentials with the corresponding live credentials.
+Use `sandbox` while testing eWAY. Set its environment to `production` only after replacing its credentials with the corresponding live credentials.
 
 The reusable customer synchronization service is in `lib/quithero/customers.ts`. Once the authentication provider has verified a login and returned the authenticated user, its server-side success callback should await the non-strict wrapper before redirecting:
 

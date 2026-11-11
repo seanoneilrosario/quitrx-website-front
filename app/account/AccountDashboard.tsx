@@ -8,7 +8,7 @@ import type { QuitHeroAddress, QuitHeroCustomer } from "@/lib/quithero/customers
 import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import OrderHistoryTable from "@/components/account/OrderHistoryTable";
 import type { QuitHeroOrder } from "@/lib/quithero";
-import { hasActiveScript } from "@/lib/account/script-access";
+import { canRenewScript, hasActiveScript } from "@/lib/account/script-access";
 
 function addressLines(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];
@@ -42,25 +42,6 @@ function isCancelled(order: QuitHeroOrder) {
   return [order.fulfillmentStatus, order.status].some((status) =>
     /^cancell?ed$/.test(status?.trim().toLowerCase() || ""),
   );
-}
-
-function isWithinRenewalWindow(expiry: string) {
-  const expiryDate = new Date(expiry);
-  if (Number.isNaN(expiryDate.getTime())) return false;
-
-  const renewalStart = new Date(expiryDate);
-  // Clamp to the last day of the target month for dates such as May 31.
-  renewalStart.setDate(1);
-  renewalStart.setMonth(renewalStart.getMonth() - 3);
-  const lastDay = new Date(
-    renewalStart.getFullYear(),
-    renewalStart.getMonth() + 1,
-    0,
-  ).getDate();
-  renewalStart.setDate(Math.min(expiryDate.getDate(), lastDay));
-
-  const now = new Date();
-  return now >= renewalStart && now <= expiryDate;
 }
 
 function formatMoney(amount: number, currency: string) {
@@ -130,9 +111,16 @@ export default function AccountDashboard({
   const headerName = fullName || customer.email?.trim() || "Customer";
   const addresses = addressLines(customer);
   const scriptIsActive = hasActiveScript(customer);
-  const canRenewScript =
-    scriptIsActive &&
-    (!customer.scriptExpiry || isWithinRenewalWindow(customer.scriptExpiry));
+  const renewalHref = customer.tags?.some((tag) => tag.trim().toLowerCase() === "scriptuploaded")
+    ? "https://quitrx.com.au/intake-form"
+    : "/account/prescriptions";
+  const escriptHref = customer.tags?.some((tag) => tag.trim().toLowerCase() === "scriptuploaded")
+    ? "https://quitrx.com.au/intake-form"
+    : "/request-script";
+  const showRenewButton = canRenewScript(customer);
+  const awaitingDoctor =
+    customer.consultPurchase === true &&
+    !customer.tags?.some((tag) => ["script", "scriptactive"].includes(tag.trim().toLowerCase()));
 
   if (customer.consultPurchase === false) {
     return (
@@ -151,15 +139,15 @@ export default function AccountDashboard({
             <h2>Start Online Assessment</h2>
           </div>
           <p className="account-assessment-card__copy">
-            Complete your assessment in just 2 minutes to get your free prescription.
+            Complete your assessment in just 2 minutes (no-cost)
           </p>
           <Link href="/intake-form" className="account-assessment-card__button">
             Start Assessment
           </Link>
           <p className="account-assessment-card__disclaimer">
-            This assessment is not for nicotine pouch prescriptions. In accordance with the
-            TGA&apos;s advertising requirements for therapeutic vaping goods, we cannot publicly
-            advertise or describe certain treatment options.
+            This assessment is not for nicotine pouch prescriptions. In accordance with the TGA's
+            advertising requirements, we cannot publicly advertise or describe certain treatment
+            options.
           </p>
         </section>
       </>
@@ -191,17 +179,21 @@ export default function AccountDashboard({
           </div>
           <div className="account-panel__content">
             <p
-              className={scriptIsActive ? "account-script-status active" : "account-script-status"}
+              className={
+                scriptIsActive && !awaitingDoctor
+                  ? "account-script-status active"
+                  : "account-script-status"
+              }
             >
-              {scriptIsActive ? "Active" : "Inactive"}
+              {awaitingDoctor ? "Awaiting doctor" : scriptIsActive ? "Active" : "Inactive"}
             </p>
             <p>
               <strong>Expiry Date:</strong> {formatDate(customer.scriptExpiry)}
             </p>
           </div>
-          {canRenewScript && (
+          {showRenewButton && (
             <Link
-              href="/account/prescriptions"
+              href={renewalHref}
               className="account-button account-button--primary account-button--compact"
             >
               Renew for free
@@ -295,7 +287,7 @@ export default function AccountDashboard({
               <p>Get a $49 eScript to use at your local pharmacy.</p>
             </div>
           </div>
-          <Link href="/request-script" className="account-button account-button--banner">
+          <Link href={escriptHref} className="account-button account-button--banner">
             Get eScript
           </Link>
         </section>

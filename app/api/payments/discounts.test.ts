@@ -10,10 +10,18 @@ vi.mock("@/lib/quithero/customers", () => ({
   findQuitHeroCustomerByEmail: vi.fn(async () => ({ id: "authenticated-customer" })),
 }));
 vi.mock("@/lib/quithero", () => ({
+  createQuitHeroOrder: vi.fn(async () => ({ id: "retail-order" })),
   getFreshQuitHeroProductById: vi.fn(async () => ({
     id: "product",
     name: "Product",
     variants: [{ id: "variant", price: 30 }],
+  })),
+}));
+vi.mock("@/lib/quithero/orders", async (original) => ({
+  ...(await original<typeof import("@/lib/quithero/orders")>()),
+  updateQuitHeroOrderPaymentStatus: vi.fn(async (_id: string, paymentStatus: string) => ({
+    id: "retail-order",
+    paymentStatus,
   })),
 }));
 vi.mock("@/lib/catalog/bundles", () => ({ getPurchasableStock: () => 99 }));
@@ -28,24 +36,20 @@ vi.mock("@/lib/payments/eway", () => ({
   })),
   EwayApiError: class extends Error {},
 }));
-vi.mock("@/lib/payments/paypal", () => ({
-  createPayPalOrder: vi.fn(async () => ({
-    id: "paypal-order",
-    links: [{ rel: "approve", href: "https://payment.test" }],
-  })),
-  PayPalApiError: class extends Error {},
-}));
 vi.mock("@/lib/payments/eway-payment-session", () => ({ setPendingEwayPayment: vi.fn() }));
-vi.mock("@/lib/payments/paypal-payment-session", () => ({ setPendingPayPalPayment: vi.fn() }));
 
 import { POST as eway } from "./eway/route";
-import { POST as paypal } from "./paypal/route";
 import { POST as previewRoute } from "../checkout/discounts/route";
 import { auth } from "@/auth";
 import { previewQuitHeroDiscounts } from "@/lib/quithero/discounts";
+import { createQuitHeroOrder } from "@/lib/quithero";
+import { updateQuitHeroOrderPaymentStatus } from "@/lib/quithero/orders";
+import {
+  ensureDefaultQuitHeroCustomerAddress,
+  updateQuitHeroCustomer,
+} from "@/lib/quithero/customers";
 import { QuitHeroApiError } from "@/lib/quithero/client";
 import { createEwayTransparentRedirect } from "@/lib/payments/eway";
-import { createPayPalOrder } from "@/lib/payments/paypal";
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { setPendingPayPalPayment } from "@/lib/payments/paypal-payment-session";
 
@@ -89,10 +93,29 @@ beforeEach(() => {
   vi.mocked(previewQuitHeroDiscounts).mockResolvedValue(preview);
 });
 
-describe.each([
-  ["eway", eway, createEwayTransparentRedirect, setPendingEwayPayment],
-  ["paypal", paypal, createPayPalOrder, setPendingPayPalPayment],
-] as const)("%s discount payment", (_name, handler, gateway, save) => {
+describe("eWAY discount payment", () => {
+  const handler = eway;
+  const gateway = createEwayTransparentRedirect;
+  const save = setPendingEwayPayment;
+  it("starts payment without posting an order for an undiscounted checkout", async () => {
+    vi.mocked(previewQuitHeroDiscounts).mockResolvedValueOnce({
+      ...preview,
+      discountAmount: 0,
+      shippingAfterDiscount: 12.9,
+      totalAfterDiscount: 72.9,
+      appliedDiscounts: [],
+      lineDiscounts: [],
+    });
+    const response = await handler(request({ discountCode: "", expectedTotal: 72.9 }));
+    expect(response.status).toBe(200);
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ total: 72.9, discountTotal: 0 }));
+    expect(gateway).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Payment: expect.objectContaining({ TotalAmount: 7290 }),
+      }),
+    );
+  });
   it.each([
     ["no promotion", undefined, 0, 12.9, 72.9],
     ["automatic promotion", undefined, 5, 12.9, 67.9],
@@ -124,6 +147,26 @@ describe.each([
   it("charges the backend total and carries the code and original shipping into the signed session", async () => {
     const response = await handler(request());
     expect(response.status).toBe(200);
+    expect(ensureDefaultQuitHeroCustomerAddress).toHaveBeenCalledWith(
+      "authenticated-customer",
+      expect.objectContaining({
+        firstName: "Test",
+        lastName: "Customer",
+        phone: "0400000000",
+        address1: "Test street",
+        city: "Brisbane",
+        state: "QLD",
+        postcode: "4000",
+        country: "Australia",
+      }),
+    );
+    expect(updateQuitHeroCustomer).toHaveBeenCalledWith("authenticated-customer", {
+      firstName: "Test",
+      lastName: "Customer",
+      phone: "0400000000",
+    });
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
+    expect(updateQuitHeroOrderPaymentStatus).not.toHaveBeenCalled();
     expect(previewQuitHeroDiscounts).toHaveBeenCalledWith(
       expect.objectContaining({
         customerId: "authenticated-customer",
@@ -135,6 +178,7 @@ describe.each([
     expect(save).toHaveBeenCalledWith(
       expect.objectContaining({
         subtotal: 60,
+        taxTotal: 0,
         total: 50,
         discountCode: "SAVE",
         shippingTotal: 12.9,
@@ -143,9 +187,7 @@ describe.each([
       }),
     );
     const payload = vi.mocked(gateway).mock.calls[0][0];
-    if (_name === "eway")
-      expect(payload).toMatchObject({ Payment: { TotalAmount: 5000 }, Items: [{ Total: 5000 }] });
-    else expect(payload).toMatchObject({ purchase_units: [{ amount: { value: "50.00" } }] });
+    expect(payload).toMatchObject({ Payment: { TotalAmount: 5000 }, Items: [{ Total: 5000 }] });
   });
   it("adds backend promotional items to the signed order session", async () => {
     vi.mocked(previewQuitHeroDiscounts).mockResolvedValue({
@@ -198,6 +240,17 @@ describe.each([
   it("requires review if discounts change before payment", async () => {
     const response = await handler(request({ expectedTotal: 60 }));
     expect(response.status).toBe(409);
+    expect(gateway).not.toHaveBeenCalled();
+  });
+  it("does not create an order or start eWAY if setting the default address fails", async () => {
+    vi.mocked(ensureDefaultQuitHeroCustomerAddress).mockRejectedValueOnce(
+      new Error("Address could not be set as default"),
+    );
+
+    const response = await handler(request());
+
+    expect(response.status).toBe(502);
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
     expect(gateway).not.toHaveBeenCalled();
   });
 });

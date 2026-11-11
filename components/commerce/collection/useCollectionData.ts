@@ -7,7 +7,6 @@ import {
   type CollectionPageResponse,
 } from "@/lib/catalog/catalog-queries";
 import type { CollectionFilterState } from "./useCollectionFilters";
-import { sortProducts } from "./sort-products";
 import { useReloadCollection } from "./useReloadCollection";
 
 const subscribe = () => () => {};
@@ -23,7 +22,15 @@ export function useCollectionData(
   // server snapshot through hydration, then allow cached/live results to render.
   const hydrated = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   const initialData =
-    !hasProductFilters && initialPage?.pagination.page === page ? initialPage : undefined;
+    !hasProductFilters &&
+    // (collectionSlug === "all-products" || sort === "MANUAL") &&
+    // initialPage?.pagination.page === page
+    //   ? initialPage
+    //   : undefined;
+    sort === "MANUAL" &&
+    initialPage?.pagination.page === page
+      ? initialPage
+      : undefined;
   /**
    * Products are filtered and paginated
    * by the backend.
@@ -91,7 +98,7 @@ export function useCollectionData(
     data?.pagination.totalPages ?? initialPage?.pagination.totalPages ?? 1,
   );
 
-  const visibleProducts = useMemo(() => sortProducts(products, sort), [products, sort]);
+  const visibleProducts = products;
   return {
     collection,
     products,

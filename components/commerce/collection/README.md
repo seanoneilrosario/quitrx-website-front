@@ -9,7 +9,7 @@ and prescription-access handling. Its public props and CSS module are unchanged.
 | `useCollectionData.ts` | Product and available-filter queries, initial server data, loading/error state, and derived results |
 | `CollectionFilters.tsx` | Desktop/mobile sidebar, checkbox groups, and price slider |
 | `CollectionPagination.tsx` | Page links, history updates, modified clicks, and scrolling to results |
-| `sort-products.ts` | Sort only the current product page without modifying cached data |
+| `../../../lib/catalog/collection-sort.ts` | Backend sort options and URL value normalization |
 | `LockedProductDialog.tsx` | Locked-product message, Escape handling, and body scroll lock |
 
 Filter changes reset the page to 1 and use `replaceState`; pagination uses

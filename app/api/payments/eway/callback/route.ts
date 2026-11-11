@@ -1,5 +1,6 @@
+import { createQuitHeroOrder } from "@/lib/quithero";
 import {
-  getQuitHeroOrderById,
+  updateQuitHeroOrderPaymentStatus,
   verifyOrderDiscountTotals,
   orderConfirmationError,
 } from "@/lib/quithero/orders";
@@ -10,16 +11,11 @@ import {
   getPendingEwayPayment,
   setPendingEwayPayment,
 } from "@/lib/payments/eway-payment-session";
-import {
-  createQuitHeroOrder,
-  findRecentlyCreatedQuitHeroOrder,
-  type QuitHeroOrder,
-  type QuitHeroOrderPayload,
-} from "@/lib/quithero";
 
 function checkoutUrl(request: NextRequest, payment: string) {
   const url = new URL("/checkout", request.url);
   url.searchParams.set("payment", payment);
+  url.searchParams.set("method", "eway");
   return url;
 }
 
@@ -29,11 +25,19 @@ async function finalizeEwayPayment(accessCode?: string) {
     return "invalid" as const;
   }
 
-  const result = await getEwayPaymentResult(accessCode);
-  const expectedCents = Math.round(pending.total * 100);
-  if (!result.TransactionStatus || result.TotalAmount !== expectedCents || !result.TransactionID) {
-    await clearPendingEwayPayment();
-    return "failed" as const;
+  if (!pending.paymentVerified) {
+    const result = await getEwayPaymentResult(pending.accessCode);
+    const expectedCents = Math.round(pending.total * 100);
+    if (
+      !result.TransactionStatus ||
+      result.TotalAmount !== expectedCents ||
+      !result.TransactionID
+    ) {
+      await clearPendingEwayPayment();
+      return "failed" as const;
+    }
+    pending = { ...pending, paymentVerified: true };
+    await setPendingEwayPayment(pending);
   }
 
   const orderPayload: QuitHeroOrderPayload = {
@@ -70,13 +74,9 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("Unable to finalize eWAY payment:", error);
-    return new NextResponse(orderConfirmationError(error), {
-      status: 502,
-      headers: {
-        "content-type": "text/plain; charset=utf-8",
-        "cache-control": "private, no-store",
-      },
-    });
+    const response = NextResponse.redirect(checkoutUrl(request, "review"));
+    response.headers.set("cache-control", "private, no-store");
+    return response;
   }
 }
 
@@ -103,11 +103,6 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Unable to finalize eWAY payment:", error);
-    return NextResponse.json(
-      {
-        error: orderConfirmationError(error),
-      },
-      { status: 502 },
-    );
+    return NextResponse.json({ error: orderConfirmationError(error) }, { status: 502 });
   }
 }

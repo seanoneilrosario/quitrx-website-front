@@ -9,6 +9,7 @@ import {
 // Explicit allowlist: never serialize detail payloads into collection HTML/API responses.
 export function toCollectionProduct(product: QuitHeroProduct): QuitHeroProduct {
   const image = product.images?.find((image) => image.isPrimary) ?? product.images?.[0];
+  const alternateImage = product.images?.find((item) => item.url && item.url !== image?.url);
   const type =
     typeof product.productType === "string"
       ? product.productType
@@ -24,7 +25,9 @@ export function toCollectionProduct(product: QuitHeroProduct): QuitHeroProduct {
     slug: product.slug,
     status: product.status,
     brand: product.brand ? { name: product.brand.name } : undefined,
-    images: image ? [{ url: image.url, altText: image.altText }] : [],
+    images: [image, alternateImage].flatMap((item) =>
+      item ? [{ url: item.url, altText: item.altText }] : [],
+    ),
     // List endpoints omit bundle configuration but include the variant's stock.
     // Use component stock when supplied; otherwise use the listed variant stock.
     available:

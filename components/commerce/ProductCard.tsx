@@ -29,6 +29,7 @@ export default function ProductCard({
   new_product = false,
 }: ProductCardProps) {
   const image = product.images?.find((item) => item.isPrimary) ?? product.images?.[0];
+  const hoverImage = product.images?.find((item) => item.url && item.url !== image?.url);
   const prices = (product.variants ?? []).flatMap((variant) => {
     if (variant.price === undefined || variant.price === null || variant.price === "") return [];
     const value =
@@ -131,14 +132,27 @@ export default function ProductCard({
               aria-hidden="true"
             />
           ) : (
-            <ProductImage
-              src={image?.url || image?.url}
-              width={600}
-              height={600}
-              sizes="(max-width: 599px) 190px, (max-width: 989px) 50vw, 25vw"
-              alt={image?.altText || product.name || "Product"}
-              className={`${styles.productImage} ${image?.url}`}
-            />
+            <>
+              <ProductImage
+                src={image?.url}
+                width={600}
+                height={600}
+                sizes="(max-width: 599px) 190px, (max-width: 989px) 50vw, 25vw"
+                alt={image?.altText || product.name || "Product"}
+                className={`${styles.productImage} ${hoverImage ? styles.productPrimaryImage : ""}`}
+              />
+              {hoverImage && (
+                <ProductImage
+                  src={hoverImage.url}
+                  width={600}
+                  height={600}
+                  sizes="(max-width: 599px) 190px, (max-width: 989px) 50vw, 25vw"
+                  alt=""
+                  aria-hidden="true"
+                  className={`${styles.productImage} ${styles.productHoverImage}`}
+                />
+              )}
+            </>
           )}
         </span>
         <span className={styles.productInfo}>

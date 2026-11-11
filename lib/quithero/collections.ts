@@ -1,3 +1,4 @@
+import { parseCollectionSort, type Sort } from "@/lib/catalog/collection-sort";
 import "server-only";
 
 import { cache } from "react";
@@ -12,6 +13,7 @@ import { productIsVisible } from "@/lib/catalog/bundles";
 import { getQuitHeroProducts, loadQuitHeroProductsPage } from "./products";
 import { productIsListedInShop, productMatchesCollectionRules } from "./helpers";
 import { filterShopProducts } from "./shop-visibility";
+import { COLLECTION_PRODUCT_FIELDS } from "./catalog-fields";
 import { visibleProductPage } from "./visible-product-pages";
 import type {
   QuitHeroCollection,
@@ -28,18 +30,6 @@ type QuitHeroCollectionsResponse =
       items?: QuitHeroCollection[];
       pagination?: { totalPages?: number };
     };
-
-const COLLECTION_PRODUCT_FIELDS = [
-  "id",
-  "name",
-  "slug",
-  "status",
-  "brand",
-  "productType",
-  "variants",
-  "images",
-  "tags",
-].join(",");
 
 function collectionsFrom(payload: QuitHeroCollectionsResponse) {
   if (Array.isArray(payload)) return payload;
@@ -80,6 +70,7 @@ const getCachedQuitHeroCollections = unstable_cache(
 export const getQuitHeroCollections = cache(getCachedQuitHeroCollections);
 
 export type QuitHeroCollectionFilters = {
+  sort?: Sort;
   brandId?: string[];
   productTypeId?: string[];
   status?: string[];
@@ -111,43 +102,45 @@ async function loadCollectionPage(
     hasNextPage: boolean;
   };
 
-  if (slug === "all-products") {
-    const { products, total, totalPages } = await loadQuitHeroProductsPage(
-      normalizedPage,
-      normalizedLimit,
-      undefined,
-      fresh,
-      filters,
-    );
+  // if (slug === "all-products") {
+  //   const { products, total, totalPages } = await loadQuitHeroProductsPage(
+  //     normalizedPage,
+  //     normalizedLimit,
+  //     undefined,
+  //     fresh,
+  //     filters,
+  //   );
 
-    console.log("[All Products Pagination]", {
-      page: normalizedPage,
-      limit: normalizedLimit,
-      products: products.length,
-      total,
-      totalPages,
-      hasNextPage: normalizedPage < totalPages,
-    });
+  //   console.log("[All Products Pagination]", {
+  //     page: normalizedPage,
+  //     limit: normalizedLimit,
+  //     products: products.length,
+  //     total,
+  //     totalPages,
+  //     hasNextPage: normalizedPage < totalPages,
+  //   });
 
-    return {
-      collection: {
-        name: "All Products",
-        slug,
-      },
-      products,
-      pagination: {
-        page: normalizedPage,
-        limit: normalizedLimit,
-        total,
-        totalPages,
-        hasNextPage: normalizedPage < totalPages,
-      },
-    };
-  }
+  //   return {
+  //     collection: {
+  //       name: "All Products",
+  //       slug,
+  //     },
+  //     products,
+  //     pagination: {
+  //       page: normalizedPage,
+  //       limit: normalizedLimit,
+  //       total,
+  //       totalPages,
+  //       hasNextPage: normalizedPage < totalPages,
+  //     },
+  //   };
+  // }
 
   const params = new URLSearchParams({
-    status: "active",
+    status: "ACTIVE",
+    excludeTags: "NOTOSHOP",
     productFields: COLLECTION_PRODUCT_FIELDS,
+    sort: parseCollectionSort(filters.sort),
   });
 
   filters.brandId?.forEach((value) => {
@@ -203,6 +196,7 @@ async function loadCollectionPage(
       return {
         collection: { name: response.data.name, slug: response.data.slug },
         products: response.data.products ?? [],
+        total: response.pagination.total,
         totalPages: response.pagination.totalPages,
       };
     },
@@ -220,7 +214,7 @@ const collectionPageCache = createSummaryCache<QuitHeroCollectionPage>(100);
 
 // Use the same key for server rendering and API requests with empty/reordered filters.
 export function normalizeCollectionFilters(filters: QuitHeroCollectionFilters) {
-  const normalized: QuitHeroCollectionFilters = {};
+  const normalized: QuitHeroCollectionFilters = { sort: parseCollectionSort(filters.sort) };
   for (const key of [
     "brandId",
     "productTypeId",
@@ -273,7 +267,7 @@ export function getQuitHeroCollectionPage(
 const getPersistentCollectionPage = unstable_cache(
   (slug: string, page: number, limit: number, filters: QuitHeroCollectionFilters) =>
     collectionPage(slug, page, limit, filters, false),
-  ["quithero-collection-pages-v1"],
+  ["quithero-collection-pages-v5-sort"],
   { revalidate: QUITHERO_CATALOG_CACHE_SECONDS, tags: ["quithero-catalog-pages"] },
 );
 
@@ -291,16 +285,16 @@ export const getFastQuitHeroCollectionPage = cache(
 );
 
 export async function getQuitHeroCollection(slug: string) {
-  if (slug === "all-products") {
-    const products = await getQuitHeroProducts();
-    return {
-      brand: {
-        name: "All Products",
-        slug: "all-products",
-      },
-      products,
-    };
-  }
+  // if (slug === "all-products") {
+  //   const products = await getQuitHeroProducts();
+  //   return {
+  //     brand: {
+  //       name: "All Products",
+  //       slug: "all-products",
+  //     },
+  //     products,
+  //   };
+  // }
   const [products, apiCollections, assignment] = await Promise.all([
     getQuitHeroProducts(),
     getQuitHeroCollections().catch(() => []),

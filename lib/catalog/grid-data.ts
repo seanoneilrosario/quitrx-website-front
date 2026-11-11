@@ -90,15 +90,23 @@ export function collectionCardsFrom(payload: unknown): CollectionCardData[] {
     const brand = asRecord(collection.brand) || {};
     const isAll = slug === "all-products";
     return [
+      // {
+      //   slug,
+      //   href: `/collections/${slug}`,
+      //   title: isAll
+      //     ? "All Products"
+      //     : text(collection, ["name", "title"]) || text(brand, ["name"]) || "Collection",
+      //   image: isAll
+      //     ? undefined
+      //     : text(collection, ["image"]) || text(brand, ["logo"]) || image(collection),
+      //   count: Array.isArray(collection.products) ? collection.products.length : 0,
+      //   placeholder: "all" as const,
+      // },
       {
         slug,
         href: `/collections/${slug}`,
-        title: isAll
-          ? "All Products"
-          : text(collection, ["name", "title"]) || text(brand, ["name"]) || "Collection",
-        image: isAll
-          ? undefined
-          : text(collection, ["image"]) || text(brand, ["logo"]) || image(collection),
+        title: text(collection, ["name", "title"]) || text(brand, ["name"]) || "Collection",
+        image: text(collection, ["image"]) || text(brand, ["logo"]) || image(collection),
         count: Array.isArray(collection.products) ? collection.products.length : 0,
         placeholder: "all" as const,
       },

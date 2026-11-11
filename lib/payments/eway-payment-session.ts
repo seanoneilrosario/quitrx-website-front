@@ -9,6 +9,7 @@ const PAYMENT_MAX_AGE = 60 * 60;
 export type PendingEwayPayment = {
   accessCode: string;
   customerId: string;
+  paymentVerified?: boolean;
   retailOrderId?: string;
   items: Array<{
     variantId: string;

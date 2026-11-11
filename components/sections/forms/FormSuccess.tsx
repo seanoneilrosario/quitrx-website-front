@@ -1,7 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import styles from "./form-success.module.css";
 
 type FormSuccessProps = {
+  icon?: string;
   title?: string;
   lead?: string;
   message?: string;
@@ -10,6 +12,7 @@ type FormSuccessProps = {
 };
 
 export default function FormSuccess({
+  icon,
   title = "Form submitted successfully!",
   lead = "Your intake form has been submitted successfully.",
   message =
@@ -21,9 +24,13 @@ export default function FormSuccess({
     <section className={styles.section} aria-labelledby="form-success-title">
       <div className={styles.content}>
         <div className={styles.icon} aria-hidden="true">
-          <svg viewBox="0 0 64 64" role="presentation">
-            <path d="M17 32.5 27.5 43 48 20.5" />
-          </svg>
+          {icon ? (
+            <Image src={icon} alt="" width={72} height={72} />
+          ) : (
+            <svg viewBox="0 0 64 64" role="presentation">
+              <path d="M17 32.5 27.5 43 48 20.5" />
+            </svg>
+          )}
         </div>
 
         <h1 id="form-success-title" className={styles.title}>

@@ -8,7 +8,7 @@ import {
   type CollectionFilterState,
 } from "./useCollectionFilters";
 import type { CollectionAvailableFilter } from "@/lib/catalog/catalog-queries";
-import { sortProducts } from "./sort-products";
+import { COLLECTION_SORT_OPTIONS } from "@/lib/catalog/collection-sort";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(window.location.search),
@@ -96,12 +96,25 @@ it("clears filters while preserving sorting and unrelated query parameters", asy
   );
 });
 
-it("sorts a copy of the current page without mutating cached product data", () => {
-  const products = [
-    { name: "B", variants: [{ price: 20 }] },
-    { name: "A", variants: [{ price: "10" }] },
-  ];
-  expect(sortProducts(products, "price-asc").map((item) => item.name)).toEqual(["A", "B"]);
-  expect(products.map((item) => item.name)).toEqual(["B", "A"]);
-  expect(sortProducts(products, "featured")).toEqual(products);
+it.each(COLLECTION_SORT_OPTIONS)(
+  "sends $value and resets pagination while preserving filters",
+  async ({ value }) => {
+    await render("page=3&brandId=one");
+    filters.setSort(value);
+    const next = new URLSearchParams(window.location.search);
+    expect(next.get("sort")).toBe(value);
+    expect(next.get("page")).toBe("1");
+    expect(next.get("brandId")).toBe("one");
+    await render(next.toString());
+    expect(filters.pageFilters.sort).toBe(value);
+  },
+);
+
+it.each([
+  ["", "MANUAL"],
+  ["invalid", "MANUAL"],
+  ["price-asc", "PRICE_ASC"],
+])("normalizes sort %s", async (value, expected) => {
+  await render(`sort=${value}`);
+  expect(filters.sort).toBe(expected);
 });

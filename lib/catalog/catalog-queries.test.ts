@@ -17,7 +17,7 @@ it("fetches only the requested page and reuses it on return", async () => {
   try {
     await client.fetchQuery(collectionPageQuery("all-products", 3));
     expect(fetch.mock.calls[0][0]).toBe(
-      "/api/quithero-products?collectionPage=all-products&page=3&limit=15",
+      "/api/quithero-products?sort=MANUAL&collectionPage=all-products&page=3&limit=15",
     );
     await client.fetchQuery(collectionPageQuery("all-products", 1));
     await client.fetchQuery(collectionPageQuery("all-products", 3));
@@ -97,10 +97,30 @@ it("refreshes the same collection cache entry while retaining filters and bypass
     client.setQueryData(normal.queryKey, cachedPage);
     await client.fetchQuery({ ...fresh, staleTime: 0 });
     expect(fetch).toHaveBeenCalledWith(
-      "/api/quithero-products?collectionPage=one&page=2&limit=15&brandId=brand-one&fresh=1",
+      "/api/quithero-products?sort=MANUAL&collectionPage=one&page=2&limit=15&brandId=brand-one&fresh=1",
       expect.objectContaining({ cache: "no-store", signal: expect.any(AbortSignal) }),
     );
     expect(client.getQueryData(normal.queryKey)).toEqual(response);
+  } finally {
+    client.clear();
+  }
+});
+
+it("requests each sort separately and preserves cached backend order", async () => {
+  const { COLLECTION_SORT_OPTIONS } = await import("./collection-sort");
+  const fetch = vi.fn().mockImplementation(async () => Response.json(cachedPage));
+  vi.stubGlobal("fetch", fetch);
+  const client = new QueryClient();
+  try {
+    for (const { value } of COLLECTION_SORT_OPTIONS) {
+      await client.fetchQuery(collectionPageQuery("one", 2, { sort: value }));
+      expect(new URL(fetch.mock.lastCall![0], "https://example.com").searchParams.get("sort")).toBe(
+        value,
+      );
+    }
+    expect(fetch).toHaveBeenCalledTimes(8);
+    await client.fetchQuery(collectionPageQuery("one", 2, { sort: "MANUAL" }));
+    expect(fetch).toHaveBeenCalledTimes(8);
   } finally {
     client.clear();
   }

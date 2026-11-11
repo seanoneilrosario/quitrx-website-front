@@ -22,10 +22,18 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 
   const query = await searchParams;
   const page = parseCollectionPage(Array.isArray(query.page) ? query.page[0] : query.page);
-  const initialPage = await getFastQuitHeroCollectionPage(slug, page, COLLECTION_PAGE_SIZE);
+  const initialPage = await getFastQuitHeroCollectionPage(slug, page, COLLECTION_PAGE_SIZE).catch(
+    (error: unknown) => {
+      console.error("Unable to render initial collection catalog.", { slug, page, error });
+      // Let the catalog load through its API and show its existing retry UI.
+      return undefined;
+    },
+  );
   const isStarterPack =
     starterPackCollections.has(slug) ||
-    starterPackCollections.has(initialPage.collection.name.trim().toLowerCase().replace(/\s+/g, "-"));
+    starterPackCollections.has(
+      (initialPage?.collection?.name ?? slug).trim().toLowerCase().replace(/\s+/g, "-"),
+    );
 
   return (
     <main className={styles.page}>

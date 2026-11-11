@@ -24,23 +24,66 @@ export async function quitHeroPost<T>(path: string, payload: unknown): Promise<T
       cache: "no-store",
     }),
   );
-  const body = await response.json().catch(() => undefined);
+  const responseBody = await response.text();
+  let body: unknown;
+  try {
+    body = responseBody ? JSON.parse(responseBody) : undefined;
+  } catch {
+    body = responseBody || undefined;
+  }
   if (!response.ok) {
-    const message = body?.message;
-    const detail =
-      typeof message === "string"
-        ? message
-        : Array.isArray(message) && message.every((entry: unknown) => typeof entry === "string")
-          ? message.join(" ")
-          : "";
+    const detail = extractApiErrorMessage(body);
     throw new QuitHeroApiError(
-      response.status === 400 && detail
-        ? detail
-        : "Unable to confirm checkout totals. Please try again.",
+      detail || `QuitHero order request failed with status ${response.status}.`,
       response.status,
     );
   }
   return body as T;
+}
+
+export async function quitHeroPatch<T>(path: string, payload: unknown): Promise<T> {
+  const apiKey = process.env.QUITHERO_API_KEY;
+  if (!apiKey) throw new Error("QuitHero API key is not configured.");
+  const response = await requestGate.run(() =>
+    fetch(`${API_BASE}${path}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    }),
+  );
+  const responseBody = await response.text();
+  let body: unknown;
+  try {
+    body = responseBody ? JSON.parse(responseBody) : undefined;
+  } catch {
+    body = responseBody || undefined;
+  }
+  if (!response.ok) {
+    const detail = extractApiErrorMessage(body);
+    throw new QuitHeroApiError(
+      detail || `QuitHero order update failed with status ${response.status}.`,
+      response.status,
+    );
+  }
+  return body as T;
+}
+
+export function extractApiErrorMessage(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    const messages = value
+      .map(extractApiErrorMessage)
+      .filter((message): message is string => Boolean(message));
+    return messages.length ? messages.join(" ") : undefined;
+  }
+  if (!value || typeof value !== "object") return undefined;
+  const record = value as Record<string, unknown>;
+  for (const key of ["message", "error", "errors", "details"]) {
+    const message = extractApiErrorMessage(record[key]);
+    if (message) return message;
+  }
+  return undefined;
 }
 
 export const API_BASE = (

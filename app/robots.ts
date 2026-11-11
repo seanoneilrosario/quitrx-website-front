@@ -5,7 +5,15 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: "/private/",
+      disallow: [
+        "/private/",
+        "/account",
+        "/api/",
+        "/admin",
+        "/cart",
+        "/checkout",
+        "/customer-debug",
+      ],
     },
     sitemap: "https://quitrx.com.au/sitemap.xml",
   };

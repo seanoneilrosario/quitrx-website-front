@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QuitHeroApiError } from "./client";
 
 vi.mock("server-only", () => ({}));
 
@@ -7,6 +8,7 @@ import {
   getQuitHeroCustomerAddresses,
   findQuitHeroCustomerByOAuth,
   createQuitHeroCustomerAddress,
+  ensureDefaultQuitHeroCustomerAddress,
   linkQuitHeroCustomerOAuth,
   syncQuitHeroCustomer,
   syncQuitHeroCustomerWithoutBlocking,
@@ -81,15 +83,19 @@ describe("QuitHero customer synchronization", () => {
 
   it("loads a customer's saved addresses", async () => {
     fetchMock.mockResolvedValueOnce(
-      response({ data: [{ id: "home", isDefault: true, address1: "1 Main St" }] }),
+      response({
+        data: {
+          id: "customer/123",
+          email: "customer@example.test",
+          addresses: [{ id: "home", isDefault: true, address1: "1 Main St" }],
+        },
+      }),
     );
 
     await expect(getQuitHeroCustomerAddresses(" customer/123 ")).resolves.toEqual([
       { id: "home", isDefault: true, address1: "1 Main St" },
     ]);
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      "https://retail-api.test/customers/customer%2F123/addresses",
-    );
+    expect(fetchMock.mock.calls[0][0]).toBe("https://retail-api.test/customers/customer%2F123");
   });
 
   it("unwraps a newly created customer address", async () => {
@@ -100,6 +106,61 @@ describe("QuitHero customer synchronization", () => {
     await expect(
       createQuitHeroCustomerAddress("customer", { address1: "14c Milsom St" }),
     ).resolves.toEqual({ id: "checkout-address", address1: "14c Milsom St" });
+  });
+
+  it("creates and explicitly sets the checkout address as the customer's default", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        response({ data: { id: "checkout-address", address1: "14c Milsom St" } }, 201),
+      )
+      .mockResolvedValueOnce(response(undefined, 200));
+
+    await expect(
+      ensureDefaultQuitHeroCustomerAddress("customer/123", {
+        address1: "14c Milsom St",
+        city: "Brisbane",
+        postcode: "4000",
+        firstName: "Test",
+        lastName: "Customer",
+        phone: "0400000000",
+      }),
+    ).resolves.toMatchObject({ id: "checkout-address", isDefault: true });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://retail-api.test/customers/customer%2F123/addresses",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          address1: "14c Milsom St",
+          city: "Brisbane",
+          postcode: "4000",
+        }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://retail-api.test/customers/customer%2F123/addresses/checkout-address/default",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+  });
+
+  it("does not set a default address when QuitHero fails to return its ID", async () => {
+    fetchMock.mockResolvedValueOnce(response({ success: true }, 201));
+
+    await expect(
+      ensureDefaultQuitHeroCustomerAddress("customer", { address1: "14c Milsom St" }),
+    ).rejects.toThrow("QuitHero created the delivery address but did not return its ID.");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves address validation errors for the checkout error handler", async () => {
+    fetchMock.mockResolvedValueOnce(response({ message: ["postcode must be a string"] }, 400));
+    const error = await ensureDefaultQuitHeroCustomerAddress("customer", {
+      address1: "1 Main St",
+    }).catch((error: unknown) => error);
+    expect(error).toBeInstanceOf(QuitHeroApiError);
+    expect(error).toMatchObject({ status: 400, message: "postcode must be a string" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("requires a customer ID before updating", async () => {

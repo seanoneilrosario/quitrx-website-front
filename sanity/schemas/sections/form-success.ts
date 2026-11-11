@@ -8,6 +8,13 @@ export const formSuccess = defineField({
   fields: [
     sectionIdField,
     defineField({
+      name: "icon",
+      title: "Icon",
+      type: "image",
+      description: "Optional. Upload an icon to replace the default checkmark.",
+      options: { hotspot: true },
+    }),
+    defineField({
       name: "title",
       title: "Heading",
       type: "string",

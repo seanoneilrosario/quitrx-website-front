@@ -29,6 +29,7 @@ function requiredText(record: Record<string, unknown>, key: string, maxLength: n
 }
 
 export async function POST(request: Request) {
+  let stage = "checking your checkout details";
   try {
     const session = await auth();
     const customerSession = await getCustomerSession();
@@ -95,6 +96,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    const street2 = requiredText(address, "address2", 50);
 
     const products = await Promise.all(
       [...new Set(items.map((item) => item.productId))].map(getFreshQuitHeroProductById),
@@ -164,8 +166,38 @@ export async function POST(request: Request) {
       );
     const reference = `QuitRx-${Date.now()}`;
     const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
-    const street2 = requiredText(address, "address2", 50);
-
+    const orderItems = [
+      ...items.map(({ variantId, quantity }) => ({ variantId, quantity })),
+      ...preview.promotionalItems.map((item) => ({
+        variantId: item.variantId,
+        quantity: item.quantity,
+        isPromotional: true as const,
+        discountId: item.discountId,
+        benefitType: item.benefitType,
+      })),
+    ];
+    const missingCustomerDetails = {
+      ...(!customerAccount.firstName?.trim() ? { firstName } : {}),
+      ...(!customerAccount.lastName?.trim() ? { lastName } : {}),
+      ...(!customerAccount.phone?.trim() ? { phone } : {}),
+    };
+    if (Object.keys(missingCustomerDetails).length) {
+      stage = "updating your customer details";
+      await updateQuitHeroCustomer(customerAccount.id, missingCustomerDetails);
+    }
+    stage = "saving your delivery address";
+    await ensureDefaultQuitHeroCustomerAddress(customerAccount.id, {
+      firstName,
+      lastName,
+      phone,
+      address1: street1,
+      address2: street2,
+      city,
+      state,
+      postcode: postalCode,
+      country: "Australia",
+    });
+    stage = "starting eWAY";
     const result = await createEwayTransparentRedirect({
       Customer: {
         FirstName: firstName,
@@ -224,19 +256,11 @@ export async function POST(request: Request) {
     if (!result.AccessCode || !result.FormActionURL)
       throw new Error("eWAY did not provide a secure payment form action.");
 
+    stage = "saving your payment session";
     await setPendingEwayPayment({
       accessCode: result.AccessCode,
       customerId: customerAccount.id,
-      items: [
-        ...items.map(({ variantId, quantity }) => ({ variantId, quantity })),
-        ...preview.promotionalItems.map((item) => ({
-          variantId: item.variantId,
-          quantity: item.quantity,
-          isPromotional: true as const,
-          discountId: item.discountId,
-          benefitType: item.benefitType,
-        })),
-      ],
+      items: orderItems,
       subtotal: preview.subtotal,
       shippingTotal: preview.shippingTotal,
       discountCode,
@@ -255,7 +279,21 @@ export async function POST(request: Request) {
       (error instanceof QuitHeroApiError && error.status === 400)
     )
       return NextResponse.json({ error: error.message }, { status: 400 });
-    console.error("Unable to start eWAY payment:", error);
+    console.error("Unable to start eWAY payment:", {
+      stage,
+      status:
+        error instanceof QuitHeroApiError || error instanceof EwayApiError
+          ? error.status
+          : undefined,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    if (error instanceof QuitHeroApiError)
+      return NextResponse.json(
+        {
+          error: `The order service failed while ${stage} (HTTP ${error.status}). Payment has not been submitted. Please contact support before trying again.`,
+        },
+        { status: 502 },
+      );
     const isConfigurationError =
       error instanceof EwayApiError && (error.status === 401 || error.status === 403);
     const message =
