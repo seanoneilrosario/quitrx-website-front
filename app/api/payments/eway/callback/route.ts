@@ -19,11 +19,9 @@ function checkoutUrl(request: NextRequest, payment: string) {
   return url;
 }
 
-const activeFinalizations = new Map<string, Promise<"success" | "failed" | "invalid">>();
-
-async function finalizeVerifiedEwayPayment(accessCode?: string) {
-  let pending = await getPendingEwayPayment();
-  if (!pending || (accessCode && pending.accessCode !== accessCode)) {
+async function finalizeEwayPayment(accessCode?: string) {
+  const pending = await getPendingEwayPayment();
+  if (!accessCode || !pending || pending.accessCode !== accessCode) {
     return "invalid" as const;
   }
 
@@ -42,50 +40,28 @@ async function finalizeVerifiedEwayPayment(accessCode?: string) {
     await setPendingEwayPayment(pending);
   }
 
-  if (!pending.retailOrderId) {
-    const order = await createQuitHeroOrder({
-      source: "NATIVE",
-      currencyCode: "AUD",
-      customerId: pending.customerId,
-      items: pending.items,
-      subtotal: pending.subtotal,
-      shippingTotal: pending.shippingTotal,
-      shippingMethod: pending.shippingMethod,
-      discountCode: pending.discountCode ?? "",
-      discountTotal: pending.discountTotal,
-      taxTotal: pending.taxTotal,
-      billingFirstName: pending.billingFirstName,
-      billingLastName: pending.billingLastName,
-      billingAddress1: pending.billingAddress1,
-      billingCity: pending.billingCity,
-      billingProvince: pending.billingProvince,
-      billingCountry: pending.billingCountry,
-      billingZip: pending.billingZip,
-      billingPhone: pending.billingPhone,
-      total: pending.total,
-    });
-    if (!order.id) throw new Error("QuitHero created an order without returning its ID.");
-    pending = { ...pending, retailOrderId: order.id };
-    await setPendingEwayPayment(pending);
-  }
-  if (!pending.retailOrderId) throw new Error("The payment session has no QuitHero order ID.");
-  const order = await updateQuitHeroOrderPaymentStatus(pending.retailOrderId, "PAID");
+  const orderPayload: QuitHeroOrderPayload = {
+    source: "NATIVE",
+    currencyCode: "AUD",
+    subtotal: pending.subtotal,
+    shippingTotal: pending.shippingTotal,
+    discountCode: pending.discountCode,
+    total: pending.total,
+    customerId: pending.customerId,
+    items: pending.items,
+  };
+  let order = pending.retailOrderId
+    ? await getQuitHeroOrderById(pending.retailOrderId)
+    : await findRecentlyCreatedQuitHeroOrder(orderPayload, pending.createdAt - 5_000).catch(
+        () => undefined,
+      );
+  if (!order) order = (await createQuitHeroOrder(orderPayload)) as QuitHeroOrder | undefined;
+  if (order?.id && order.id !== pending.retailOrderId)
+    await setPendingEwayPayment({ ...pending, retailOrderId: order.id });
 
   verifyOrderDiscountTotals(order, pending);
   await clearPendingEwayPayment();
   return "success" as const;
-}
-
-function finalizeEwayPayment(accessCode?: string) {
-  if (!accessCode) return finalizeVerifiedEwayPayment();
-  const active = activeFinalizations.get(accessCode);
-  if (active) return active;
-
-  const finalization = finalizeVerifiedEwayPayment(accessCode).finally(() => {
-    activeFinalizations.delete(accessCode);
-  });
-  activeFinalizations.set(accessCode, finalization);
-  return finalization;
 }
 
 export async function GET(request: NextRequest) {

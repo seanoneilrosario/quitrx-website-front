@@ -13,11 +13,7 @@ import { createEwayTransparentRedirect, EwayApiError } from "@/lib/payments/eway
 import { setPendingEwayPayment } from "@/lib/payments/eway-payment-session";
 import { getFreshQuitHeroProductById } from "@/lib/quithero";
 import { getPurchasableStock } from "@/lib/catalog/bundles";
-import {
-  ensureDefaultQuitHeroCustomerAddress,
-  findQuitHeroCustomerByEmail,
-  updateQuitHeroCustomer,
-} from "@/lib/quithero/customers";
+import { findQuitHeroCustomerByEmail } from "@/lib/quithero/customers";
 
 type PaymentRequest = {
   items?: unknown;
@@ -168,7 +164,6 @@ export async function POST(request: Request) {
         { error: "Please contact support to complete an order with a zero total." },
         { status: 400 },
       );
-
     const reference = `QuitRx-${Date.now()}`;
     const callbackUrl = new URL("/api/payments/eway/callback", request.url).toString();
     const orderItems = [
@@ -268,18 +263,8 @@ export async function POST(request: Request) {
       items: orderItems,
       subtotal: preview.subtotal,
       shippingTotal: preview.shippingTotal,
-      shippingMethod: body.shippingMethod,
       discountCode,
       discountTotal: preview.discountAmount,
-      taxTotal: 0,
-      billingFirstName: firstName,
-      billingLastName: lastName,
-      billingAddress1: street1,
-      billingCity: city,
-      billingProvince: state,
-      billingCountry: "Australia",
-      billingZip: postalCode,
-      billingPhone: phone,
       discountFingerprint: previewDiscountFingerprint(preview),
       total: totalCents / 100,
       createdAt: Date.now(),
