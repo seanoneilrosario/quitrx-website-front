@@ -30,8 +30,8 @@ const FORM_URLS: Record<QuitRxForm, string> = {
     "https://forms.quithero.com.au/quickrx/form/QuitRXScriptRenewal/formperma/Zc9s8aLGPTVQntvZrepRaqSCsgNugnAh0z_ApC8x2XY",
 };
 
-export function formatAustralianPhoneForForm(phone = "") {
-  let decoded = phone?.trim();
+export function formatAustralianPhoneForForm(phone?: string | null) {
+  let decoded = phone?.trim() ?? "";
 
   try {
     decoded = decodeURIComponent(decoded);

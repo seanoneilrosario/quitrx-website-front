@@ -37,7 +37,17 @@ const pending = {
   subtotal: 60,
   total: 50,
   shippingTotal: 12.9,
+  shippingMethod: "standard" as const,
   discountTotal: 22.9,
+  taxTotal: 0,
+  billingFirstName: "Test",
+  billingLastName: "Customer",
+  billingAddress1: "Test street",
+  billingCity: "Brisbane",
+  billingProvince: "QLD",
+  billingCountry: "Australia",
+  billingZip: "4000",
+  billingPhone: "0400000000",
   discountCode: "SAVE",
   items: [{ variantId: "variant", quantity: 2 }],
   createdAt: Date.now(),
@@ -75,13 +85,17 @@ describe("eWAY order confirmation", () => {
   ])("does not mark an unverified payment as paid: %j", async (result) => {
     vi.mocked(getEwayPaymentResult).mockResolvedValueOnce(result);
     const response = await invoke();
-    expect(response.status).toBe(gateway === "eway" ? 200 : 307);
-    expect(createQuitHeroOrder).toHaveBeenCalledWith(
-      expect.objectContaining({
-        discountCode: "SAVE",
-        shippingTotal: 12.9,
-        total: 50,
-        items: pending.items,
+    expect(response.status).toBe(402);
+    expect(createQuitHeroOrder).not.toHaveBeenCalled();
+    expect(updateQuitHeroOrderPaymentStatus).not.toHaveBeenCalled();
+    expect(setPendingEwayPayment).not.toHaveBeenCalled();
+  });
+
+  it("rejects a return for a different access code before querying eWAY", async () => {
+    const response = await eway(
+      new NextRequest("https://shop.test/callback", {
+        method: "POST",
+        body: JSON.stringify({ accessCode: "different-access-code" }),
       }),
     );
     expect(response.status).toBe(400);
@@ -154,4 +168,57 @@ describe("eWAY order confirmation", () => {
     expect(updateQuitHeroOrderPaymentStatus).toHaveBeenCalledWith("retail-order", "PAID");
     expect(createQuitHeroOrder).not.toHaveBeenCalled();
   });
+
+  it("retains verified payment when order creation fails so confirmation can be retried", async () => {
+    vi.mocked(createQuitHeroOrder).mockRejectedValueOnce(new Error("Order service unavailable"));
+    expect((await invoke()).status).toBe(502);
+    expect(setPendingEwayPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentVerified: true }),
+    );
+    expect(clearPendingEwayPayment).not.toHaveBeenCalled();
+    expect(updateQuitHeroOrderPaymentStatus).not.toHaveBeenCalled();
+
+    vi.mocked(getPendingEwayPayment).mockResolvedValue({
+      ...pending,
+      accessCode: "access",
+      paymentVerified: true,
+    });
+    expect((await invoke()).status).toBe(200);
+    expect(getEwayPaymentResult).toHaveBeenCalledTimes(1);
+  });
+
+  it("coalesces simultaneous callbacks into one order creation", async () => {
+    const [first, second] = await Promise.all([invoke(), invoke()]);
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(updateQuitHeroOrderPaymentStatus).toHaveBeenCalledTimes(1);
+    expect(createQuitHeroOrder).toHaveBeenCalledTimes(1);
+  });
+});
+
+it("surfaces the QuitHero validation error when a verified eWAY order retry is rejected", async () => {
+  vi.mocked(getPendingEwayPayment).mockResolvedValue({
+    ...pending,
+    accessCode: "access",
+    retailOrderId: "retail-order",
+    paymentVerified: true,
+  });
+  vi.mocked(updateQuitHeroOrderPaymentStatus).mockRejectedValue(
+    new QuitHeroApiError("billingAddress1 must be a string", 400),
+  );
+
+  const response = await eway(
+    new NextRequest("https://shop.test/callback", {
+      method: "POST",
+      body: JSON.stringify({}),
+    }),
+  );
+
+  expect(response.status).toBe(502);
+  expect(await response.json()).toMatchObject({
+    error: expect.stringContaining("billingAddress1 must be a string"),
+  });
+  expect(getEwayPaymentResult).not.toHaveBeenCalled();
+  expect(createQuitHeroOrder).not.toHaveBeenCalled();
+  expect(clearPendingEwayPayment).not.toHaveBeenCalled();
 });
