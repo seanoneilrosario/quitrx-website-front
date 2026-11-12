@@ -8,7 +8,9 @@ export async function GET() {
     const account = await getInitialAccount();
     if (!account?.id) return Response.json({ url: null }, { status: 401, headers });
     const customer = await getQuitHeroCustomer(account.id);
-    const url = escriptRenewalUrl({ ...account, ...customer });
+    const url = customer.medicareNumber?.trim()
+      ? escriptRenewalUrl({ ...account, ...customer })
+      : null;
     return Response.json({ url }, { headers });
   } catch {
     return Response.json({ url: null }, { status: 502, headers });
