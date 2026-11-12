@@ -1,4 +1,5 @@
 import type { QuitHeroCustomer } from "@/lib/quithero/customers";
+import { formatAustralianPhoneForForm } from "@/lib/forms/form-urls";
 
 export function escriptRenewalUrl(customer: QuitHeroCustomer) {
   const address =
@@ -20,7 +21,7 @@ export function escriptRenewalUrl(customer: QuitHeroCustomer) {
     city: address?.city,
     zip: address?.postcode ?? address?.zip,
     state: address?.state ?? address?.province,
-    phone: customer.phone || address?.phone,
+    phone: formatAustralianPhoneForForm(customer.phone || address?.phone),
   };
   for (const [key, value] of Object.entries(fields)) {
     url.searchParams.set(key, value ?? "");

@@ -29,7 +29,7 @@ describe("eScript renewal prefill", () => {
       email: "person+test@example.com",
       firstname: "Anne & Jo",
       lastname: "Smith",
-      phone: "+61401234567",
+      phone: "0401234567",
       MedicareNumber: "0123456789",
       IRN: "1",
       IHINumber: "8003601234567890",
