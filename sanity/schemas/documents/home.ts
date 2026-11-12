@@ -91,6 +91,7 @@ export const homeType = defineType({
         { type: "intakeForm" },
         { type: "uploadPrescription" },
         { type: "escriptRequest" },
+        { type: "renewEscript" },
         { type: "formSuccess" },
       ],
       options: {
@@ -137,6 +138,7 @@ export const homeType = defineType({
                 "intakeForm",
                 "uploadPrescription",
                 "escriptRequest",
+                "renewEscript",
                 "formSuccess",
               ],
             },

@@ -27,6 +27,7 @@ import ProductHighlights from "./products/ProductHighlights";
 import IntakeForm from "./forms/IntakeForm";
 import UploadPrescription from "./forms/UploadPrescription";
 import EscriptRequest from "./forms/EscriptRequest";
+import RenewEscript from "./forms/RenewEscript";
 import FormSuccess from "./forms/FormSuccess";
 
 const sectionRenderers: Record<
@@ -262,6 +263,13 @@ const sectionRenderers: Record<
   ),
   escriptRequest: (component) => (
     <EscriptRequest
+      title={component.title}
+      paddingTop={component.paddingTop}
+      paddingBottom={component.paddingBottom}
+    />
+  ),
+  renewEscript: (component) => (
+    <RenewEscript
       title={component.title}
       paddingTop={component.paddingTop}
       paddingBottom={component.paddingBottom}
