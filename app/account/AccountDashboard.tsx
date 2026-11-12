@@ -163,9 +163,9 @@ export default function AccountDashboard({
             Start Assessment
           </Link>
           <p className="account-assessment-card__disclaimer">
-            This assessment is not for nicotine pouch prescriptions. In accordance with the TGA&apos;s
-            advertising requirements, we cannot publicly advertise or describe certain treatment
-            options.
+            This assessment is not for nicotine pouch prescriptions. In accordance with the
+            TGA&apos;s advertising requirements, we cannot publicly advertise or describe certain
+            treatment options.
           </p>
         </section>
       </>
@@ -288,7 +288,7 @@ export default function AccountDashboard({
             </div>
           </div>
           <a
-            href={medicareRenewal.url}
+            href={`/renew-escript`}
             target="_blank"
             rel="noopener noreferrer"
             className="account-button account-button--banner"
