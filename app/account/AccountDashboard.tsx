@@ -54,36 +54,6 @@ export default function AccountDashboard({
   initialCustomer?: QuitHeroCustomer;
 }) {
   const router = useRouter();
-  const [renewalLoading, setRenewalLoading] = useState(false);
-  const [renewalError, setRenewalError] = useState("");
-  const [medicareCustomerId, setMedicareCustomerId] = useState<string>();
-  async function openMedicareRenewal() {
-    // Open during the click so browsers do not block the tab after the API request.
-    const renewalTab = window.open("about:blank", "_blank");
-    if (!renewalTab) {
-      setRenewalError("Please allow pop-ups to open the renewal form in a new tab.");
-      return;
-    }
-    renewalTab.opener = null;
-    setRenewalLoading(true);
-    setRenewalError("");
-    try {
-      const response = await fetch("/api/account/escript-renewal", { method: "POST" });
-      const result = await response.json();
-      if (!response.ok || !result.url)
-        throw new Error(result.error || "Unable to load your renewal form.");
-      renewalTab.location.replace(result.url);
-    } catch (error) {
-      renewalTab.close();
-      setRenewalError(
-        error instanceof Error
-          ? error.message
-          : "Unable to load your renewal form. Please try again.",
-      );
-    } finally {
-      setRenewalLoading(false);
-    }
-  }
   const {
     customer: loadedCustomer,
     loading,
@@ -92,19 +62,20 @@ export default function AccountDashboard({
     setCustomer,
   } = useAccountCustomer();
   const customer = loadedCustomer ?? initialCustomer;
+  const [medicareRenewal, setMedicareRenewal] = useState<{ customerId: string; url: string }>();
   useEffect(() => {
     const controller = new AbortController();
     if (customer?.id) {
       const customerId = customer.id;
       void fetch("/api/account/escript-renewal", { cache: "no-store", signal: controller.signal })
         .then(async (response) => {
-          if (!response.ok) return;
-          const result = await response.json();
-          if (!controller.signal.aborted && result.eligible === true)
-            setMedicareCustomerId(customerId);
+          const result = response.ok ? await response.json() : null;
+          if (!controller.signal.aborted) {
+            setMedicareRenewal(result?.url ? { customerId, url: result.url } : undefined);
+          }
         })
         .catch(() => {
-          /* Keep the block hidden if eligibility cannot be confirmed. */
+          if (!controller.signal.aborted) setMedicareRenewal(undefined);
         });
     }
     return () => controller.abort();
@@ -305,7 +276,7 @@ export default function AccountDashboard({
         </article>
       </section>
 
-      {customer.id && medicareCustomerId === customer.id && (
+      {medicareRenewal && medicareRenewal.customerId === customer.id && (
         <section
           className="account-banner account-medicare-renewal"
           aria-labelledby="medicare-renewal-title"
@@ -314,20 +285,18 @@ export default function AccountDashboard({
             <div>
               <h3 id="medicare-renewal-title">Renew your eScript with Medicare</h3>
               <p>Request a renewal with your details prefilled.</p>
-              {renewalError && <p role="alert">{renewalError}</p>}
             </div>
           </div>
-          <button
-            type="button"
+          <a
+            href={medicareRenewal.url}
+            target="_blank"
+            rel="noopener noreferrer"
             className="account-button account-button--banner"
-            onClick={openMedicareRenewal}
-            disabled={renewalLoading}
           >
-            {renewalLoading ? "Opening form..." : "Renew eScript (opens in new tab)"}
-          </button>
+            Renew eScript
+          </a>
         </section>
       )}
-
       <section className="account-order-history">
         <div className="account-order-history__header">
           <span className="account-order-history__icon" aria-hidden="true">
