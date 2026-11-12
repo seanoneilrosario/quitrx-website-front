@@ -1044,6 +1044,11 @@
   gap: 20px;
 }
 
+.account-banner.account-medicare-renewal {
+  order: 3;
+  margin: 24px 0;
+}
+
 .account-banner__content {
   display: flex;
   align-items: center;

@@ -9,6 +9,7 @@ import { useAccountCustomer } from "@/hooks/useAccountCustomer";
 import OrderHistoryTable from "@/components/account/OrderHistoryTable";
 import type { QuitHeroOrder } from "@/lib/quithero";
 import { canRenewScript, hasActiveScript } from "@/lib/account/script-access";
+import { escriptRenewalUrl } from "@/lib/account/escript-renewal";
 
 function addressLines(customer: QuitHeroCustomer) {
   const address: QuitHeroAddress | undefined = customer.address ?? customer.addresses?.[0];
@@ -62,6 +63,24 @@ export default function AccountDashboard({
     setCustomer,
   } = useAccountCustomer();
   const customer = loadedCustomer ?? initialCustomer;
+  const [medicareRenewal, setMedicareRenewal] = useState<{ customerId: string; url: string }>();
+  useEffect(() => {
+    const controller = new AbortController();
+    if (customer?.id) {
+      const customerId = customer.id;
+      void fetch("/api/account/escript-renewal", { cache: "no-store", signal: controller.signal })
+        .then(async (response) => {
+          const result = response.ok ? await response.json() : null;
+          if (!controller.signal.aborted) {
+            setMedicareRenewal(result?.url ? { customerId, url: result.url } : undefined);
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setMedicareRenewal(undefined);
+        });
+    }
+    return () => controller.abort();
+  }, [customer?.id]);
   const [orders, setOrders] = useState<QuitHeroOrder[] | null>(null);
   const handleOrdersLoaded = useCallback((loadedOrders: QuitHeroOrder[]) => {
     setOrders(loadedOrders);
@@ -258,6 +277,29 @@ export default function AccountDashboard({
         </article>
       </section>
 
+      <section
+        className="account-banner account-medicare-renewal"
+        aria-labelledby="medicare-renewal-title"
+      >
+        <div className="account-banner__content">
+          <div>
+            <h3 id="medicare-renewal-title">Renew your eScript with Medicare</h3>
+            <p>Request a renewal with your details prefilled.</p>
+          </div>
+        </div>
+        <a
+          href={
+            medicareRenewal && medicareRenewal.customerId === customer.id
+              ? medicareRenewal.url
+              : escriptRenewalUrl(customer)
+          }
+          target="_blank"
+          rel="noopener noreferrer"
+          className="account-button account-button--banner"
+        >
+          Renew eScript
+        </a>
+      </section>
       <section className="account-order-history">
         <div className="account-order-history__header">
           <span className="account-order-history__icon" aria-hidden="true">
