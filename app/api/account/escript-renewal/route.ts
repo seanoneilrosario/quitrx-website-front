@@ -11,7 +11,15 @@ export async function GET() {
     const url = customer.medicareNumber?.trim()
       ? escriptRenewalUrl({ ...account, ...customer })
       : null;
-    return Response.json({ url }, { headers });
+    return Response.json(
+      {
+        url,
+        medicareNumber: customer.medicareNumber?.trim() || null,
+        medicareIRNumber: customer.medicareIRNumber?.trim() || null,
+        IHINumber: customer.IHINumber?.trim() || null,
+      },
+      { headers },
+    );
   } catch {
     return Response.json({ url: null }, { status: 502, headers });
   }

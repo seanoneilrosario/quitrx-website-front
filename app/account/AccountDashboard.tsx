@@ -62,7 +62,13 @@ export default function AccountDashboard({
     setCustomer,
   } = useAccountCustomer();
   const customer = loadedCustomer ?? initialCustomer;
-  const [medicareRenewal, setMedicareRenewal] = useState<{ customerId: string; url: string }>();
+  const [medicareRenewal, setMedicareRenewal] = useState<{
+    customerId: string;
+    url: string;
+    medicareNumber?: string;
+    medicareIRNumber?: string;
+    IHINumber?: string;
+  }>();
   useEffect(() => {
     const controller = new AbortController();
     if (customer?.id) {
@@ -71,7 +77,17 @@ export default function AccountDashboard({
         .then(async (response) => {
           const result = response.ok ? await response.json() : null;
           if (!controller.signal.aborted) {
-            setMedicareRenewal(result?.url ? { customerId, url: result.url } : undefined);
+            setMedicareRenewal(
+              result?.url
+                ? {
+                    customerId,
+                    url: result.url,
+                    medicareNumber: result.medicareNumber,
+                    medicareIRNumber: result.medicareIRNumber,
+                    IHINumber: result.IHINumber,
+                  }
+                : undefined,
+            );
           }
         })
         .catch(() => {
@@ -284,6 +300,21 @@ export default function AccountDashboard({
           <div className="account-banner__content">
             <div>
               <h3 id="medicare-renewal-title">Renew your eScript with Medicare</h3>
+              {medicareRenewal.medicareNumber && (
+                <p>
+                  <strong>Medicare number:</strong> {medicareRenewal.medicareNumber}
+                </p>
+              )}
+              {medicareRenewal.medicareIRNumber && (
+                <p>
+                  <strong>Medicare IRN:</strong> {medicareRenewal.medicareIRNumber}
+                </p>
+              )}
+              {medicareRenewal.IHINumber && (
+                <p>
+                  <strong>IHI number:</strong> {medicareRenewal.IHINumber}
+                </p>
+              )}
               <p>Request a renewal with your details prefilled.</p>
             </div>
           </div>
