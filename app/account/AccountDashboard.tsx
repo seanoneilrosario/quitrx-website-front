@@ -311,7 +311,7 @@ export default function AccountDashboard({
                 </p>
               )}
               {medicareRenewal.IHINumber && (
-                <p>
+                <p className="account-medicare-renewal__ihi-number pb-2">
                   <strong>IHI number:</strong> {medicareRenewal.IHINumber}
                 </p>
               )}
