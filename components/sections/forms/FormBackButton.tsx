@@ -1,13 +1,10 @@
+import Link from "next/link";
+
 export default function FormBackButton() {
   return (
-    <button
-      type="button"
-      className="form-back-button"
-      onClick={() => window.history.back()}
-      aria-label="Go back to the previous page"
-    >
+    <Link href="/account" className="form-back-button" aria-label="Go back to your account">
       <span aria-hidden="true">←</span>
       Back
-    </button>
+    </Link>
   );
 }

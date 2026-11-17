@@ -105,21 +105,41 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
     return { error: "Enter a valid email address." };
 
   const normalizedEmail = email.toLowerCase();
-  const cookieStore = await cookies();
-  const existingChallenge = decodeChallenge(cookieStore.get(EMAIL_CODE_COOKIE)?.value);
-  if (existingChallenge?.email === normalizedEmail && existingChallenge.resendAt > Date.now()) {
-    return {
-      step: "code",
-      email: normalizedEmail,
-      error: "Please wait a minute before requesting another code.",
-    };
-  }
-  const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
-
+  const requestId = randomUUID();
+  const startedAt = Date.now();
+  console.info("Email sign-in code request started.", {
+    requestId,
+    environment: process.env.VERCEL_ENV ?? "local",
+    configuration: {
+      resendApiKeyPresent: Boolean(process.env.RESEND_API_KEY),
+      emailFromPresent: Boolean(process.env.EMAIL_FROM),
+      quitHeroApiKeyPresent: Boolean(process.env.QUITHERO_API_KEY),
+      sessionSecretValid:
+        (process.env.AUTH_SESSION_SECRET || process.env.AUTH_SECRET || "").length >= 32,
+    },
+  });
+  let stage = "read_challenge";
   try {
+    const cookieStore = await cookies();
+    const existingChallenge = decodeChallenge(cookieStore.get(EMAIL_CODE_COOKIE)?.value);
+    if (existingChallenge?.email === normalizedEmail && existingChallenge.resendAt > Date.now()) {
+      console.info("Email sign-in code request throttled.", { requestId });
+      return {
+        step: "code",
+        email: normalizedEmail,
+        error: "Please wait a minute before requesting another code.",
+      };
+    }
+    const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
+
+    stage = "customer_lookup";
     const customer = await findQuitHeroCustomerByEmail(normalizedEmail);
+    console.info("Email sign-in customer lookup completed.", { requestId });
     const id = randomUUID();
+    stage = "send_email";
     await sendLoginCode(normalizedEmail, code);
+    console.info("Email sign-in email accepted by provider.", { requestId });
+    stage = "store_challenge";
     await storeChallenge({
       id,
       email: normalizedEmail,
@@ -129,6 +149,10 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
       resendAt: Date.now() + 60_000,
       attempts: 0,
     });
+    console.info("Email sign-in code request completed.", {
+      requestId,
+      durationMs: Date.now() - startedAt,
+    });
     return {
       step: "code",
       email: normalizedEmail,
@@ -136,6 +160,9 @@ async function requestCode(email: string): Promise<CustomerAccessState> {
     };
   } catch (error) {
     console.error("Email sign-in code delivery failed.", {
+      requestId,
+      stage,
+      durationMs: Date.now() - startedAt,
       error: error instanceof Error ? error.message : "Unknown error",
     });
     return { error: "We could not send your email code. Please try again." };

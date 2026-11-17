@@ -642,7 +642,6 @@
 .account-panel__status-row {
   margin-top: 8px;
 }
-
 .account-badge {
   display: inline-flex;
   align-items: center;
@@ -1042,6 +1041,11 @@
   justify-content: space-between;
   align-items: center;
   gap: 20px;
+}
+
+.account-banner.account-medicare-renewal {
+  order: 3;
+  margin: 24px 0;
 }
 
 .account-banner__content {

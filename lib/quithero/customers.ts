@@ -39,6 +39,9 @@ export type QuitHeroCustomer = {
   birthday?: string;
   scriptValidity?: string;
   renewalForm?: string;
+  medicareNumber?: string;
+  medicareIRNumber?: string;
+  IHINumber?: string;
   gender?: string;
   vapeTag?: string;
   pouchTag?: string;
@@ -430,6 +433,13 @@ export async function getQuitHeroCustomerAddresses(customerId: string) {
   const customer = extractCustomers(response).find((entry) => entry.id === id);
   if (!customer) throw new Error("QuitHero did not return the requested customer.");
   return customer.addresses ?? (customer.address ? [customer.address] : []);
+}
+
+export async function getQuitHeroCustomer(customerId: string) {
+  const response = await quitHeroRequest<unknown>(`/customers/${encodeURIComponent(customerId)}`);
+  const customer = extractCustomers(response).find((entry) => entry.id === customerId);
+  if (!customer) throw new Error("QuitHero did not return the requested customer.");
+  return customer;
 }
 
 export async function updateQuitHeroCustomerAddress(

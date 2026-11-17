@@ -118,6 +118,7 @@ export type SectionType =
   | "intakeForm"
   | "uploadPrescription"
   | "escriptRequest"
+  | "renewEscript"
   | "formSuccess";
 
 export interface ContentSection {

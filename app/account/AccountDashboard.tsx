@@ -62,6 +62,40 @@ export default function AccountDashboard({
     setCustomer,
   } = useAccountCustomer();
   const customer = loadedCustomer ?? initialCustomer;
+  const [medicareRenewal, setMedicareRenewal] = useState<{
+    customerId: string;
+    url: string;
+    medicareNumber?: string;
+    medicareIRNumber?: string;
+    IHINumber?: string;
+  }>();
+  useEffect(() => {
+    const controller = new AbortController();
+    if (customer?.id) {
+      const customerId = customer.id;
+      void fetch("/api/account/escript-renewal", { cache: "no-store", signal: controller.signal })
+        .then(async (response) => {
+          const result = response.ok ? await response.json() : null;
+          if (!controller.signal.aborted) {
+            setMedicareRenewal(
+              result?.url
+                ? {
+                    customerId,
+                    url: result.url,
+                    medicareNumber: result.medicareNumber,
+                    medicareIRNumber: result.medicareIRNumber,
+                    IHINumber: result.IHINumber,
+                  }
+                : undefined,
+            );
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setMedicareRenewal(undefined);
+        });
+    }
+    return () => controller.abort();
+  }, [customer?.id]);
   const [orders, setOrders] = useState<QuitHeroOrder[] | null>(null);
   const handleOrdersLoaded = useCallback((loadedOrders: QuitHeroOrder[]) => {
     setOrders(loadedOrders);
@@ -145,9 +179,9 @@ export default function AccountDashboard({
             Start Assessment
           </Link>
           <p className="account-assessment-card__disclaimer">
-            This assessment is not for nicotine pouch prescriptions. In accordance with the TGA's
-            advertising requirements, we cannot publicly advertise or describe certain treatment
-            options.
+            This assessment is not for nicotine pouch prescriptions. In accordance with the
+            TGA&apos;s advertising requirements, we cannot publicly advertise or describe certain
+            treatment options.
           </p>
         </section>
       </>
@@ -258,6 +292,42 @@ export default function AccountDashboard({
         </article>
       </section>
 
+      {medicareRenewal && medicareRenewal.customerId === customer.id && (
+        <section
+          className="account-banner account-medicare-renewal"
+          aria-labelledby="medicare-renewal-title"
+        >
+          <div className="account-banner__content">
+            <div>
+              <h3 id="medicare-renewal-title">Renew your eScript with Medicare</h3>
+              {medicareRenewal.medicareNumber && (
+                <p>
+                  <strong>Medicare number:</strong> {medicareRenewal.medicareNumber}
+                </p>
+              )}
+              {medicareRenewal.medicareIRNumber && (
+                <p>
+                  <strong>Medicare IRN:</strong> {medicareRenewal.medicareIRNumber}
+                </p>
+              )}
+              {medicareRenewal.IHINumber && (
+                <p className="account-medicare-renewal__ihi-number pb-2">
+                  <strong>IHI number:</strong> {medicareRenewal.IHINumber}
+                </p>
+              )}
+              <p>Request a renewal with your details prefilled.</p>
+            </div>
+          </div>
+          <a
+            href={`/renew-escript`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="account-button account-button--banner"
+          >
+            Renew eScript
+          </a>
+        </section>
+      )}
       <section className="account-order-history">
         <div className="account-order-history__header">
           <span className="account-order-history__icon" aria-hidden="true">
