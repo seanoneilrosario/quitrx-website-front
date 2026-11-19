@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
           "https://workdrive.zohopublic.com.au/external/cfaa90dd1e16252b61174ac10d1e983aa703a4722e125584119ae0f601be82b3",
         permanent: false,
       },
+      {
+        source: "www.quitrx.com.au/Gartrell",
+        destination:
+          "https://workdrive.zohopublic.com.au/external/80d30fdd8fb0777b58f56dbd5583d3ae4d01614b500a9cf6e3fa0befccae466c",
+        permanent: true,
+      },
     ];
   },
   async headers() {
