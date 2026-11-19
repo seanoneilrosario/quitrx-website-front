@@ -11,7 +11,13 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
-        source: "www.quitrx.com.au/Gartrell",
+        source: "/Gartrell",
+        destination:
+          "https://workdrive.zohopublic.com.au/external/80d30fdd8fb0777b58f56dbd5583d3ae4d01614b500a9cf6e3fa0befccae466c",
+        permanent: true,
+      },
+      {
+        source: "/gartrell",
         destination:
           "https://workdrive.zohopublic.com.au/external/80d30fdd8fb0777b58f56dbd5583d3ae4d01614b500a9cf6e3fa0befccae466c",
         permanent: true,
