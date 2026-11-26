@@ -66,8 +66,12 @@ export class PublicInvoiceError extends Error {
   }
 }
 
-type PaymentSession = {
-  sharedPaymentUrl: string;
+// Eway Transparent Redirect payment session
+export type PaymentSession = {
+  paymentMethod: "eway";
+  paymentType: "TRANSPARENT_REDIRECT";
+  accessCode: string;
+  formActionUrl: string;
 };
 
 function objectValue(value: unknown): Record<string, unknown> {
@@ -99,6 +103,27 @@ function getErrorMessage(status: number): string {
 
     default:
       return "We could not process your invoice request. Please contact support.";
+  }
+}
+
+// Validate the Eway payment submission URL.
+function validateEwayFormActionUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+
+    const isEwayHost = hostname === "ewaypayments.com" || hostname.endsWith(".ewaypayments.com");
+
+    if (url.protocol !== "https:" || !isEwayHost || url.username || url.password || url.port) {
+      throw new Error("Invalid Eway payment URL.");
+    }
+
+    return url.toString();
+  } catch {
+    throw new PublicInvoiceError(
+      "The payment service returned an invalid payment destination.",
+      502,
+    );
   }
 }
 
@@ -171,13 +196,19 @@ export async function getPublicInvoice(token: string): Promise<PublicInvoice> {
   return data as PublicInvoice;
 }
 
+// Create an Eway Transparent Redirect payment session.
 export async function createInvoicePaymentSession(token: string): Promise<PaymentSession> {
   const data = await publicInvoiceRequest(token, "POST", "/pay");
 
   if (
     data.success !== true ||
-    typeof data.sharedPaymentUrl !== "string" ||
-    !data.sharedPaymentUrl.trim()
+    data.paymentMethod !== "eway" ||
+    data.paymentType !== "TRANSPARENT_REDIRECT" ||
+    typeof data.accessCode !== "string" ||
+    !data.accessCode.trim() ||
+    data.accessCode.length > 2048 ||
+    typeof data.formActionUrl !== "string" ||
+    !data.formActionUrl.trim()
   ) {
     throw new PublicInvoiceError(
       "Unable to create a valid payment session. Please contact support.",
@@ -185,7 +216,12 @@ export async function createInvoicePaymentSession(token: string): Promise<Paymen
     );
   }
 
+  const formActionUrl = validateEwayFormActionUrl(data.formActionUrl);
+
   return {
-    sharedPaymentUrl: data.sharedPaymentUrl,
+    paymentMethod: "eway",
+    paymentType: "TRANSPARENT_REDIRECT",
+    accessCode: data.accessCode,
+    formActionUrl,
   };
 }
