@@ -268,13 +268,11 @@ export default function PaymentButton({ token }: { token: string }) {
             </label>
           </div>
         </fieldset>
-
         {error && (
           <p className={styles.actionError} role="alert">
             {error}
           </p>
         )}
-
         <button
           type="submit"
           className={styles.payButton}
