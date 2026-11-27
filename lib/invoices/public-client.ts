@@ -28,6 +28,7 @@ export type InvoicePaymentState =
   | "PAID"
   | null;
 
+
 export type PublicInvoice = {
   orderId: string;
   orderNumber: string;
@@ -46,6 +47,7 @@ export type PublicInvoice = {
   amountDue: number | null;
 
   isPaid: boolean;
+  noPaymentRequired: boolean;
   requiresPayment: boolean;
   canPay: boolean;
   hasExistingPaymentAttempt: boolean;
@@ -55,6 +57,7 @@ export type PublicInvoice = {
   createdAt: string;
   updatedAt: string;
 };
+
 
 export class PublicInvoiceError extends Error {
   constructor(
@@ -177,6 +180,7 @@ async function publicInvoiceRequest(
   }
 }
 
+
 export async function getPublicInvoice(token: string): Promise<PublicInvoice> {
   const data = await publicInvoiceRequest(token, "GET");
 
@@ -188,13 +192,18 @@ export async function getPublicInvoice(token: string): Promise<PublicInvoice> {
     typeof data.canPay !== "boolean" ||
     typeof data.isPaid !== "boolean" ||
     typeof data.requiresPayment !== "boolean" ||
-    typeof data.hasExistingPaymentAttempt !== "boolean"
+    typeof data.hasExistingPaymentAttempt !== "boolean" ||
+    (data.noPaymentRequired !== undefined && typeof data.noPaymentRequired !== "boolean")
   ) {
     throw new PublicInvoiceError("The invoice service returned incomplete information.", 502);
   }
 
-  return data as PublicInvoice;
+  return {
+    ...data,
+    noPaymentRequired: data.noPaymentRequired === true,
+  } as PublicInvoice;
 }
+
 
 // Create an Eway Transparent Redirect payment session.
 export async function createInvoicePaymentSession(token: string): Promise<PaymentSession> {

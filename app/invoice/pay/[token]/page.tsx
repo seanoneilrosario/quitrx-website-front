@@ -63,6 +63,7 @@ function Brand() {
   );
 }
 
+
 function getPaymentStatusLabel(invoice: PublicInvoice) {
   if (invoice.isPaid) {
     return "PAID";
@@ -80,12 +81,17 @@ function getPaymentStatusLabel(invoice: PublicInvoice) {
     return "CANCELLED";
   }
 
+  if (invoice.noPaymentRequired) {
+    return "NO PAYMENT REQUIRED";
+  }
+
   if (invoice.requiresPayment) {
     return "UNPAID";
   }
 
   return invoice.paymentStatus.replaceAll("_", " ");
 }
+
 
 function InvoiceDetails({ invoice }: { invoice: PublicInvoice }) {
   const rows = [
@@ -97,15 +103,19 @@ function InvoiceDetails({ invoice }: { invoice: PublicInvoice }) {
 
   const statusLabel = getPaymentStatusLabel(invoice);
 
-  const statusClass = invoice.isPaid
-    ? "statusPAID"
-    : invoice.hasExistingPaymentAttempt
-      ? "statusPENDING"
-      : invoice.orderStatus === "CANCELLED"
-        ? "statusCANCELLED"
+ 
+const statusClass = invoice.isPaid
+  ? "statusPAID"
+  : invoice.hasExistingPaymentAttempt || invoice.paymentSessionStatus === "RECONCILIATION_REQUIRED"
+    ? "statusPENDING"
+    : invoice.orderStatus === "CANCELLED"
+      ? "statusCANCELLED"
+      : invoice.noPaymentRequired
+        ? "statusPAID"
         : invoice.requiresPayment
           ? "statusUNPAID"
           : `status${invoice.paymentStatus.replaceAll("_", "")}`;
+
 
   const amountPaid = invoice.isPaid ? invoice.total : null;
 
@@ -202,22 +212,37 @@ export default async function InvoicePaymentPage({
     );
   }
 
-  const isPaid = invoice.isPaid;
 
-  const isCancelled = invoice.orderStatus === "CANCELLED";
+const isPaid = invoice.isPaid;
 
-  const requiresReview = !isPaid && invoice.paymentSessionStatus === "RECONCILIATION_REQUIRED";
+const isCancelled = invoice.orderStatus === "CANCELLED";
 
-  const isPending = !isPaid && !requiresReview && invoice.hasExistingPaymentAttempt;
+const requiresReview = !isPaid && invoice.paymentSessionStatus === "RECONCILIATION_REQUIRED";
 
-  const canPay =
-    invoice.canPay &&
-    invoice.requiresPayment &&
-    !isPaid &&
-    !isCancelled &&
-    !invoice.hasExistingPaymentAttempt;
+const isPending = !isPaid && !requiresReview && invoice.hasExistingPaymentAttempt;
 
-  const isUnavailable = !canPay && !isPaid && !isPending && !requiresReview && !isCancelled;
+const noPaymentRequired =
+  invoice.noPaymentRequired &&
+  !isPaid &&
+  !isCancelled &&
+  !requiresReview &&
+  !isPending &&
+  !invoice.requiresPayment &&
+  !invoice.canPay &&
+  invoice.amountDue === 0;
+
+const canPay =
+  invoice.canPay &&
+  invoice.requiresPayment &&
+  !isPaid &&
+  !isCancelled &&
+  !noPaymentRequired &&
+  !requiresReview &&
+  !invoice.hasExistingPaymentAttempt;
+
+const isUnavailable =
+  !canPay && !isPaid && !isPending && !requiresReview && !isCancelled && !noPaymentRequired;
+
 
   return (
     <main className={styles.page}>
@@ -244,6 +269,14 @@ export default async function InvoicePaymentPage({
               <strong>Payment complete</strong>
 
               <span>This invoice has been paid in full. No further payment is required.</span>
+            </div>
+          )}
+
+          {noPaymentRequired && (
+            <div className={styles.success} role="status">
+              <strong>No payment required</strong>
+
+              <span>This invoice has no outstanding balance. No further payment is required.</span>
             </div>
           )}
 
